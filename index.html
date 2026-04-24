@@ -753,7 +753,7 @@ body{font-family:var(--sans);color:var(--ink)}
 // ═══════════════════════ STATE ═══════════════════════
 const STATE = {
   mode: null, // 'client' | 'admin'
-  quote: '« Bienvenue Flo ! Je suis tellement contente qu'on commence cette aventure ensemble. 🌸 »',
+  quote: "« Bienvenue Flo ! Je suis tellement contente qu'on commence cette aventure ensemble. 🌸 »",
   sessions: [],
   measures: null,
   earnedBadges: [],
@@ -761,14 +761,14 @@ const STATE = {
   postImgIdx: 0,
   posts: [
     { id:'p1', author:'Sophie', initial:'S', time:'Il y a 2h', img:2, caption:'Matinée pilates au soleil ☀️ Je sens déjà mon dos mieux ! Merci Violette 🌸', likes:12, liked:false, vis:'public' },
-    { id:'p2', author:'Violette', initial:'V', time:'Hier', img:3, caption:'Le mouvement juste, c\'est d\'abord écouter son corps. Petit rappel pour cette semaine 💫', likes:28, liked:true, vis:'public', isViolette:true },
+    { id:'p2', author:'Violette', initial:'V', time:'Hier', img:3, caption:"Le mouvement juste, c'est d'abord écouter son corps. Petit rappel pour cette semaine 💫", likes:28, liked:true, vis:'public', isViolette:true },
     { id:'p3', author:'Marie', initial:'M', time:'Il y a 2 jours', img:4, caption:'45 min de gainage ce matin. Petite victoire personnelle !', likes:8, liked:false, vis:'public' },
     { id:'p4', author:'Camille', initial:'C', time:'Il y a 3 jours', img:5, caption:'Premier cours en entreprise avec Violette, mes collègues sont conquis 🙌', likes:15, liked:false, vis:'public' },
   ],
   quotes: [
-    '« Le corps se souvient de tout ce qu\'on lui offre. »',
+    "« Le corps se souvient de tout ce qu'on lui offre. »",
     '« Bouge comme si personne ne regardait. »',
-    '« La force vient d\'abord du centre. »',
+    "« La force vient d'abord du centre. »",
     '« Respire, et le reste suivra. »',
   ],
   // admin state
@@ -801,26 +801,26 @@ STATE.pending.push({
   id:'req-1', client:'Sophie', initial:'S',
   date: dateKey(new Date(Date.now()+3*86400000)),
   time:'11:00', dur:60, type:'domicile',
-  msg:'J\'aimerais travailler le dos, encore quelques douleurs 😊'
+  msg:"J'aimerais travailler le dos, encore quelques douleurs 😊"
 });
 
 const ALL_BADGES = [
   { id:'first',   emoji:'🌸', name:'Première flamme',    desc:'1ère séance' },
   { id:'trio',    emoji:'🔥', name:'Trio gagnant',       desc:'3 séances en 1 sem.' },
   { id:'mois',    emoji:'🌿', name:'Mois sans faille',   desc:'20 séances' },
-  { id:'planche', emoji:'🛡️', name:'Planche d\'acier',   desc:'60s de gainage' },
+  { id:'planche', emoji:'🛡️', name:'Planche acier',      desc:'60s de gainage' },
   { id:'mains',   emoji:'🌺', name:'Mains au sol',       desc:'Mains-sol < 5cm' },
   { id:'cent',    emoji:'🏆', name:'Centenaire',         desc:'100 séances' },
   { id:'equi',    emoji:'🦋', name:'Équilibriste',       desc:'45s unipodal' },
   { id:'ambass',  emoji:'💕', name:'Ambassadrice',       desc:'Parrainer une amie' },
   { id:'reg',     emoji:'🌙', name:'Régularité',         desc:'8 sem. non-stop' },
   { id:'obj',     emoji:'🎯', name:'Objectif',           desc:'Bilan 3 mois' },
-  { id:'prem',    emoji:'✨', name:'Premium',             desc:'Abonnée Premium' },
-  { id:'zen',     emoji:'🧘', name:'Zen',                 desc:'Journal 30j' },
-  { id:'an',      emoji:'🌻', name:'1 an',                desc:'12 mois ensemble' },
-  { id:'booking', emoji:'🗓️', name:'Première résa',       desc:'1ère réservation' },
-  { id:'sharing', emoji:'📸', name:'Partageuse',          desc:'1er post public' },
-  { id:'energie', emoji:'⚡', name:'Énergie max',         desc:'10/10 ressenti' },
+  { id:'prem',    emoji:'✨', name:'Premium',            desc:'Abonnée Premium' },
+  { id:'zen',     emoji:'🧘', name:'Zen',                desc:'Journal 30j' },
+  { id:'an',      emoji:'🌻', name:'1 an',               desc:'12 mois ensemble' },
+  { id:'booking', emoji:'🗓️', name:'Première résa',      desc:'1ère réservation' },
+  { id:'sharing', emoji:'📸', name:'Partageuse',         desc:'1er post public' },
+  { id:'energie', emoji:'⚡', name:'Énergie max',        desc:'10/10 ressenti' },
 ];
 
 function dateKey(d) { return d.toISOString().split('T')[0]; }
@@ -1187,7 +1187,7 @@ function submitPost() {
   const author = STATE.mode === 'admin' ? 'Violette' : 'Flo';
   const initial = STATE.mode === 'admin' ? 'V' : 'F';
   STATE.posts.unshift({
-    id:'p'+Date.now(), author, initial, time:'À l\'instant',
+    id:'p'+Date.now(), author, initial, time:"À l'instant",
     img: (STATE.postImgIdx % 5) + 1, caption,
     likes: 0, liked: false, vis: postVis,
     isViolette: STATE.mode === 'admin'
@@ -1207,7 +1207,7 @@ function renderGallery(tab) {
     posts = STATE.posts.filter(p => p.author === 'Flo');
   }
   if (posts.length === 0) {
-    el.innerHTML = `<div style="margin:16px"><div class="empty-state"><div class="empty-emoji">🌸</div><div class="empty-title">${tab==='feed' ? 'Aucun post pour l\'instant' : 'Aucune photo partagée'}</div><div class="empty-sub">${tab==='feed' ? 'Reviens bientôt !' : 'Partage ton premier moment pilates.'}</div></div></div>`;
+    el.innerHTML = `<div style="margin:16px"><div class="empty-state"><div class="empty-emoji">🌸</div><div class="empty-title">${tab==='feed' ? "Aucun post pour l'instant" : 'Aucune photo partagée'}</div><div class="empty-sub">${tab==='feed' ? 'Reviens bientôt !' : 'Partage ton premier moment pilates.'}</div></div></div>`;
     return;
   }
   el.innerHTML = posts.map(p => renderPost(p)).join('');
@@ -1232,7 +1232,7 @@ function renderPost(p) {
       <div class="post-actions">
         <button class="post-action ${p.liked?'liked':''}" onclick="toggleLike('${p.id}',this)">${heart} J'aime</button>
         <button class="post-action" onclick="showToast('Commentaires à venir 💬')">💬 Commenter</button>
-        <span class="post-like-count">${p.likes} ${p.likes>1?'j\'aimes':'j\'aime'}</span>
+        <span class="post-like-count">${p.likes} ${p.likes>1?"j'aimes":"j'aime"}</span>
       </div>
     </div>`;
 }
