@@ -1824,7 +1824,7 @@ async function loadFcSeances(){
         ${s.tarif?`<span style="font-family:var(--serif);font-size:15px;color:var(--ink)">${s.tarif}€</span>`:''}
         <button onclick="openSessionNote('${s.id}','${s.date}','${s.type}',${isSolo})" style="font-size:11px;padding:5px 10px;border-radius:20px;background:var(--cream);border:1px solid rgba(244,160,188,.3);color:var(--mid);cursor:pointer;font-family:var(--sans)">📝</button>
       </div>
-      ${s.note_violette?`<div style="font-size:12px;color:var(--mid);font-style:italic;padding:8px 10px;background:var(--cream);border-radius:8px;border-left:2px solid var(--rose)">${s.note_violette}</div>`:''}
+      ${s.note?`<div style="font-size:12px;color:var(--mid);font-style:italic;padding:8px 10px;background:var(--cream);border-radius:8px;border-left:2px solid var(--rose)">${s.note}</div>`:''}
     </div>`;
   }).join('');
 }
@@ -1837,14 +1837,14 @@ function openSessionNote(sessionId, date, type, isSolo){
   document.getElementById('session-tarif-row').style.display=isSolo?'none':'block';
   document.getElementById('modal-session-note').classList.add('open');
   // Load existing note
-  sb.from('sessions').select('note_violette,tarif').eq('id',sessionId).single().then(({data})=>{
-    if(data){ document.getElementById('session-note-text').value=data.note_violette||''; document.getElementById('session-note-tarif').value=data.tarif||''; }
+  sb.from('sessions').select('note,tarif').eq('id',sessionId).single().then(({data})=>{
+    if(data){ document.getElementById('session-note-text').value=data.note||''; document.getElementById('session-note-tarif').value=data.tarif||''; }
   });
 }
 async function submitSessionNote(){
   const note=document.getElementById('session-note-text').value.trim();
   const tarif=document.getElementById('session-note-tarif').value;
-  await sb.from('sessions').update({note_violette:note,tarif:tarif?parseFloat(tarif):null}).eq('id',fcSessionNoteId);
+  await sb.from('sessions').update({note:note,tarif:tarif?parseFloat(tarif):null}).eq('id',fcSessionNoteId);
   closeModal('modal-session-note');
   loadFcSeances();
   showToast('Note sauvegardee !');
