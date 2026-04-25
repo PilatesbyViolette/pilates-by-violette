@@ -1878,7 +1878,7 @@ async function submitPost(){
 }
 
 async function loadAndRenderGallery(tab){
-  let query=sb.from('posts').select('*, users(firstname,lastname,role)').order('created_at',{ascending:false});
+  let query=sb.from('posts').select('*, users(firstname,lastname,role,pseudo)').order('created_at',{ascending:false});
   if(tab==='feed') query=query.eq('visibility','public');
   else query=query.eq('user_id',STATE.user.id);
   const {data:posts}=await query;
@@ -1923,11 +1923,18 @@ async function toggleLike(postId, btn){
 async function deletePost(postId, imageUrl){
   if(!confirm('Supprimer ce post ?')) return;
   if(imageUrl){
-    const fileName=imageUrl.split('/').pop();
-    await sb.storage.from('community').remove([fileName]);
+    try{
+      const url=new URL(imageUrl);
+      const parts=url.pathname.split('/');
+      const fileName=parts[parts.length-1];
+      await sb.storage.from('community').remove([fileName]);
+    }catch(e){}
   }
-  await sb.from('posts').delete().eq('id',postId);
-  loadAndRenderGallery(galTab);
+  const {error}=await sb.from('posts').delete().eq('id',postId);
+  if(error){ showToast('Erreur: '+error.message); return; }
+  const activeTab=document.querySelector('.gal-tab.active');
+  const tab=activeTab?.textContent?.includes('Mes')?'mine':'feed';
+  loadAndRenderGallery(tab);
   showToast('Post supprime');
 }
 
@@ -2196,7 +2203,7 @@ async function saveVword(){
 }
 
 async function loadAndRenderAdmGallery(){
-  const {data:posts}=await sb.from('posts').select('*, users(firstname,lastname,role)').eq('visibility','public').order('created_at',{ascending:false});
+  const {data:posts}=await sb.from('posts').select('*, users(firstname,lastname,role,pseudo)').eq('visibility','public').order('created_at',{ascending:false});
   const el=document.getElementById('adm-gal-content');
   if (!posts||posts.length===0){ el.innerHTML='<div style="margin:16px"><div class="empty-state"><div class="empty-emoji">🌸</div><div class="empty-title">Aucun post</div></div></div>'; return; }
   el.innerHTML=posts.map(p=>renderPost(p)).join('');
