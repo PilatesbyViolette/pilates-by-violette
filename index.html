@@ -1126,13 +1126,15 @@ body{font-family:var(--sans);color:var(--ink)}
 
 
 <!-- MESSAGERIE CLIENT -->
-<div class="screen" id="screen-cl-messages" style="display:flex;flex-direction:column;overflow:hidden">
-    <div class="top-bar" style="flex-shrink:0"><div class="top-bar-inner"><div class="app-wordmark">Pilates by Violette</div><div class="screen-heading">Mes <em>messages</em></div></div></div>
-    <div id="cl-chat-box" style="flex:1;overflow-y:auto;padding:12px 16px 80px;display:flex;flex-direction:column;gap:8px;min-height:0"></div>
-    <div style="position:sticky;bottom:0;padding:10px 12px 10px;background:var(--white);border-top:.5px solid rgba(244,160,188,.2);display:flex;gap:8px;align-items:flex-end;z-index:10">
-      <textarea id="cl-msg-input" placeholder="Ecris un message..." oninput="autoResizeTextarea(this);sendTyping('cl')" style="flex:1;resize:none;border:1px solid rgba(244,160,188,.4);border-radius:20px;padding:10px 14px;font-family:var(--sans);font-size:13px;color:var(--ink);background:var(--cream);outline:none;max-height:100px;overflow-y:auto" rows="1" oninput="autoResizeTextarea(this)"></textarea>
-      <button onclick="sendClientMessage()" style="width:40px;height:40px;border-radius:50%;background:var(--rose-deep);border:none;color:white;font-size:18px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center">➤</button>
-    </div>
+<div class="screen" id="screen-cl-messages">
+  <div class="screen-scroll" style="padding-bottom:140px">
+    <div class="top-bar"><div class="top-bar-inner"><div class="app-wordmark">Pilates by Violette</div><div class="screen-heading">Mes <em>messages</em></div></div></div>
+    <div id="cl-chat-box" style="display:flex;flex-direction:column;gap:8px;padding:12px 16px 0"></div>
+  </div>
+  <div id="cl-input-bar" style="position:fixed;bottom:60px;left:50%;transform:translateX(-50%);width:100%;max-width:430px;padding:10px 12px;background:var(--white);border-top:.5px solid rgba(244,160,188,.2);display:none;gap:8px;align-items:flex-end;z-index:50;box-sizing:border-box">
+    <textarea id="cl-msg-input" placeholder="Ecris un message..." oninput="autoResizeTextarea(this);sendTyping('cl')" style="flex:1;resize:none;border:1px solid rgba(244,160,188,.4);border-radius:20px;padding:10px 14px;font-family:var(--sans);font-size:13px;color:var(--ink);background:var(--cream);outline:none;max-height:100px;overflow-y:auto" rows="1"></textarea>
+    <button onclick="sendClientMessage()" style="width:40px;height:40px;border-radius:50%;background:var(--rose-deep);border:none;color:white;font-size:18px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center">➤</button>
+  </div>
 </div>
 
 <!-- MESSAGERIE ADMIN - LISTE DES CONVERSATIONS -->
@@ -1144,8 +1146,9 @@ body{font-family:var(--sans);color:var(--ink)}
 </div>
 
 <!-- MESSAGERIE ADMIN - CONVERSATION INDIVIDUELLE -->
-<div class="screen" id="screen-adm-chat" style="display:flex;flex-direction:column;overflow:hidden">
-    <div class="admin-top" style="padding-bottom:12px;flex-shrink:0">
+<div class="screen" id="screen-adm-chat">
+  <div class="screen-scroll" style="padding-bottom:80px">
+    <div class="admin-top" style="padding-bottom:12px">
       <div class="admin-top-inner">
         <button onclick="goTo('adm-messages',document.getElementById('nav-adm-messages'))" style="background:none;border:none;color:var(--rose-deep);font-size:13px;cursor:pointer;padding:0;font-family:var(--sans);margin-bottom:6px">‹ Retour</button>
         <div style="display:flex;align-items:center;gap:10px">
@@ -1154,11 +1157,12 @@ body{font-family:var(--sans);color:var(--ink)}
         </div>
       </div>
     </div>
-    <div id="adm-chat-box" style="flex:1;overflow-y:auto;padding:12px 16px 80px;display:flex;flex-direction:column;gap:8px;min-height:0"></div>
-    <div style="position:sticky;bottom:0;padding:10px 12px 10px;background:var(--white);border-top:.5px solid rgba(244,160,188,.2);display:flex;gap:8px;align-items:flex-end;z-index:10">
-      <textarea id="adm-msg-input" placeholder="Repondre..." oninput="autoResizeTextarea(this);sendTyping('adm')" style="flex:1;resize:none;border:1px solid rgba(244,160,188,.4);border-radius:20px;padding:10px 14px;font-family:var(--sans);font-size:13px;color:var(--ink);background:var(--cream);outline:none;max-height:100px;overflow-y:auto" rows="1" oninput="autoResizeTextarea(this)"></textarea>
-      <button onclick="sendAdminMessage()" style="width:40px;height:40px;border-radius:50%;background:var(--rose-deep);border:none;color:white;font-size:18px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center">➤</button>
-    </div>
+    <div id="adm-chat-box" style="display:flex;flex-direction:column;gap:8px;padding:0 16px"></div>
+  </div>
+  <div id="adm-input-bar" style="position:fixed;bottom:60px;left:50%;transform:translateX(-50%);width:100%;max-width:430px;padding:10px 12px;background:var(--white);border-top:.5px solid rgba(244,160,188,.2);display:none;gap:8px;align-items:flex-end;z-index:50;box-sizing:border-box">
+    <textarea id="adm-msg-input" placeholder="Repondre..." oninput="autoResizeTextarea(this);sendTyping('adm')" style="flex:1;resize:none;border:1px solid rgba(244,160,188,.4);border-radius:20px;padding:10px 14px;font-family:var(--sans);font-size:13px;color:var(--ink);background:var(--cream);outline:none;max-height:100px;overflow-y:auto" rows="1"></textarea>
+    <button onclick="sendAdminMessage()" style="width:40px;height:40px;border-radius:50%;background:var(--rose-deep);border:none;color:white;font-size:18px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center">➤</button>
+  </div>
 </div>
 
 <!-- MODALS -->
@@ -1393,9 +1397,7 @@ function formatDateFR(d){ return new Date(d+'T00:00:00').toLocaleDateString('fr-
 function goToScreen(id){
   document.querySelectorAll('.screen').forEach(s=>{ s.classList.remove('active'); s.style.display='none'; });
   const sc = document.getElementById('screen-'+id);
-  const flexScreens=['cl-messages','adm-chat','adm-stats'];
-  sc.style.display=flexScreens.includes(id)?'flex':'block';
-  if(flexScreens.includes(id)) sc.style.setProperty('display','flex','important');
+  sc.style.display='block';
   sc.classList.add('active');
 }
 
@@ -1525,9 +1527,24 @@ function goTo(id, btn){
   if (id==='adm-offre') loadOffre();
   if (id==='adm-stats') { /* loaded by openStats */ }
   if (id==='adm-profile') checkStorageUsage();
-  if (id==='cl-messages'){ loadClientMessages(); }
+  if (id==='cl-messages'){
+    loadClientMessages();
+    const bar=document.getElementById('cl-input-bar');
+    if(bar) bar.style.display='flex';
+  }
+  if (id!=='cl-messages'){
+    const bar=document.getElementById('cl-input-bar');
+    if(bar) bar.style.display='none';
+  }
   if (id==='adm-messages'){ loadAdmConversations(); }
-  if (id==='adm-chat'){ /* loaded by openAdmChat */ }
+  if (id==='adm-chat'){
+    const bar=document.getElementById('adm-input-bar');
+    if(bar) bar.style.display='flex';
+  }
+  if (id!=='adm-chat'){
+    const bar=document.getElementById('adm-input-bar');
+    if(bar) bar.style.display='none';
+  }
   if (id==='settings'){ loadSettings(); }
 }
 
@@ -3097,6 +3114,9 @@ function renderMessages(messages, myId, box){
     box.appendChild(wrap);
   });
   box.scrollTop=box.scrollHeight;
+  // Also scroll the parent screen-scroll
+  const scroll=box.closest('.screen-scroll');
+  if(scroll) scroll.scrollTop=scroll.scrollHeight;
 }
 
 // ── CLIENT MESSAGES ──
