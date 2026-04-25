@@ -1356,8 +1356,8 @@ const ALL_BADGES = [
   { id:'cent',    emoji:'🏆', name:'Centenaire',      desc:'100 seances' },
 ];
 const postImgs = ['🌸','🌿','🌺','✨','🌻'];
-function dateKey(d){ return d.toISOString().split('T')[0]; }
-function formatDateFR(d){ return new Date(d).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}); }
+function dateKey(d){ const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0'); return y+'-'+m+'-'+day; }
+function formatDateFR(d){ return new Date(d+'T00:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}); }
 
 // ── AUTH ──
 function goToScreen(id){
