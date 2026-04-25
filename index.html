@@ -550,6 +550,11 @@ body{font-family:var(--sans);color:var(--ink)}
       <div class="pstat"><div class="pstat-val" id="p-badges">0</div><div class="pstat-lbl">Badges</div></div>
       <div class="pstat"><div class="pstat-val" id="p-bookings">0</div><div class="pstat-lbl">Resas</div></div>
     </div>
+    <div id="forfait-banner" style="display:none;margin:10px 16px 0;background:var(--lilac-light);border-radius:var(--radius-sm);padding:14px;border-left:3px solid var(--lilac)">
+      <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--lilac);margin-bottom:4px">Mon forfait</div>
+      <div style="font-family:var(--serif);font-size:16px;color:var(--ink)" id="forfait-label">—</div>
+      <div style="font-size:12px;color:var(--mid);margin-top:4px" id="forfait-remaining">—</div>
+    </div>
     <div class="menu-section">
       <div class="menu-item" onclick="showToast('Bientot disponible 🌸')"><div class="menu-item-icon">✨</div><div class="menu-item-text"><div class="menu-item-title">Passer Premium</div><div class="menu-item-sub">9,90 euros/mois</div></div><div class="menu-item-arrow">›</div></div>
       <div class="menu-item" onclick="logout()"><div class="menu-item-icon">🚪</div><div class="menu-item-text"><div class="menu-item-title">Se deconnecter</div></div><div class="menu-item-arrow">›</div></div>
@@ -729,6 +734,63 @@ body{font-family:var(--sans);color:var(--ink)}
   </div>
 </div>
 
+<div class="modal-backdrop" id="modal-adm-booking" onclick="if(event.target===this)closeModal('modal-adm-booking')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Detail de la reservation</div>
+    <div id="adm-booking-slot-info" style="background:var(--rose-light);padding:14px;border-radius:12px;margin-bottom:14px">
+      <div style="font-family:var(--serif);font-size:17px;color:var(--ink)" id="adm-bk-datetime">—</div>
+      <div style="font-size:12px;color:var(--mid);margin-top:2px" id="adm-bk-type">—</div>
+    </div>
+    <div style="background:var(--cream);border-radius:12px;padding:12px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Cliente</div>
+      <div style="font-size:14px;font-weight:500;color:var(--ink)" id="adm-bk-client">—</div>
+      <div style="font-size:12px;color:var(--mid);margin-top:2px" id="adm-bk-phone">—</div>
+      <div style="font-size:12px;color:var(--mid);margin-top:6px;font-style:italic" id="adm-bk-msg">—</div>
+    </div>
+    <div class="form-field">
+      <label class="form-label">Adresse (si domicile)</label>
+      <input type="text" class="form-input" id="adm-bk-adresse" placeholder="ex: 12 rue des Lilas, 75014 Paris">
+    </div>
+    <div class="form-field">
+      <label class="form-label">Tarif a appliquer (€)</label>
+      <div style="display:flex;align-items:center;gap:10px">
+        <input type="number" class="form-input" id="adm-bk-tarif" placeholder="ex: 70" style="max-width:100px">
+        <select class="form-select" id="adm-bk-tarif-type">
+          <option value="seance">A la seance</option>
+          <option value="forfait5">Forfait 5</option>
+          <option value="forfait10">Forfait 10</option>
+          <option value="abonnement">Abonnement</option>
+          <option value="offert">Offert</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:6px">
+      <button class="br-btn br-refuse" style="flex:1;padding:12px;border-radius:12px;font-size:13px;font-weight:500;border:1px solid rgba(216,80,80,.3);background:var(--white);color:var(--danger);cursor:pointer;font-family:var(--sans)" onclick="admCancelBooking()">Annuler</button>
+      <button class="br-btn br-accept" style="flex:1;padding:12px;border-radius:12px;font-size:13px;font-weight:500;border:none;background:var(--sage);color:var(--white);cursor:pointer;font-family:var(--sans)" onclick="admConfirmBooking()">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-client-booking" onclick="if(event.target===this)closeModal('modal-client-booking')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Ma reservation</div>
+    <div id="cl-booking-info" style="background:var(--rose-light);padding:14px;border-radius:12px;margin-bottom:14px">
+      <div style="font-family:var(--serif);font-size:17px;color:var(--ink)" id="cl-bk-datetime">—</div>
+      <div style="font-size:12px;color:var(--mid);margin-top:2px" id="cl-bk-type">—</div>
+    </div>
+    <div style="background:var(--cream);border-radius:12px;padding:12px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:12px;color:var(--mid)">Statut</span>
+        <span id="cl-bk-status" style="font-size:12px;font-weight:500;padding:4px 12px;border-radius:20px;background:var(--gold-light);color:#7a5820">En attente</span>
+      </div>
+      <div style="margin-top:10px;font-size:12px;color:var(--mid);font-style:italic" id="cl-bk-adresse"></div>
+    </div>
+    <button style="width:100%;padding:13px;background:var(--white);color:var(--danger);border:1px solid rgba(216,80,80,.3);border-radius:12px;font-size:13px;font-weight:500;font-family:var(--sans);cursor:pointer" onclick="clientCancelBooking()">Annuler ma reservation</button>
+  </div>
+</div>
+
 <div class="modal-backdrop" id="modal-post" onclick="if(event.target===this)closeModal('modal-post')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -745,6 +807,45 @@ body{font-family:var(--sans);color:var(--ink)}
       </div>
     </div>
     <button class="submit-btn" onclick="submitPost()">Publier</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-adm-client" onclick="if(event.target===this)closeModal('modal-adm-client')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div class="client-avatar" id="adm-cl-avatar" style="width:48px;height:48px;font-size:20px">?</div>
+      <div>
+        <div style="font-family:var(--serif);font-size:20px;color:var(--ink)" id="adm-cl-name">—</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px" id="adm-cl-phone">—</div>
+      </div>
+    </div>
+    <div style="background:var(--cream);border-radius:12px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--mid);font-style:italic;line-height:1.6" id="adm-cl-motivation">—</div>
+    <div style="background:var(--rose-light);border-radius:12px;padding:12px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Suivi</div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:13px;color:var(--mid)">Seances effectuees</span>
+        <span style="font-family:var(--serif);font-size:18px;color:var(--ink)" id="adm-cl-sessions">0</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px" id="adm-cl-forfait-row">
+        <span style="font-size:13px;color:var(--mid)">Forfait utilise</span>
+        <span style="font-family:var(--serif);font-size:18px;color:var(--ink)" id="adm-cl-forfait-used">0</span>
+      </div>
+    </div>
+    <div class="form-field">
+      <label class="form-label">Forfait attribue</label>
+      <select class="form-select" id="adm-cl-forfait-type">
+        <option value="seance">A la seance</option>
+        <option value="forfait5">Forfait 5 seances</option>
+        <option value="forfait10">Forfait 10 seances</option>
+        <option value="abonnement">Abonnement mensuel</option>
+      </select>
+    </div>
+    <div class="form-field" id="adm-cl-tarif-perso-row">
+      <label class="form-label">Tarif personnalise (€) <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted)">optionnel</span></label>
+      <input type="number" class="form-input" id="adm-cl-tarif-perso" placeholder="Laisser vide = tarif standard">
+    </div>
+    <button class="submit-btn" onclick="saveAdmClientForfait()">Sauvegarder</button>
   </div>
 </div>
 
@@ -910,8 +1011,25 @@ async function loadClientData(){
   showLoader();
   const p = STATE.profile;
   document.getElementById('hero-name-el').innerHTML = p.firstname + ',<br><em>contente de te voir !</em>';
-  document.getElementById('prof-name').textContent = p.firstname + ' ' + p.lastname;
-  document.getElementById('prof-avatar').textContent = p.firstname[0];
+  document.getElementById('prof-name').textContent = (p.firstname||'')+' '+(p.lastname||'');
+  document.getElementById('prof-avatar').textContent = (p.firstname||p.name||'?')[0];
+  // Forfait banner
+  const forfait=p.forfait_type||'seance';
+  const forfaitNames={'seance':'A la seance','forfait5':'Forfait 5 seances','forfait10':'Forfait 10 seances','abonnement':'Abonnement mensuel'};
+  const totalSeances={'forfait5':5,'forfait10':10};
+  const banner=document.getElementById('forfait-banner');
+  if (forfait!=='seance'){
+    banner.style.display='block';
+    document.getElementById('forfait-label').textContent=forfaitNames[forfait]||forfait;
+    const used=p.forfait_used||0;
+    const total=totalSeances[forfait];
+    if (total){
+      const left=Math.max(0,total-used);
+      document.getElementById('forfait-remaining').textContent=left+' seance'+(left>1?'s':'')+' restante'+(left>1?'s':'')+' sur '+total;
+    } else if (forfait==='abonnement'){
+      document.getElementById('forfait-remaining').textContent='Abonnement actif';
+    }
+  } else { banner.style.display='none'; }
   const { data: quotes } = await sb.from('quotes').select('*').eq('is_word_of_day',true).limit(1);
   if (quotes && quotes.length>0) document.getElementById('vword-text').textContent = quotes[0].text;
   await loadSessions();
@@ -1059,8 +1177,8 @@ async function renderSlotsFor(key){
     for (const s of slots){
       const myBooking=STATE.bookings.find(b=>b.slot_id===s.id);
       let btnHtml;
-      if (myBooking&&myBooking.status==='confirmed') btnHtml='<button class="slot-btn slot-btn-confirmed">Confirme</button>';
-      else if (myBooking) btnHtml='<button class="slot-btn slot-btn-pending">En attente</button>';
+      if (myBooking&&myBooking.status==='confirmed') btnHtml=`<button class="slot-btn slot-btn-confirmed" onclick="openClientBookingDetail('${myBooking.id}')">Confirme ›</button>`;
+      else if (myBooking) btnHtml=`<button class="slot-btn slot-btn-pending" onclick="openClientBookingDetail('${myBooking.id}')">En attente ›</button>`;
       else {
         const {data:existing}=await sb.from('bookings').select('id').eq('slot_id',s.id).limit(1);
         if (existing&&existing.length>0) btnHtml='<button class="slot-btn slot-btn-disabled">Reserve</button>';
@@ -1083,6 +1201,17 @@ function openBookModal(slotId,date,time,dur,type,note){
 }
 async function submitBooking(){
   const msg=document.getElementById('book-msg').value.trim();
+  // Check forfait
+  const p=STATE.profile;
+  const forfait=p.forfait_type||'seance';
+  const totalSeances={'forfait5':5,'forfait10':10};
+  const total=totalSeances[forfait];
+  if (total){
+    const used=p.forfait_used||0;
+    if (used>=total){
+      if (!confirm('Ton forfait est epuise ('+used+'/'+total+' seances). Cette seance sera facturee a la seance. Continuer ?')) return;
+    }
+  }
   const {error}=await sb.from('bookings').insert({slot_id:bookSlotId,user_id:STATE.user.id,status:'pending',message:msg||''});
   if (error){ showToast('Erreur : '+error.message); return; }
   closeModal('modal-book');
@@ -1202,17 +1331,34 @@ async function loadAdminData(){
         </div>
       </div>`).join('');
   }
+  // Load session counts per client
+  const userIds=(users||[]).map(u=>u.id);
+  let sessionCounts={};
+  if (userIds.length>0){
+    const {data:scs}=await sb.from('sessions').select('user_id').in('user_id',userIds);
+    (scs||[]).forEach(s=>{ sessionCounts[s.user_id]=(sessionCounts[s.user_id]||0)+1; });
+  }
   const cl=document.getElementById('clients-list');
   if (!users||users.length===0){ cl.innerHTML='<div style="margin:16px;color:var(--muted);font-size:13px">Aucune cliente pour le moment.</div>'; return; }
-  cl.innerHTML=users.map(u=>`
-    <div class="client-card">
+  cl.innerHTML=users.map(u=>{
+    const n=sessionCounts[u.id]||0;
+    const forfait=u.forfait_type?u.forfait_type:'seance';
+    const forfaitLabel={'seance':'A la seance','forfait5':'Forfait 5','forfait10':'Forfait 10','abonnement':'Abonnement'}[forfait]||forfait;
+    const used=u.forfait_used||0;
+    const total={'forfait5':5,'forfait10':10}[forfait]||null;
+    const forfaitInfo=total?`${used}/${total} seances`:(forfait==='abonnement'?'Abonnement actif':'');
+    const badge=total?`<span style="font-size:10px;padding:3px 8px;border-radius:20px;background:var(--lilac-light);color:#6b3fa0;font-weight:500">${forfaitLabel} · ${forfaitInfo}</span>`
+      :(forfait==='abonnement'?`<span style="font-size:10px;padding:3px 8px;border-radius:20px;background:var(--sage-light);color:#3a6e40;font-weight:500">Abonnement</span>`
+      :`<span style="font-size:10px;padding:3px 8px;border-radius:20px;background:var(--cream);color:var(--muted);font-weight:500">A la seance</span>`);
+    return `<div class="client-card" onclick="openAdmClientDetail('${u.id}')" style="cursor:pointer">
       <div class="client-avatar">${u.firstname?u.firstname[0]:u.name[0]}</div>
       <div class="client-info">
         <div class="client-name">${u.firstname||''} ${u.lastname||''}</div>
-        <div class="client-meta">${u.motivation||'Cliente'}</div>
+        <div style="margin-top:4px">${badge}</div>
       </div>
-      <span class="client-status cs-active">Active</span>
-    </div>`).join('');
+      <span style="color:var(--muted);font-size:16px">›</span>
+    </div>`;
+  }).join('');
 }
 
 async function acceptBooking(id, name){
@@ -1260,8 +1406,87 @@ async function renderAdmSlotsFor(key){
   const {data:slots}=await sb.from('slots').select('*').eq('date',key).order('time');
   let html=`<div style="padding:12px 16px 4px;font-family:var(--serif);font-size:15px;color:var(--mid);font-style:italic">${formatDateFR(key)}</div>`;
   if (!slots||slots.length===0){ html+='<div style="padding:1rem 16px;color:var(--muted);font-size:13px">Aucun creneau.</div>'; }
-  else { slots.forEach(s=>{ html+=`<div class="admin-slot-item"><div class="asi-time">${s.time}</div><div class="asi-info"><div class="asi-title">${s.type} - ${s.duration} min</div><div class="asi-status">${s.note||'Disponible'}</div></div><button class="asi-del" onclick="delAdmSlot('${s.id}')">✕</button></div>`; }); }
+  else {
+    for (const s of slots){
+      const {data:bk}=await sb.from('bookings').select('*, users(firstname,lastname,phone)').eq('slot_id',s.id).limit(1);
+      const booking=bk&&bk.length>0?bk[0]:null;
+      let statusBadge='';
+      let clickAction='';
+      if (booking){
+        const color=booking.status==='confirmed'?'var(--sage-light)':'var(--gold-light)';
+        const textColor=booking.status==='confirmed'?'#3a6e40':'#7a5820';
+        const label=booking.status==='confirmed'?'Confirme':'En attente';
+        statusBadge=`<span style="font-size:10px;padding:3px 9px;border-radius:20px;background:${color};color:${textColor};font-weight:500;cursor:pointer" onclick="openAdmBookingDetail('${s.id}','${booking.id}')">${label} — voir</span>`;
+      } else {
+        statusBadge=`<span style="font-size:10px;padding:3px 9px;border-radius:20px;background:var(--sage-light);color:#3a6e40;font-weight:500">Libre</span>`;
+        clickAction=`onclick="delAdmSlot('${s.id}')"`;
+      }
+      html+=`<div class="admin-slot-item"><div class="asi-time">${s.time}</div><div class="asi-info"><div class="asi-title">${s.type} - ${s.duration} min</div><div style="margin-top:4px">${statusBadge}</div></div>${!booking?`<button class="asi-del" onclick="delAdmSlot('${s.id}')">✕</button>`:''}</div>`;
+    }
+  }
   container.innerHTML=html;
+}
+
+let admCurrentBookingId=null, admCurrentSlotId=null;
+async function openAdmBookingDetail(slotId, bookingId){
+  admCurrentBookingId=bookingId;
+  admCurrentSlotId=slotId;
+  const {data:bk}=await sb.from('bookings').select('*, users(firstname,lastname,phone,forfait_type,forfait_used,tarif_perso), slots(date,time,type,duration,note)').eq('id',bookingId).single();
+  if (!bk) return;
+  document.getElementById('adm-bk-datetime').textContent=formatDateFR(bk.slots.date)+' - '+bk.slots.time;
+  document.getElementById('adm-bk-type').textContent=bk.slots.type+' - '+bk.slots.duration+' min'+(bk.slots.note?' - '+bk.slots.note:'');
+  document.getElementById('adm-bk-client').textContent=(bk.users.firstname||'')+' '+(bk.users.lastname||'');
+  document.getElementById('adm-bk-phone').textContent=bk.users.phone||'';
+  document.getElementById('adm-bk-msg').textContent=bk.message?'"'+bk.message+'"':'Pas de message';
+  document.getElementById('adm-bk-adresse').value=bk.adresse||'';
+  // Pre-fill tarif from offre or client tarif perso
+  let tarif=bk.tarif||'';
+  if (!tarif){
+    if (bk.users.tarif_perso) tarif=bk.users.tarif_perso;
+    else {
+      const tarifs=JSON.parse(localStorage.getItem('pbv_tarifs')||'{}');
+      const type=bk.slots.type;
+      tarif=tarifs[type]||'';
+    }
+  }
+  document.getElementById('adm-bk-tarif').value=tarif;
+  // Show forfait info
+  const forfait=bk.users.forfait_type||'seance';
+  const used=bk.users.forfait_used||0;
+  const totalSeances={'forfait5':5,'forfait10':10};
+  const total=totalSeances[forfait];
+  const forfaitNames={'seance':'A la seance','forfait5':'Forfait 5','forfait10':'Forfait 10','abonnement':'Abonnement'};
+  const forfaitInfo=total?forfaitNames[forfait]+' · '+used+'/'+total+' utilisees':(forfait==='abonnement'?'Abonnement actif':'A la seance');
+  document.getElementById('adm-bk-type').textContent+=(' · '+forfaitInfo);
+  document.getElementById('modal-adm-booking').classList.add('open');
+}
+async function admConfirmBooking(){
+  const adresse=document.getElementById('adm-bk-adresse').value.trim();
+  const tarif=document.getElementById('adm-bk-tarif').value;
+  const tarif_type=document.getElementById('adm-bk-tarif-type').value;
+  // Get booking to find client
+  const {data:bk}=await sb.from('bookings').select('*, users(id,forfait_type,forfait_used,tarif_perso)').eq('id',admCurrentBookingId).single();
+  await sb.from('bookings').update({status:'confirmed',adresse,tarif:tarif?parseFloat(tarif):null,tarif_type}).eq('id',admCurrentBookingId);
+  // Increment forfait_used if client has a forfait
+  if (bk&&bk.users){
+    const u=bk.users;
+    const forfait=u.forfait_type||'seance';
+    const hasForfait=forfait==='forfait5'||forfait==='forfait10';
+    if (hasForfait){
+      await sb.from('users').update({forfait_used:(u.forfait_used||0)+1}).eq('id',u.id);
+    }
+  }
+  closeModal('modal-adm-booking');
+  renderAdmSlotsFor(admSelectedDate);
+  loadAdminData();
+  showToast('Reservation confirmee !');
+}
+async function admCancelBooking(){
+  await sb.from('bookings').delete().eq('id',admCurrentBookingId);
+  closeModal('modal-adm-booking');
+  renderAdmSlotsFor(admSelectedDate);
+  loadAdminData();
+  showToast('Reservation annulee');
 }
 function openAdmSlotModal(){
   if (!admSelectedDate) return;
@@ -1356,6 +1581,68 @@ function savePremium(){
   tarifs.premium=document.getElementById('t-premium').value;
   localStorage.setItem('pbv_tarifs',JSON.stringify(tarifs));
   showToast('Premium sauvegarde !');
+}
+
+// ── ADMIN CLIENT DETAIL ──
+let admCurrentClientId=null;
+async function openAdmClientDetail(userId){
+  admCurrentClientId=userId;
+  const {data:u}=await sb.from('users').select('*').eq('id',userId).single();
+  if (!u) return;
+  document.getElementById('adm-cl-avatar').textContent=(u.firstname||u.name||'?')[0];
+  document.getElementById('adm-cl-name').textContent=(u.firstname||'')+' '+(u.lastname||'');
+  document.getElementById('adm-cl-phone').textContent=u.phone||u.email||'';
+  document.getElementById('adm-cl-motivation').textContent=u.motivation||'Pas de motivation renseignee';
+  // Count sessions with Violette (non-solo)
+  const {data:scs}=await sb.from('sessions').select('id').eq('user_id',userId).neq('type','solo');
+  document.getElementById('adm-cl-sessions').textContent=(scs||[]).length;
+  document.getElementById('adm-cl-forfait-used').textContent=u.forfait_used||0;
+  document.getElementById('adm-cl-forfait-type').value=u.forfait_type||'seance';
+  document.getElementById('adm-cl-tarif-perso').value=u.tarif_perso||'';
+  const hasForfait=(u.forfait_type&&u.forfait_type!=='seance'&&u.forfait_type!=='abonnement');
+  document.getElementById('adm-cl-forfait-row').style.display=hasForfait?'flex':'none';
+  document.getElementById('modal-adm-client').classList.add('open');
+}
+async function saveAdmClientForfait(){
+  const forfait_type=document.getElementById('adm-cl-forfait-type').value;
+  const tarif_perso=document.getElementById('adm-cl-tarif-perso').value;
+  await sb.from('users').update({
+    forfait_type,
+    tarif_perso: tarif_perso?parseFloat(tarif_perso):null,
+    forfait_used: 0
+  }).eq('id',admCurrentClientId);
+  closeModal('modal-adm-client');
+  loadAdminData();
+  showToast('Forfait mis a jour !');
+}
+
+// ── CLIENT BOOKING DETAIL ──
+let clientCurrentBookingId=null;
+async function openClientBookingDetail(bookingId){
+  clientCurrentBookingId=bookingId;
+  const {data:bk}=await sb.from('bookings').select('*, slots(date,time,type,duration,note)').eq('id',bookingId).single();
+  if (!bk) return;
+  document.getElementById('cl-bk-datetime').textContent=formatDateFR(bk.slots.date)+' - '+bk.slots.time;
+  document.getElementById('cl-bk-type').textContent=bk.slots.type+' - '+bk.slots.duration+' min';
+  const statusEl=document.getElementById('cl-bk-status');
+  if (bk.status==='confirmed'){
+    statusEl.textContent='Confirme';
+    statusEl.style.background='var(--sage-light)';
+    statusEl.style.color='#3a6e40';
+  } else {
+    statusEl.textContent='En attente de confirmation';
+    statusEl.style.background='var(--gold-light)';
+    statusEl.style.color='#7a5820';
+  }
+  document.getElementById('cl-bk-adresse').textContent=bk.adresse?'Adresse : '+bk.adresse:'';
+  document.getElementById('modal-client-booking').classList.add('open');
+}
+async function clientCancelBooking(){
+  await sb.from('bookings').delete().eq('id',clientCurrentBookingId);
+  closeModal('modal-client-booking');
+  await loadBookings();
+  await renderSlotsFor(selectedDate);
+  showToast('Reservation annulee');
 }
 
 // ── HELPERS ──
