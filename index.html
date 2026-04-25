@@ -240,8 +240,8 @@ html,body{height:100%;overflow:hidden;background:var(--rose-light)}
 body{font-family:var(--sans);color:var(--ink)}
 #app{height:100dvh;display:flex;flex-direction:column;max-width:430px;margin:0 auto;position:relative;background:var(--cream);overflow:hidden}
 #screens{flex:1;overflow:hidden;position:relative}
-.screen{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;display:none;background:var(--cream)}
-.screen.active{display:block}
+.screen{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;display:none;background:var(--cream);pointer-events:none}
+.screen.active{pointer-events:auto;display:block}
 .screen-scroll{padding:0 0 90px}
 
 #loading{position:fixed;inset:0;background:var(--rose-light);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:16px}
