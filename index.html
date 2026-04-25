@@ -477,7 +477,7 @@ body{font-family:var(--sans);color:var(--ink)}
       <div class="home-hero-inner">
         <div class="hello-text" id="hero-greeting">Bonjour 🌸</div>
         <div class="hero-name" id="hero-name-el">—</div>
-        <div style="font-family:var(--serif);font-size:13px;font-style:italic;color:rgba(255,255,255,.8);margin-top:4px;line-height:1.5" id="vword-text">—</div>
+        <div style="font-family:var(--serif);font-size:15px;font-style:italic;color:var(--ink);margin-top:8px;line-height:1.6;background:rgba(255,255,255,.7);padding:10px 14px;border-radius:10px;backdrop-filter:blur(4px)" id="vword-text">—</div>
       </div>
     </div>
 
@@ -631,7 +631,7 @@ body{font-family:var(--sans);color:var(--ink)}
         <div style="flex:1">
           <div class="profile-name" id="prof-name">—</div>
           <div class="profile-since">Pilates by Violette 🌸</div>
-          <div class="profile-type">🌸 Cliente</div>
+
         </div>
         <button onclick="goTo('settings',document.querySelector('#nav-client .nav-btn.active'))" style="background:none;border:none;cursor:pointer;font-size:22px;padding:4px;color:var(--mid);align-self:flex-start">⚙️</button>
       </div>
@@ -1524,7 +1524,7 @@ async function loadClientData(){
   const p = STATE.profile;
   // Dynamic greeting
   const h=new Date().getHours();
-  const greeting=h<12?'Bonjour 🌸':h<18?'Bon après-midi 🌿':'Bonsoir 🌙';
+  const greeting=(h>=3&&h<18)?'Bonjour 🌸':'Bonsoir 🌙';
   document.getElementById('hero-greeting').textContent=greeting;
   document.getElementById('hero-name-el').innerHTML = p.firstname + ',<br><em>contente de te voir !</em>';
   document.getElementById('prof-name').textContent = (p.firstname||'')+' '+(p.lastname||'');
@@ -1653,7 +1653,9 @@ async function loadHomeScreen(){
   const {data:lastSess}=await sb.from('sessions').select('*').eq('user_id',STATE.user.id).order('date',{ascending:false}).limit(1);
   if(lastSess&&lastSess.length>0){
     const s=lastSess[0];
-    const daysDiff=Math.floor((new Date()-new Date(s.date))/(1000*60*60*24));
+    const today2=new Date(); today2.setHours(0,0,0,0);
+    const sessDate=new Date(s.date+'T00:00:00');
+    const daysDiff=Math.max(0,Math.floor((today2-sessDate)/(1000*60*60*24)));
     document.getElementById('home-last-session').style.display='block';
     document.getElementById('home-last-content').innerHTML=`
       <div style="display:flex;align-items:center;gap:10px">
