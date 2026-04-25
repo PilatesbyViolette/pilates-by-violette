@@ -1583,16 +1583,32 @@ async function admConfirmBooking(){
   const adresse=document.getElementById('adm-bk-adresse').value.trim();
   const tarif=document.getElementById('adm-bk-tarif').value;
   const tarif_type=document.getElementById('adm-bk-tarif-type').value;
-  // Get booking to find client
-  const {data:bk}=await sb.from('bookings').select('*, users(id,forfait_type,forfait_used,tarif_perso)').eq('id',admCurrentBookingId).single();
+  // Get booking with slot and client info
+  const {data:bk}=await sb.from('bookings').select('*, users(id,forfait_type,forfait_used,tarif_perso), slots(date,time,duration,type)').eq('id',admCurrentBookingId).single();
   await sb.from('bookings').update({status:'confirmed',adresse,tarif:tarif?parseFloat(tarif):null,tarif_type}).eq('id',admCurrentBookingId);
-  // Increment forfait_used if client has a forfait
-  if (bk&&bk.users){
+  if (bk&&bk.users&&bk.slots){
     const u=bk.users;
+    const s=bk.slots;
+    // Create session automatically
+    await sb.from('sessions').insert({
+      user_id:u.id,
+      date:s.date,
+      type:s.type,
+      duration:s.duration,
+      tarif:tarif?parseFloat(tarif):null,
+      note:''
+    });
+    // Increment forfait_used if needed
     const forfait=u.forfait_type||'seance';
-    const hasForfait=forfait==='forfait5'||forfait==='forfait10';
-    if (hasForfait){
+    if(forfait==='forfait5'||forfait==='forfait10'){
       await sb.from('users').update({forfait_used:(u.forfait_used||0)+1}).eq('id',u.id);
+    }
+    // Save adresse to client profile if domicile
+    if(adresse&&s.type==='domicile'){
+      const {data:ud}=await sb.from('users').select('adresses').eq('id',u.id).single();
+      const adresses=ud?.adresses||[];
+      const exists=adresses.find(a=>a.value===adresse);
+      if(!exists){ adresses.push({label:'Domicile',value:adresse}); await sb.from('users').update({adresses}).eq('id',u.id); }
     }
   }
   closeModal('modal-adm-booking');
