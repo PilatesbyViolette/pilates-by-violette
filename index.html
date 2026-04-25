@@ -1906,18 +1906,20 @@ function renderPost(p){
     ${imgHtml}
     <div class="post-caption">${p.caption}</div>
     <div class="post-actions">
-      <button class="post-action" onclick="toggleLike('${p.id}',this)">🤍 J'aime</button>
-      <span class="post-like-count" id="likes-${p.id}">${p.likes||0} j'aimes</span>
+      <button class="post-action" onclick="toggleLike('${p.id}',this)">🤍 J’aime</button>
+      <span class="post-like-count" id="likes-${p.id}">${p.likes||0} j’aimes</span>
     </div>
   </div>`;
 }
 
 async function toggleLike(postId, btn){
+  const liked=btn.dataset.liked==='1';
   const {data:post}=await sb.from('posts').select('likes').eq('id',postId).single();
-  const newLikes=(post?.likes||0)+1;
+  const newLikes=Math.max(0,(post?.likes||0)+(liked?-1:1));
   await sb.from('posts').update({likes:newLikes}).eq('id',postId);
-  document.getElementById('likes-'+postId).textContent=newLikes+" j'aimes";
-  btn.textContent="❤️ Jaime";
+  document.getElementById('likes-'+postId).textContent=newLikes+" j\u2019aimes";
+  btn.dataset.liked=liked?'0':'1';
+  btn.textContent=liked?"\u{1F90D} J\u2019aime":"\u2764\uFE0F J\u2019aime";
 }
 
 async function deletePost(postId, imageUrl){
