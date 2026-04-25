@@ -9,183 +9,7 @@
 <meta name="theme-color" content="#fce8f0">
 <title>Pilates by Violette</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-// ── MESSAGERIE ──
-let admChatClientId=null, admChatClientName='', msgPollingInterval=null;
-
-function autoResizeTextarea(el){
-  el.style.height='auto';
-  el.style.height=Math.min(el.scrollHeight,100)+'px';
-}
-
-function formatMsgTime(ts){
-  const d=new Date(ts);
-  const now=new Date();
-  const isToday=d.toDateString()===now.toDateString();
-  return isToday?d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-}
-
-function renderMessages(messages, myId, box){
-  box.innerHTML='';
-  messages.forEach(m=>{
-    const isSystem=m.sender_id===null||m.sender_id==='system';
-    const isMine=m.sender_id===myId;
-    const wrap=document.createElement('div');
-    wrap.style.display='flex';
-    wrap.style.flexDirection='column';
-    wrap.style.alignItems=isSystem?'center':isMine?'flex-end':'flex-start';
-    const bubble=document.createElement('div');
-    bubble.className='msg-bubble '+(isSystem?'system':isMine?'sent':'received');
-    bubble.textContent=m.content;
-    wrap.appendChild(bubble);
-    if(!isSystem){
-      const time=document.createElement('div');
-      time.className='msg-time '+(isMine?'':'left');
-      time.textContent=formatMsgTime(m.created_at);
-      wrap.appendChild(time);
-    }
-    box.appendChild(wrap);
-  });
-  box.scrollTop=box.scrollHeight;
-}
-
-// ── CLIENT MESSAGES ──
-async function loadClientMessages(){
-  if(!STATE.user) return;
-  const violetteId=await getVioletteId();
-  if(!violetteId) return;
-  const {data}=await sb.from('messages')
-    .select('*')
-    .or(`and(sender_id.eq.${STATE.user.id},receiver_id.eq.${violetteId}),and(sender_id.eq.${violetteId},receiver_id.eq.${STATE.user.id}),sender_id.is.null`)
-    .order('created_at',{ascending:true});
-  renderMessages(data||[], STATE.user.id, document.getElementById('cl-chat-box'));
-  // Mark as read
-  await sb.from('messages').update({read:true}).eq('receiver_id',STATE.user.id).eq('read',false);
-  updateClientMsgBadge();
-}
-
-async function sendClientMessage(){
-  const input=document.getElementById('cl-msg-input');
-  const content=input.value.trim();
-  if(!content) return;
-  const violetteId=await getVioletteId();
-  if(!violetteId) return;
-  input.value=''; input.style.height='auto';
-  await sb.from('messages').insert({sender_id:STATE.user.id,receiver_id:violetteId,content});
-  loadClientMessages();
-  updateAdmMsgBadge();
-}
-
-async function updateClientMsgBadge(){
-  if(!STATE.user) return;
-  const violetteId=await getVioletteId();
-  if(!violetteId) return;
-  const {count}=await sb.from('messages').select('id',{count:'exact',head:true}).eq('receiver_id',STATE.user.id).eq('read',false);
-  const badge=document.getElementById('cl-msg-badge');
-  if(badge) badge.style.display=count>0?'block':'none';
-}
-
-// ── ADMIN MESSAGES ──
-async function loadAdmConversations(){
-  const {data:users}=await sb.from('users').select('id,firstname,lastname').neq('role','admin');
-  if(!users||users.length===0){ document.getElementById('adm-conv-list').innerHTML='<div style="font-size:13px;color:var(--muted);text-align:center;padding:2rem">Aucune cliente</div>'; return; }
-  const violetteId=await getVioletteId();
-  // Get last message + unread count per user
-  const list=document.getElementById('adm-conv-list');
-  const rows=await Promise.all(users.map(async u=>{
-    const {data:last}=await sb.from('messages').select('content,created_at,sender_id').or(`and(sender_id.eq.${u.id},receiver_id.eq.${violetteId}),and(sender_id.eq.${violetteId},receiver_id.eq.${u.id})`).order('created_at',{ascending:false}).limit(1);
-    const {count:unread}=await sb.from('messages').select('id',{count:'exact',head:true}).eq('sender_id',u.id).eq('receiver_id',violetteId).eq('read',false);
-    return {user:u, last:last?.[0]||null, unread:unread||0};
-  }));
-  // Sort: unread first, then by last message date
-  rows.sort((a,b)=>{
-    if(a.unread&&!b.unread) return -1;
-    if(!a.unread&&b.unread) return 1;
-    if(!a.last&&!b.last) return 0;
-    if(!a.last) return 1;
-    if(!b.last) return -1;
-    return new Date(b.last.created_at)-new Date(a.last.created_at);
-  });
-  list.innerHTML=rows.map(r=>{
-    const u=r.user;
-    const initial=(u.firstname||'?')[0].toUpperCase();
-    const lastText=r.last?r.last.content:'Pas encore de message';
-    const lastTime=r.last?formatMsgTime(r.last.created_at):'';
-    return `<div class="conv-item" onclick="openAdmChat('${u.id}','${(u.firstname||'')} ${(u.lastname||'')}')">
-      <div class="client-avatar" style="width:44px;height:44px;font-size:17px;flex-shrink:0">${initial}</div>
-      <div style="flex:1;min-width:0">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:4px">
-          <div style="font-size:13px;font-weight:${r.unread?'600':'400'};color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.firstname||''} ${u.lastname||''}</div>
-          <div style="font-size:10px;color:var(--muted);flex-shrink:0">${lastTime}</div>
-        </div>
-        <div style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px">${lastText}</div>
-      </div>
-      ${r.unread?`<div class="conv-unread-dot"></div>`:''}
-    </div>`;
-  }).join('');
-  updateAdmMsgBadge(rows.reduce((s,r)=>s+r.unread,0));
-}
-
-async function openAdmChat(clientId, clientName){
-  admChatClientId=clientId;
-  admChatClientName=clientName.trim();
-  document.getElementById('adm-chat-name').textContent=admChatClientName;
-  document.getElementById('adm-chat-avatar').textContent=admChatClientName[0]?.toUpperCase()||'?';
-  goTo('adm-chat',null);
-  await loadAdmChatMessages();
-  // Mark received messages as read
-  const violetteId=await getVioletteId();
-  await sb.from('messages').update({read:true}).eq('sender_id',clientId).eq('receiver_id',violetteId).eq('read',false);
-  updateAdmMsgBadge();
-}
-
-async function loadAdmChatMessages(){
-  const violetteId=await getVioletteId();
-  const {data}=await sb.from('messages')
-    .select('*')
-    .or(`and(sender_id.eq.${admChatClientId},receiver_id.eq.${violetteId}),and(sender_id.eq.${violetteId},receiver_id.eq.${admChatClientId}),sender_id.is.null`)
-    .order('created_at',{ascending:true});
-  renderMessages(data||[], violetteId, document.getElementById('adm-chat-box'));
-}
-
-async function sendAdminMessage(){
-  const input=document.getElementById('adm-msg-input');
-  const content=input.value.trim();
-  if(!content||!admChatClientId) return;
-  const violetteId=await getVioletteId();
-  input.value=''; input.style.height='auto';
-  await sb.from('messages').insert({sender_id:violetteId,receiver_id:admChatClientId,content});
-  loadAdmChatMessages();
-}
-
-function updateAdmMsgBadge(count){
-  const badge=document.getElementById('adm-msg-badge');
-  if(!badge) return;
-  if(count===undefined){
-    getVioletteId().then(vid=>{
-      sb.from('messages').select('id',{count:'exact',head:true}).eq('receiver_id',vid).eq('read',false).then(({count:c})=>{
-        badge.style.display=c>0?'inline-block':'none';
-      });
-    });
-  } else {
-    badge.style.display=count>0?'inline-block':'none';
-  }
-}
-
-let _violetteIdCache=null;
-async function getVioletteId(){
-  if(_violetteIdCache) return _violetteIdCache;
-  const {data}=await sb.from('users').select('id').eq('role','admin').single();
-  _violetteIdCache=data?.id||null;
-  return _violetteIdCache;
-}
-
-// Auto-send system message on booking events
-async function sendSystemMessage(clientId, content){
-  await sb.from('messages').insert({sender_id:null,receiver_id:clientId,content,read:false});
-}
-
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--rose:#f4a0bc;--rose-light:#fce8f0;--rose-mid:#e8789a;--rose-deep:#c45878;--cream:#fdf8f3;--sage:#8aab8e;--sage-light:#d4e8d4;--gold:#c8a870;--gold-light:#f0e4c8;--lilac:#c8a8d8;--lilac-light:#f0e8f8;--peach:#f8c8a0;--peach-light:#fef0e4;--ink:#2a2420;--mid:#6b5e58;--muted:#a89890;--white:#ffffff;--danger:#d85050;--serif:'Cormorant Garamond',Georgia,serif;--sans:'DM Sans',sans-serif;--radius:20px;--radius-sm:12px}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -2679,6 +2503,182 @@ async function loadStats(){
   const projection=Math.round(caPerDay*30);
   document.getElementById('stats-projection').textContent=projection+'€';
   document.getElementById('stats-projection-sub').textContent=`Base sur ${nbDays}j de donnees (${Math.round(caPerDay)}€/jour)`;
+}
+
+
+// ── MESSAGERIE ──
+let admChatClientId=null, admChatClientName='', msgPollingInterval=null;
+
+function autoResizeTextarea(el){
+  el.style.height='auto';
+  el.style.height=Math.min(el.scrollHeight,100)+'px';
+}
+
+function formatMsgTime(ts){
+  const d=new Date(ts);
+  const now=new Date();
+  const isToday=d.toDateString()===now.toDateString();
+  return isToday?d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+}
+
+function renderMessages(messages, myId, box){
+  box.innerHTML='';
+  messages.forEach(m=>{
+    const isSystem=m.sender_id===null||m.sender_id==='system';
+    const isMine=m.sender_id===myId;
+    const wrap=document.createElement('div');
+    wrap.style.display='flex';
+    wrap.style.flexDirection='column';
+    wrap.style.alignItems=isSystem?'center':isMine?'flex-end':'flex-start';
+    const bubble=document.createElement('div');
+    bubble.className='msg-bubble '+(isSystem?'system':isMine?'sent':'received');
+    bubble.textContent=m.content;
+    wrap.appendChild(bubble);
+    if(!isSystem){
+      const time=document.createElement('div');
+      time.className='msg-time '+(isMine?'':'left');
+      time.textContent=formatMsgTime(m.created_at);
+      wrap.appendChild(time);
+    }
+    box.appendChild(wrap);
+  });
+  box.scrollTop=box.scrollHeight;
+}
+
+// ── CLIENT MESSAGES ──
+async function loadClientMessages(){
+  if(!STATE.user) return;
+  const violetteId=await getVioletteId();
+  if(!violetteId) return;
+  const {data}=await sb.from('messages')
+    .select('*')
+    .or(`and(sender_id.eq.${STATE.user.id},receiver_id.eq.${violetteId}),and(sender_id.eq.${violetteId},receiver_id.eq.${STATE.user.id}),sender_id.is.null`)
+    .order('created_at',{ascending:true});
+  renderMessages(data||[], STATE.user.id, document.getElementById('cl-chat-box'));
+  // Mark as read
+  await sb.from('messages').update({read:true}).eq('receiver_id',STATE.user.id).eq('read',false);
+  updateClientMsgBadge();
+}
+
+async function sendClientMessage(){
+  const input=document.getElementById('cl-msg-input');
+  const content=input.value.trim();
+  if(!content) return;
+  const violetteId=await getVioletteId();
+  if(!violetteId) return;
+  input.value=''; input.style.height='auto';
+  await sb.from('messages').insert({sender_id:STATE.user.id,receiver_id:violetteId,content});
+  loadClientMessages();
+  updateAdmMsgBadge();
+}
+
+async function updateClientMsgBadge(){
+  if(!STATE.user) return;
+  const violetteId=await getVioletteId();
+  if(!violetteId) return;
+  const {count}=await sb.from('messages').select('id',{count:'exact',head:true}).eq('receiver_id',STATE.user.id).eq('read',false);
+  const badge=document.getElementById('cl-msg-badge');
+  if(badge) badge.style.display=count>0?'block':'none';
+}
+
+// ── ADMIN MESSAGES ──
+async function loadAdmConversations(){
+  const {data:users}=await sb.from('users').select('id,firstname,lastname').neq('role','admin');
+  if(!users||users.length===0){ document.getElementById('adm-conv-list').innerHTML='<div style="font-size:13px;color:var(--muted);text-align:center;padding:2rem">Aucune cliente</div>'; return; }
+  const violetteId=await getVioletteId();
+  // Get last message + unread count per user
+  const list=document.getElementById('adm-conv-list');
+  const rows=await Promise.all(users.map(async u=>{
+    const {data:last}=await sb.from('messages').select('content,created_at,sender_id').or(`and(sender_id.eq.${u.id},receiver_id.eq.${violetteId}),and(sender_id.eq.${violetteId},receiver_id.eq.${u.id})`).order('created_at',{ascending:false}).limit(1);
+    const {count:unread}=await sb.from('messages').select('id',{count:'exact',head:true}).eq('sender_id',u.id).eq('receiver_id',violetteId).eq('read',false);
+    return {user:u, last:last?.[0]||null, unread:unread||0};
+  }));
+  // Sort: unread first, then by last message date
+  rows.sort((a,b)=>{
+    if(a.unread&&!b.unread) return -1;
+    if(!a.unread&&b.unread) return 1;
+    if(!a.last&&!b.last) return 0;
+    if(!a.last) return 1;
+    if(!b.last) return -1;
+    return new Date(b.last.created_at)-new Date(a.last.created_at);
+  });
+  list.innerHTML=rows.map(r=>{
+    const u=r.user;
+    const initial=(u.firstname||'?')[0].toUpperCase();
+    const lastText=r.last?r.last.content:'Pas encore de message';
+    const lastTime=r.last?formatMsgTime(r.last.created_at):'';
+    return `<div class="conv-item" onclick="openAdmChat('${u.id}','${(u.firstname||'')} ${(u.lastname||'')}')">
+      <div class="client-avatar" style="width:44px;height:44px;font-size:17px;flex-shrink:0">${initial}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:4px">
+          <div style="font-size:13px;font-weight:${r.unread?'600':'400'};color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.firstname||''} ${u.lastname||''}</div>
+          <div style="font-size:10px;color:var(--muted);flex-shrink:0">${lastTime}</div>
+        </div>
+        <div style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px">${lastText}</div>
+      </div>
+      ${r.unread?`<div class="conv-unread-dot"></div>`:''}
+    </div>`;
+  }).join('');
+  updateAdmMsgBadge(rows.reduce((s,r)=>s+r.unread,0));
+}
+
+async function openAdmChat(clientId, clientName){
+  admChatClientId=clientId;
+  admChatClientName=clientName.trim();
+  document.getElementById('adm-chat-name').textContent=admChatClientName;
+  document.getElementById('adm-chat-avatar').textContent=admChatClientName[0]?.toUpperCase()||'?';
+  goTo('adm-chat',null);
+  await loadAdmChatMessages();
+  // Mark received messages as read
+  const violetteId=await getVioletteId();
+  await sb.from('messages').update({read:true}).eq('sender_id',clientId).eq('receiver_id',violetteId).eq('read',false);
+  updateAdmMsgBadge();
+}
+
+async function loadAdmChatMessages(){
+  const violetteId=await getVioletteId();
+  const {data}=await sb.from('messages')
+    .select('*')
+    .or(`and(sender_id.eq.${admChatClientId},receiver_id.eq.${violetteId}),and(sender_id.eq.${violetteId},receiver_id.eq.${admChatClientId}),sender_id.is.null`)
+    .order('created_at',{ascending:true});
+  renderMessages(data||[], violetteId, document.getElementById('adm-chat-box'));
+}
+
+async function sendAdminMessage(){
+  const input=document.getElementById('adm-msg-input');
+  const content=input.value.trim();
+  if(!content||!admChatClientId) return;
+  const violetteId=await getVioletteId();
+  input.value=''; input.style.height='auto';
+  await sb.from('messages').insert({sender_id:violetteId,receiver_id:admChatClientId,content});
+  loadAdmChatMessages();
+}
+
+function updateAdmMsgBadge(count){
+  const badge=document.getElementById('adm-msg-badge');
+  if(!badge) return;
+  if(count===undefined){
+    getVioletteId().then(vid=>{
+      sb.from('messages').select('id',{count:'exact',head:true}).eq('receiver_id',vid).eq('read',false).then(({count:c})=>{
+        badge.style.display=c>0?'inline-block':'none';
+      });
+    });
+  } else {
+    badge.style.display=count>0?'inline-block':'none';
+  }
+}
+
+let _violetteIdCache=null;
+async function getVioletteId(){
+  if(_violetteIdCache) return _violetteIdCache;
+  const {data}=await sb.from('users').select('id').eq('role','admin').single();
+  _violetteIdCache=data?.id||null;
+  return _violetteIdCache;
+}
+
+// Auto-send system message on booking events
+async function sendSystemMessage(clientId, content){
+  await sb.from('messages').insert({sender_id:null,receiver_id:clientId,content,read:false});
 }
 
 </script>
