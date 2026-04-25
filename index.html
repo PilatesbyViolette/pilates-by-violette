@@ -652,6 +652,126 @@ body{font-family:var(--sans);color:var(--ink)}
   </div>
 </div>
 
+
+<!-- FICHE CLIENTE COMPLETE -->
+<div class="screen" id="screen-adm-client">
+  <div class="screen-scroll">
+    <div class="admin-top" style="padding-bottom:16px">
+      <div class="admin-top-inner">
+        <button onclick="goTo('adm-home',document.querySelector('#nav-admin .nav-btn'))" style="background:none;border:none;color:var(--rose-deep);font-size:13px;cursor:pointer;padding:0;font-family:var(--sans);display:flex;align-items:center;gap:4px;margin-bottom:8px">‹ Retour</button>
+        <div style="display:flex;align-items:center;gap:14px">
+          <div class="client-avatar" id="fc-avatar" style="width:56px;height:56px;font-size:22px;border:3px solid rgba(255,255,255,.5)">?</div>
+          <div>
+            <div style="font-family:var(--serif);font-size:24px;font-weight:300;color:var(--ink)" id="fc-name">—</div>
+            <div style="font-size:12px;color:var(--mid);margin-top:2px" id="fc-since">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ONGLETS FICHE -->
+    <div style="display:flex;gap:0;border-bottom:1px solid rgba(244,160,188,.2);background:var(--white);overflow-x:auto">
+      <button class="fc-tab active" onclick="setFcTab(this,'fc-infos')" style="flex:1;min-width:60px;padding:12px 8px;font-size:11px;font-weight:500;border:none;background:none;cursor:pointer;color:var(--rose-deep);border-bottom:2px solid var(--rose-deep);font-family:var(--sans)">Infos</button>
+      <button class="fc-tab" onclick="setFcTab(this,'fc-seances')" style="flex:1;min-width:60px;padding:12px 8px;font-size:11px;font-weight:500;border:none;background:none;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;font-family:var(--sans)">Seances</button>
+      <button class="fc-tab" onclick="setFcTab(this,'fc-ca')" style="flex:1;min-width:60px;padding:12px 8px;font-size:11px;font-weight:500;border:none;background:none;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;font-family:var(--sans)">CA</button>
+      <button class="fc-tab" onclick="setFcTab(this,'fc-forfait')" style="flex:1;min-width:60px;padding:12px 8px;font-size:11px;font-weight:500;border:none;background:none;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;font-family:var(--sans)">Forfait</button>
+    </div>
+
+    <!-- ONGLET INFOS -->
+    <div id="fc-infos" class="fc-panel">
+      <div style="padding:14px 16px 0">
+        <div style="font-family:var(--serif);font-size:13px;font-style:italic;color:var(--mid);background:var(--cream);padding:12px;border-radius:10px;border-left:3px solid var(--lilac);margin-bottom:12px" id="fc-motivation">—</div>
+        <div style="background:var(--white);border-radius:var(--radius-sm);padding:14px;box-shadow:0 1px 6px rgba(200,100,140,.06);margin-bottom:10px">
+          <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Contact</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:.5px solid rgba(244,160,188,.15)">
+            <span style="font-size:16px">📧</span>
+            <div><div style="font-size:11px;color:var(--muted)">Email</div><div style="font-size:13px;color:var(--ink)" id="fc-email">—</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:6px 0">
+            <span style="font-size:16px">📱</span>
+            <div><div style="font-size:11px;color:var(--muted)">Telephone</div><div style="font-size:13px;color:var(--ink)" id="fc-phone">—</div></div>
+          </div>
+        </div>
+        <div style="background:var(--white);border-radius:var(--radius-sm);padding:14px;box-shadow:0 1px 6px rgba(200,100,140,.06);margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Adresses</div>
+            <button onclick="openAddAdresse()" style="font-size:11px;color:var(--rose-deep);background:none;border:none;cursor:pointer;font-family:var(--sans)">+ Ajouter</button>
+          </div>
+          <div id="fc-adresses"><div style="font-size:12px;color:var(--muted);font-style:italic">Aucune adresse enregistree</div></div>
+        </div>
+        <div style="background:var(--white);border-radius:var(--radius-sm);padding:14px;box-shadow:0 1px 6px rgba(200,100,140,.06);margin-bottom:10px">
+          <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Stats rapides</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+            <div style="text-align:center;padding:10px;background:var(--rose-light);border-radius:10px"><div style="font-family:var(--serif);font-size:22px;color:var(--ink)" id="fc-total-seances">0</div><div style="font-size:10px;color:var(--mid)">Seances</div></div>
+            <div style="text-align:center;padding:10px;background:var(--sage-light);border-radius:10px"><div style="font-family:var(--serif);font-size:22px;color:var(--ink)" id="fc-total-violette">0</div><div style="font-size:10px;color:var(--mid)">Avec Violette</div></div>
+            <div style="text-align:center;padding:10px;background:var(--gold-light);border-radius:10px"><div style="font-family:var(--serif);font-size:22px;color:var(--ink)" id="fc-total-ca">0€</div><div style="font-size:10px;color:var(--mid)">CA total</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ONGLET SEANCES -->
+    <div id="fc-seances" class="fc-panel" style="display:none">
+      <div style="padding:12px 16px 0">
+        <div id="fc-seances-list"></div>
+      </div>
+    </div>
+
+    <!-- ONGLET CA -->
+    <div id="fc-ca" class="fc-panel" style="display:none">
+      <div style="padding:12px 16px 0">
+        <div style="background:var(--white);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(200,100,140,.06)">
+          <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Periode</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="date" class="form-input" id="fc-ca-from" style="flex:1">
+            <span style="color:var(--muted);font-size:12px">au</span>
+            <input type="date" class="form-input" id="fc-ca-to" style="flex:1">
+          </div>
+          <button onclick="loadFcCA()" style="width:100%;margin-top:10px;padding:10px;background:var(--rose-deep);color:var(--white);border:none;border-radius:10px;font-size:13px;font-family:var(--sans);cursor:pointer">Filtrer</button>
+        </div>
+        <div style="background:var(--rose-light);border-radius:var(--radius-sm);padding:16px;margin-bottom:10px;text-align:center">
+          <div style="font-size:11px;color:var(--rose-deep);font-weight:500;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px">CA sur la periode</div>
+          <div style="font-family:var(--serif);font-size:36px;font-weight:300;color:var(--ink)" id="fc-ca-total">0 €</div>
+        </div>
+        <div style="background:var(--white);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(200,100,140,.06)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Encaissements</div>
+            <button onclick="openAddEncaissement()" style="font-size:11px;color:var(--rose-deep);background:none;border:none;cursor:pointer;font-family:var(--sans)">+ Ajouter</button>
+          </div>
+          <div id="fc-encaissements-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ONGLET FORFAIT -->
+    <div id="fc-forfait" class="fc-panel" style="display:none">
+      <div style="padding:12px 16px 0">
+        <div style="background:var(--white);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(200,100,140,.06)">
+          <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Forfait actif</div>
+          <select class="form-select" id="fc-forfait-type" style="margin-bottom:10px">
+            <option value="seance">A la seance</option>
+            <option value="forfait5">Forfait 5 seances</option>
+            <option value="forfait10">Forfait 10 seances</option>
+            <option value="abonnement">Abonnement mensuel</option>
+          </select>
+          <div id="fc-forfait-progress" style="display:none;margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--mid);margin-bottom:6px">
+              <span>Seances utilisees</span>
+              <span id="fc-forfait-used-label">0/0</span>
+            </div>
+            <div style="height:8px;background:var(--rose-light);border-radius:4px"><div id="fc-forfait-bar" style="height:100%;background:var(--rose-deep);border-radius:4px;width:0%;transition:width .5s"></div></div>
+            <button onclick="resetForfaitUsed()" style="margin-top:8px;font-size:11px;color:var(--muted);background:none;border:none;cursor:pointer;font-family:var(--sans)">Remettre le compteur a zero</button>
+          </div>
+          <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;margin-top:4px">Tarif personnalise (€)</div>
+          <input type="number" class="form-input" id="fc-tarif-perso" placeholder="Laisser vide = tarif standard" style="margin-bottom:10px">
+          <button class="submit-btn" onclick="saveFcForfait()">Sauvegarder</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 </div>
 
 <nav id="nav">
@@ -810,42 +930,40 @@ body{font-family:var(--sans);color:var(--ink)}
   </div>
 </div>
 
-<div class="modal-backdrop" id="modal-adm-client" onclick="if(event.target===this)closeModal('modal-adm-client')">
+<!-- modal-adm-client replaced by full screen-adm-client -->
+
+<div class="modal-backdrop" id="modal-add-adresse" onclick="if(event.target===this)closeModal('modal-add-adresse')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-      <div class="client-avatar" id="adm-cl-avatar" style="width:48px;height:48px;font-size:20px">?</div>
-      <div>
-        <div style="font-family:var(--serif);font-size:20px;color:var(--ink)" id="adm-cl-name">—</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px" id="adm-cl-phone">—</div>
-      </div>
+    <div class="modal-title">Ajouter une adresse</div>
+    <div class="form-field"><label class="form-label">Libelle</label><input type="text" class="form-input" id="adresse-label" placeholder="ex: Domicile, Bureau..."></div>
+    <div class="form-field"><label class="form-label">Adresse complete</label><textarea class="form-textarea" id="adresse-value" placeholder="12 rue des Lilas, 75014 Paris"></textarea></div>
+    <button class="submit-btn" onclick="submitAdresse()">Enregistrer</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-add-encaissement" onclick="if(event.target===this)closeModal('modal-add-encaissement')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Ajouter un encaissement</div>
+    <div class="form-field"><label class="form-label">Description</label><input type="text" class="form-input" id="enc-label" placeholder="ex: Forfait 10 seances, Tapis, Elastiques..."></div>
+    <div class="form-field"><label class="form-label">Montant (€)</label><input type="number" class="form-input" id="enc-montant" placeholder="ex: 550"></div>
+    <div class="form-field"><label class="form-label">Date</label><input type="date" class="form-input" id="enc-date"></div>
+    <button class="submit-btn" onclick="submitEncaissement()">Enregistrer</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-session-note" onclick="if(event.target===this)closeModal('modal-session-note')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Note de seance</div>
+    <div id="session-note-header" style="background:var(--rose-light);padding:12px;border-radius:10px;margin-bottom:14px;font-size:13px;color:var(--mid)">—</div>
+    <div class="form-field"><label class="form-label">Ce qui a ete travaille</label><textarea class="form-textarea" id="session-note-text" placeholder="Gainage, equilibre, respiration..." style="height:100px"></textarea></div>
+    <div class="form-field" id="session-tarif-row">
+      <label class="form-label">Tarif facture (€)</label>
+      <input type="number" class="form-input" id="session-note-tarif" placeholder="0 = solo / offert">
     </div>
-    <div style="background:var(--cream);border-radius:12px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--mid);font-style:italic;line-height:1.6" id="adm-cl-motivation">—</div>
-    <div style="background:var(--rose-light);border-radius:12px;padding:12px;margin-bottom:14px">
-      <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Suivi</div>
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:13px;color:var(--mid)">Seances effectuees</span>
-        <span style="font-family:var(--serif);font-size:18px;color:var(--ink)" id="adm-cl-sessions">0</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px" id="adm-cl-forfait-row">
-        <span style="font-size:13px;color:var(--mid)">Forfait utilise</span>
-        <span style="font-family:var(--serif);font-size:18px;color:var(--ink)" id="adm-cl-forfait-used">0</span>
-      </div>
-    </div>
-    <div class="form-field">
-      <label class="form-label">Forfait attribue</label>
-      <select class="form-select" id="adm-cl-forfait-type">
-        <option value="seance">A la seance</option>
-        <option value="forfait5">Forfait 5 seances</option>
-        <option value="forfait10">Forfait 10 seances</option>
-        <option value="abonnement">Abonnement mensuel</option>
-      </select>
-    </div>
-    <div class="form-field" id="adm-cl-tarif-perso-row">
-      <label class="form-label">Tarif personnalise (€) <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted)">optionnel</span></label>
-      <input type="number" class="form-input" id="adm-cl-tarif-perso" placeholder="Laisser vide = tarif standard">
-    </div>
-    <button class="submit-btn" onclick="saveAdmClientForfait()">Sauvegarder</button>
+    <button class="submit-btn" onclick="submitSessionNote()">Sauvegarder</button>
   </div>
 </div>
 
@@ -1003,6 +1121,7 @@ function goTo(id, btn){
   if (id==='adm-galerie') loadAndRenderAdmGallery();
   if (id==='adm-quotes') loadQuotes();
   if (id==='adm-home') loadAdminData();
+  if (id==='adm-client') { /* loaded by openAdmClientDetail */ }
   if (id==='adm-offre') loadOffre();
 }
 
@@ -1583,37 +1702,211 @@ function savePremium(){
   showToast('Premium sauvegarde !');
 }
 
-// ── ADMIN CLIENT DETAIL ──
-let admCurrentClientId=null;
-async function openAdmClientDetail(userId){
-  admCurrentClientId=userId;
-  const {data:u}=await sb.from('users').select('*').eq('id',userId).single();
-  if (!u) return;
-  document.getElementById('adm-cl-avatar').textContent=(u.firstname||u.name||'?')[0];
-  document.getElementById('adm-cl-name').textContent=(u.firstname||'')+' '+(u.lastname||'');
-  document.getElementById('adm-cl-phone').textContent=u.phone||u.email||'';
-  document.getElementById('adm-cl-motivation').textContent=u.motivation||'Pas de motivation renseignee';
-  // Count sessions with Violette (non-solo)
-  const {data:scs}=await sb.from('sessions').select('id').eq('user_id',userId).neq('type','solo');
-  document.getElementById('adm-cl-sessions').textContent=(scs||[]).length;
-  document.getElementById('adm-cl-forfait-used').textContent=u.forfait_used||0;
-  document.getElementById('adm-cl-forfait-type').value=u.forfait_type||'seance';
-  document.getElementById('adm-cl-tarif-perso').value=u.tarif_perso||'';
-  const hasForfait=(u.forfait_type&&u.forfait_type!=='seance'&&u.forfait_type!=='abonnement');
-  document.getElementById('adm-cl-forfait-row').style.display=hasForfait?'flex':'none';
-  document.getElementById('modal-adm-client').classList.add('open');
+// ── FICHE CLIENTE COMPLETE ──
+let fcClientId=null, fcClientData=null, fcSessionNoteId=null;
+
+function setFcTab(btn, panelId){
+  document.querySelectorAll('.fc-tab').forEach(t=>{ t.style.color='var(--muted)'; t.style.borderBottom='2px solid transparent'; });
+  btn.style.color='var(--rose-deep)'; btn.style.borderBottom='2px solid var(--rose-deep)';
+  document.querySelectorAll('.fc-panel').forEach(p=>p.style.display='none');
+  document.getElementById(panelId).style.display='block';
+  if(panelId==='fc-seances') loadFcSeances();
+  if(panelId==='fc-ca') loadFcCA();
+  if(panelId==='fc-forfait') loadFcForfait();
 }
-async function saveAdmClientForfait(){
-  const forfait_type=document.getElementById('adm-cl-forfait-type').value;
-  const tarif_perso=document.getElementById('adm-cl-tarif-perso').value;
-  await sb.from('users').update({
-    forfait_type,
-    tarif_perso: tarif_perso?parseFloat(tarif_perso):null,
-    forfait_used: 0
-  }).eq('id',admCurrentClientId);
-  closeModal('modal-adm-client');
-  loadAdminData();
-  showToast('Forfait mis a jour !');
+
+async function openAdmClientDetail(userId){
+  fcClientId=userId;
+  // Reset tabs
+  document.querySelectorAll('.fc-tab').forEach((t,i)=>{ t.style.color=i===0?'var(--rose-deep)':'var(--muted)'; t.style.borderBottom=i===0?'2px solid var(--rose-deep)':'2px solid transparent'; });
+  document.querySelectorAll('.fc-panel').forEach((p,i)=>p.style.display=i===0?'block':'none');
+  const {data:u}=await sb.from('users').select('*').eq('id',userId).single();
+  if(!u) return;
+  fcClientData=u;
+  const initial=(u.firstname||u.name||'?')[0].toUpperCase();
+  document.getElementById('fc-avatar').textContent=initial;
+  document.getElementById('fc-name').textContent=(u.firstname||'')+' '+(u.lastname||'');
+  document.getElementById('fc-since').textContent='Cliente depuis '+new Date(u.created_at).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+  document.getElementById('fc-motivation').textContent=u.motivation||'Motivation non renseignee';
+  document.getElementById('fc-email').textContent=u.email||'—';
+  document.getElementById('fc-phone').textContent=u.phone||'—';
+  // Adresses
+  renderFcAdresses(u.adresses||[]);
+  // Stats
+  const {data:allSessions}=await sb.from('sessions').select('*').eq('user_id',userId);
+  const {data:bookings}=await sb.from('bookings').select('tarif').eq('user_id',userId).eq('status','confirmed');
+  const {data:encaissements}=await sb.from('encaissements').select('montant').eq('user_id',userId);
+  const totalSessions=(allSessions||[]).length;
+  const withViolette=(allSessions||[]).filter(s=>s.type!=='solo').length;
+  const caBookings=(bookings||[]).reduce((s,b)=>s+(b.tarif||0),0);
+  const caEnc=(encaissements||[]).reduce((s,e)=>s+(e.montant||0),0);
+  const totalCA=caBookings+caEnc;
+  document.getElementById('fc-total-seances').textContent=totalSessions;
+  document.getElementById('fc-total-violette').textContent=withViolette;
+  document.getElementById('fc-total-ca').textContent=totalCA+'€';
+  goTo('adm-client', null);
+}
+
+function renderFcAdresses(adresses){
+  const el=document.getElementById('fc-adresses');
+  if(!adresses||adresses.length===0){ el.innerHTML='<div style="font-size:12px;color:var(--muted);font-style:italic">Aucune adresse enregistree</div>'; return; }
+  el.innerHTML=adresses.map((a,i)=>`
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:.5px solid rgba(244,160,188,.15)">
+      <span style="font-size:16px">📍</span>
+      <div style="flex:1">
+        <div style="font-size:11px;font-weight:500;color:var(--mid)">${a.label}</div>
+        <div style="font-size:13px;color:var(--ink);margin-top:2px">${a.value}</div>
+      </div>
+      <button onclick="deleteAdresse(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:2px 6px">✕</button>
+    </div>`).join('');
+}
+
+function openAddAdresse(){
+  document.getElementById('adresse-label').value='';
+  document.getElementById('adresse-value').value='';
+  document.getElementById('modal-add-adresse').classList.add('open');
+}
+async function submitAdresse(){
+  const label=document.getElementById('adresse-label').value.trim();
+  const value=document.getElementById('adresse-value').value.trim();
+  if(!label||!value){ showToast('Remplis les deux champs'); return; }
+  const adresses=fcClientData.adresses||[];
+  adresses.push({label,value});
+  await sb.from('users').update({adresses}).eq('id',fcClientId);
+  fcClientData.adresses=adresses;
+  renderFcAdresses(adresses);
+  closeModal('modal-add-adresse');
+  showToast('Adresse ajoutee !');
+  // Also save to booking if current slot is domicile
+  if(admCurrentBookingId){
+    await sb.from('bookings').update({adresse:value}).eq('id',admCurrentBookingId);
+  }
+}
+async function deleteAdresse(idx){
+  const adresses=fcClientData.adresses||[];
+  adresses.splice(idx,1);
+  await sb.from('users').update({adresses}).eq('id',fcClientId);
+  fcClientData.adresses=adresses;
+  renderFcAdresses(adresses);
+}
+
+async function loadFcSeances(){
+  const {data:sessions}=await sb.from('sessions').select('*').eq('user_id',fcClientId).order('date',{ascending:false});
+  const list=document.getElementById('fc-seances-list');
+  if(!sessions||sessions.length===0){ list.innerHTML='<div style="font-size:13px;color:var(--muted);text-align:center;padding:2rem">Aucune seance</div>'; return; }
+  list.innerHTML=sessions.map(s=>{
+    const isSolo=s.type==='solo';
+    const tagColor=isSolo?'var(--lilac-light)':'var(--rose-light)';
+    const tagText=isSolo?'color:#6b3fa0':'color:var(--rose-deep)';
+    return `<div style="background:var(--white);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 6px rgba(200,100,140,.06)">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+        <div style="width:8px;height:8px;border-radius:50%;background:${isSolo?'var(--lilac)':'var(--rose-deep)'};flex-shrink:0"></div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:500;color:var(--ink)">${formatDateFR(s.date)}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:1px">${s.duration} min · <span style="padding:2px 7px;border-radius:20px;background:${tagColor};${tagText};font-size:10px">${s.type}</span></div>
+        </div>
+        ${s.tarif?`<span style="font-family:var(--serif);font-size:15px;color:var(--ink)">${s.tarif}€</span>`:''}
+        <button onclick="openSessionNote('${s.id}','${s.date}','${s.type}',${isSolo})" style="font-size:11px;padding:5px 10px;border-radius:20px;background:var(--cream);border:1px solid rgba(244,160,188,.3);color:var(--mid);cursor:pointer;font-family:var(--sans)">📝</button>
+      </div>
+      ${s.note_violette?`<div style="font-size:12px;color:var(--mid);font-style:italic;padding:8px 10px;background:var(--cream);border-radius:8px;border-left:2px solid var(--rose)">${s.note_violette}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function openSessionNote(sessionId, date, type, isSolo){
+  fcSessionNoteId=sessionId;
+  document.getElementById('session-note-header').textContent=formatDateFR(date)+' · '+type;
+  document.getElementById('session-note-text').value='';
+  document.getElementById('session-note-tarif').value='';
+  document.getElementById('session-tarif-row').style.display=isSolo?'none':'block';
+  document.getElementById('modal-session-note').classList.add('open');
+  // Load existing note
+  sb.from('sessions').select('note_violette,tarif').eq('id',sessionId).single().then(({data})=>{
+    if(data){ document.getElementById('session-note-text').value=data.note_violette||''; document.getElementById('session-note-tarif').value=data.tarif||''; }
+  });
+}
+async function submitSessionNote(){
+  const note=document.getElementById('session-note-text').value.trim();
+  const tarif=document.getElementById('session-note-tarif').value;
+  await sb.from('sessions').update({note_violette:note,tarif:tarif?parseFloat(tarif):null}).eq('id',fcSessionNoteId);
+  closeModal('modal-session-note');
+  loadFcSeances();
+  showToast('Note sauvegardee !');
+}
+
+async function loadFcCA(){
+  const fromDate=document.getElementById('fc-ca-from').value;
+  const toDate=document.getElementById('fc-ca-to').value;
+  let bkQuery=sb.from('bookings').select('tarif,created_at,slots(date,type)').eq('user_id',fcClientId).eq('status','confirmed');
+  let encQuery=sb.from('encaissements').select('*').eq('user_id',fcClientId);
+  if(fromDate){ bkQuery=bkQuery.gte('created_at',fromDate); encQuery=encQuery.gte('date',fromDate); }
+  if(toDate){ bkQuery=bkQuery.lte('created_at',toDate+'T23:59:59'); encQuery=encQuery.lte('date',toDate); }
+  const [{data:bookings},{data:encaissements}]=await Promise.all([bkQuery,encQuery]);
+  const caBookings=(bookings||[]).filter(b=>b.tarif).reduce((s,b)=>s+(b.tarif||0),0);
+  const caEnc=(encaissements||[]).reduce((s,e)=>s+(e.montant||0),0);
+  document.getElementById('fc-ca-total').textContent=(caBookings+caEnc)+' €';
+  const encList=document.getElementById('fc-encaissements-list');
+  if(!encaissements||encaissements.length===0){ encList.innerHTML='<div style="font-size:12px;color:var(--muted);font-style:italic">Aucun encaissement</div>'; return; }
+  encList.innerHTML=encaissements.map(e=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:.5px solid rgba(244,160,188,.15)">
+      <div style="flex:1">
+        <div style="font-size:13px;color:var(--ink)">${e.label}</div>
+        <div style="font-size:11px;color:var(--muted)">${formatDateFR(e.date)}</div>
+      </div>
+      <span style="font-family:var(--serif);font-size:16px;color:var(--ink);font-weight:500">${e.montant}€</span>
+      <button onclick="deleteEncaissement('${e.id}')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px">✕</button>
+    </div>`).join('');
+}
+
+function openAddEncaissement(){
+  document.getElementById('enc-label').value='';
+  document.getElementById('enc-montant').value='';
+  document.getElementById('enc-date').value=dateKey(new Date());
+  document.getElementById('modal-add-encaissement').classList.add('open');
+}
+async function submitEncaissement(){
+  const label=document.getElementById('enc-label').value.trim();
+  const montant=document.getElementById('enc-montant').value;
+  const date=document.getElementById('enc-date').value;
+  if(!label||!montant){ showToast('Remplis tous les champs'); return; }
+  const {error}=await sb.from('encaissements').insert({user_id:fcClientId,label,montant:parseFloat(montant),date});
+  if(error){ showToast('Erreur : '+error.message); return; }
+  closeModal('modal-add-encaissement');
+  loadFcCA();
+  showToast('Encaissement ajoute !');
+}
+async function deleteEncaissement(id){
+  await sb.from('encaissements').delete().eq('id',id);
+  loadFcCA();
+  showToast('Encaissement supprime');
+}
+
+function loadFcForfait(){
+  if(!fcClientData) return;
+  document.getElementById('fc-forfait-type').value=fcClientData.forfait_type||'seance';
+  document.getElementById('fc-tarif-perso').value=fcClientData.tarif_perso||'';
+  updateForfaitProgress(fcClientData.forfait_type,fcClientData.forfait_used);
+  document.getElementById('fc-forfait-type').onchange=function(){ updateForfaitProgress(this.value,fcClientData.forfait_used); };
+}
+function updateForfaitProgress(type,used){
+  const total={'forfait5':5,'forfait10':10}[type]||null;
+  const prog=document.getElementById('fc-forfait-progress');
+  if(total){ prog.style.display='block'; document.getElementById('fc-forfait-used-label').textContent=(used||0)+'/'+total; document.getElementById('fc-forfait-bar').style.width=Math.min((used||0)/total*100,100)+'%'; }
+  else prog.style.display='none';
+}
+async function resetForfaitUsed(){
+  await sb.from('users').update({forfait_used:0}).eq('id',fcClientId);
+  fcClientData.forfait_used=0;
+  updateForfaitProgress(document.getElementById('fc-forfait-type').value,0);
+  showToast('Compteur remis a zero');
+}
+async function saveFcForfait(){
+  const forfait_type=document.getElementById('fc-forfait-type').value;
+  const tarif_perso=document.getElementById('fc-tarif-perso').value;
+  await sb.from('users').update({forfait_type,tarif_perso:tarif_perso?parseFloat(tarif_perso):null}).eq('id',fcClientId);
+  fcClientData.forfait_type=forfait_type;
+  fcClientData.tarif_perso=tarif_perso?parseFloat(tarif_perso):null;
+  showToast('Forfait sauvegarde !');
 }
 
 // ── CLIENT BOOKING DETAIL ──
