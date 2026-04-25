@@ -1783,23 +1783,24 @@ async function loadMeasures(){
   const m = data[0];
   document.getElementById('metrics-empty').style.display='none';
   document.getElementById('metrics-filled').style.display='block';
-  document.getElementById('home-stats').style.display='block';
-  document.getElementById('m-planche').innerHTML=m.planche+'<span class="metric-unit">s</span>';
-  document.getElementById('m-equi').innerHTML=m.equi+'<span class="metric-unit">s</span>';
-  document.getElementById('m-mains').innerHTML=m.mains+'<span class="metric-unit">cm</span>';
-  document.getElementById('m-gainage').innerHTML=m.gainage+'<span class="metric-unit">s</span>';
-  document.getElementById('m-energie').innerHTML=m.energie+'<span class="metric-unit">/10</span>';
-  document.getElementById('m-sommeil').innerHTML=m.sommeil+'<span class="metric-unit">/10</span>';
-  document.getElementById('bar-planche').style.width=Math.min(m.planche/120*100,100)+'%';
-  document.getElementById('bar-equi').style.width=Math.min(m.equi/60*100,100)+'%';
-  document.getElementById('bar-mains').style.width=Math.min((40-m.mains)/40*100,100)+'%';
-  document.getElementById('bar-gainage').style.width=Math.min(m.gainage/90*100,100)+'%';
-  document.getElementById('bar-energie').style.width=m.energie/10*100+'%';
-  document.getElementById('bar-sommeil').style.width=m.sommeil/10*100+'%';
-  document.getElementById('h-planche').innerHTML=m.planche+'<span style="font-size:14px;color:var(--muted)">s</span>';
-  document.getElementById('h-equi').innerHTML=m.equi+'<span style="font-size:14px;color:var(--muted)">s</span>';
-  document.getElementById('h-energie').innerHTML=m.energie+'<span style="font-size:14px;color:var(--muted)">/10</span>';
-  document.getElementById('h-mains').innerHTML=m.mains+'<span style="font-size:14px;color:var(--muted)">cm</span>';
+  const metricsEmpty=document.getElementById('metrics-empty');
+  const metricsFilled=document.getElementById('metrics-filled');
+  if(metricsEmpty) metricsEmpty.style.display='none';
+  if(metricsFilled) metricsFilled.style.display='block';
+  const set=(id,html)=>{ const el=document.getElementById(id); if(el) el.innerHTML=html; };
+  const setW=(id,w)=>{ const el=document.getElementById(id); if(el) el.style.width=w; };
+  set('m-planche',m.planche+'<span class="metric-unit">s</span>');
+  set('m-equi',m.equi+'<span class="metric-unit">s</span>');
+  set('m-mains',m.mains+'<span class="metric-unit">cm</span>');
+  set('m-gainage',m.gainage+'<span class="metric-unit">s</span>');
+  set('m-energie',m.energie+'<span class="metric-unit">/10</span>');
+  set('m-sommeil',m.sommeil+'<span class="metric-unit">/10</span>');
+  setW('bar-planche',Math.min(m.planche/120*100,100)+'%');
+  setW('bar-equi',Math.min(m.equi/60*100,100)+'%');
+  setW('bar-mains',Math.min((40-m.mains)/40*100,100)+'%');
+  setW('bar-gainage',Math.min(m.gainage/90*100,100)+'%');
+  setW('bar-energie',m.energie/10*100+'%');
+  setW('bar-sommeil',m.sommeil/10*100+'%');
 }
 
 async function loadBookings(){
