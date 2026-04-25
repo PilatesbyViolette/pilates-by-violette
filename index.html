@@ -9,128 +9,7 @@
 <meta name="theme-color" content="#fce8f0">
 <title>Pilates by Violette</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-// ── PARAMÈTRES ──
-const THEMES = {
-  rose:  {main:'#f4a0bc',light:'#fce8f0',mid:'#e8789a',deep:'#c45878',cream:'#fdf8f3'},
-  sage:  {main:'#8aab8e',light:'#d4e8d4',mid:'#5a8a5e',deep:'#3a6e40',cream:'#f4f9f4'},
-  gold:  {main:'#c8a870',light:'#f5ecd8',mid:'#a08040',deep:'#7a6020',cream:'#fdf8ee'},
-  lilac: {main:'#b89bc8',light:'#ecdaf5',mid:'#9070b0',deep:'#6b3fa0',cream:'#f8f4fd'}
-};
-
-function setTheme(btn, theme){
-  document.querySelectorAll('.theme-btn').forEach(b=>{
-    b.style.border='2px solid transparent';
-  });
-  btn.style.border='2px solid var(--rose-deep)';
-  btn.classList.add('active');
-  const t=THEMES[theme];
-  if(!t) return;
-  const root=document.documentElement;
-  root.style.setProperty('--rose', t.main);
-  root.style.setProperty('--rose-light', t.light);
-  root.style.setProperty('--rose-mid', t.mid);
-  root.style.setProperty('--rose-deep', t.deep);
-  root.style.setProperty('--cream', t.cream);
-  localStorage.setItem('pbv_theme', theme);
-}
-
-function applyStoredTheme(){
-  const theme=localStorage.getItem('pbv_theme')||'rose';
-  const btn=document.querySelector(`.theme-btn[data-theme="${theme}"]`);
-  if(btn) setTheme(btn, theme);
-}
-
-function setGoal(btn, goal){
-  document.querySelectorAll('.goal-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-}
-
-async function loadSettings(){
-  const p=STATE.profile;
-  if(!p) return;
-  document.getElementById('set-firstname').value=p.firstname||'';
-  document.getElementById('set-lastname').value=p.lastname||'';
-  document.getElementById('set-email').value=p.email||STATE.user?.email||'';
-  document.getElementById('set-phone').value=p.phone||'';
-  document.getElementById('set-pseudo').value=p.pseudo||'';
-  document.getElementById('set-motivation').value=p.motivation||'';
-  // Parcours
-  if(p.practice_start) document.getElementById('set-practice-start').value=p.practice_start;
-  const goal=p.weekly_goal||1;
-  document.querySelectorAll('.goal-btn').forEach(b=>b.classList.toggle('active',parseInt(b.dataset.goal)===goal));
-  // Prefs stored in localStorage
-  const prefs=JSON.parse(localStorage.getItem('pbv_prefs')||'{}');
-  document.getElementById('set-public-default').checked=prefs.publicDefault!==false;
-  document.getElementById('set-notif-seance').checked=prefs.notifSeance!==false;
-  document.getElementById('set-notif-citation').checked=prefs.notifCitation!==false;
-  // Theme
-  applyStoredTheme();
-  const theme=localStorage.getItem('pbv_theme')||'rose';
-  document.querySelectorAll('.theme-btn').forEach(b=>{
-    const active=b.dataset.theme===theme;
-    b.style.border=active?'2px solid var(--rose-deep)':'2px solid transparent';
-  });
-}
-
-async function saveAccountSettings(){
-  const firstname=document.getElementById('set-firstname').value.trim();
-  const lastname=document.getElementById('set-lastname').value.trim();
-  const phone=document.getElementById('set-phone').value.trim();
-  const pseudo=document.getElementById('set-pseudo').value.trim();
-  const motivation=document.getElementById('set-motivation').value.trim();
-  const {error}=await sb.from('users').update({firstname,lastname,phone,pseudo,motivation}).eq('id',STATE.user.id);
-  if(error){ showToast('Erreur: '+error.message); return; }
-  STATE.profile={...STATE.profile,firstname,lastname,phone,pseudo,motivation};
-  document.getElementById('prof-name').textContent=(firstname+' '+lastname).trim();
-  showToast('Informations sauvegardées ✓');
-}
-
-function savePrivacySettings(){
-  const prefs=JSON.parse(localStorage.getItem('pbv_prefs')||'{}');
-  prefs.publicDefault=document.getElementById('set-public-default').checked;
-  localStorage.setItem('pbv_prefs', JSON.stringify(prefs));
-  // Apply to post modal default
-  postVis=prefs.publicDefault?'public':'private';
-}
-
-function saveNotifSettings(){
-  const prefs=JSON.parse(localStorage.getItem('pbv_prefs')||'{}');
-  prefs.notifSeance=document.getElementById('set-notif-seance').checked;
-  prefs.notifCitation=document.getElementById('set-notif-citation').checked;
-  localStorage.setItem('pbv_prefs', JSON.stringify(prefs));
-  showToast('Préférences sauvegardées');
-}
-
-async function saveParcours(){
-  const practice_start=document.getElementById('set-practice-start').value;
-  const weekly_goal=parseInt(document.querySelector('.goal-btn.active')?.dataset.goal||1);
-  const {error}=await sb.from('users').update({practice_start,weekly_goal}).eq('id',STATE.user.id);
-  if(error){ showToast('Erreur: '+error.message); return; }
-  STATE.profile={...STATE.profile,practice_start,weekly_goal};
-  showToast('Parcours sauvegardé ✓');
-}
-
-async function deleteAccount(){
-  const confirmed=confirm('Es-tu sûre de vouloir supprimer définitivement ton compte ? Cette action est irréversible.');
-  if(!confirmed) return;
-  const doubleConfirm=confirm('Dernière confirmation — toutes tes données seront supprimées. Continuer ?');
-  if(!doubleConfirm) return;
-  // Delete user data
-  await Promise.all([
-    sb.from('sessions').delete().eq('user_id',STATE.user.id),
-    sb.from('bookings').delete().eq('user_id',STATE.user.id),
-    sb.from('messages').delete().eq('sender_id',STATE.user.id),
-    sb.from('messages').delete().eq('receiver_id',STATE.user.id),
-    sb.from('posts').delete().eq('user_id',STATE.user.id),
-    sb.from('encaissements').delete().eq('user_id',STATE.user.id),
-    sb.from('users').delete().eq('id',STATE.user.id),
-  ]);
-  await sb.auth.signOut();
-  location.reload();
-}
-
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--rose:#f4a0bc;--rose-light:#fce8f0;--rose-mid:#e8789a;--rose-deep:#c45878;--cream:#fdf8f3;--sage:#8aab8e;--sage-light:#d4e8d4;--gold:#c8a870;--gold-light:#f0e4c8;--lilac:#c8a8d8;--lilac-light:#f0e8f8;--peach:#f8c8a0;--peach-light:#fef0e4;--ink:#2a2420;--mid:#6b5e58;--muted:#a89890;--white:#ffffff;--danger:#d85050;--serif:'Cormorant Garamond',Georgia,serif;--sans:'DM Sans',sans-serif;--radius:20px;--radius-sm:12px}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -763,7 +642,7 @@ body{font-family:var(--sans);color:var(--ink)}
           <div class="form-field" style="margin:0"><label class="form-label">Prénom</label><input type="text" class="form-input" id="set-firstname"></div>
           <div class="form-field" style="margin:0"><label class="form-label">Nom</label><input type="text" class="form-input" id="set-lastname"></div>
         </div>
-        <div class="form-field"><label class="form-label">Email</label><input type="email" class="form-input" id="set-email" disabled style="opacity:.6"></div>
+        <div class="form-field"><label class="form-label">Email <span style="font-weight:400;font-size:10px;color:var(--muted)">(nécessite une reconfirmation)</span></label><input type="email" class="form-input" id="set-email"></div>
         <div class="form-field"><label class="form-label">Téléphone</label><input type="tel" class="form-input" id="set-phone"></div>
         <div class="form-field"><label class="form-label">Pseudo <span style="font-weight:400;font-size:10px;color:var(--muted)">(affiché dans la communauté)</span></label><input type="text" class="form-input" id="set-pseudo" placeholder="Laisser vide = nom complet"></div>
         <div class="form-field" style="margin-bottom:0"><label class="form-label">Ma motivation</label><textarea class="form-textarea" id="set-motivation" placeholder="Pourquoi je pratique le pilates..."></textarea></div>
@@ -3124,6 +3003,134 @@ async function getVioletteId(){
 // Auto-send system message on booking events
 async function sendSystemMessage(clientId, content){
   await sb.from('messages').insert({sender_id:null,receiver_id:clientId,content,read:false});
+}
+
+
+// ── PARAMÈTRES ──
+const THEMES = {
+  rose:  {main:'#f4a0bc',light:'#fce8f0',mid:'#e8789a',deep:'#c45878',cream:'#fdf8f3'},
+  sage:  {main:'#8aab8e',light:'#d4e8d4',mid:'#5a8a5e',deep:'#3a6e40',cream:'#f4f9f4'},
+  gold:  {main:'#c8a870',light:'#f5ecd8',mid:'#a08040',deep:'#7a6020',cream:'#fdf8ee'},
+  lilac: {main:'#b89bc8',light:'#ecdaf5',mid:'#9070b0',deep:'#6b3fa0',cream:'#f8f4fd'}
+};
+
+function setTheme(btn, theme){
+  document.querySelectorAll('.theme-btn').forEach(b=>{
+    b.style.border='2px solid transparent';
+  });
+  btn.style.border='2px solid var(--rose-deep)';
+  btn.classList.add('active');
+  const t=THEMES[theme];
+  if(!t) return;
+  const root=document.documentElement;
+  root.style.setProperty('--rose', t.main);
+  root.style.setProperty('--rose-light', t.light);
+  root.style.setProperty('--rose-mid', t.mid);
+  root.style.setProperty('--rose-deep', t.deep);
+  root.style.setProperty('--cream', t.cream);
+  localStorage.setItem('pbv_theme', theme);
+}
+
+function applyStoredTheme(){
+  const theme=localStorage.getItem('pbv_theme')||'rose';
+  const btn=document.querySelector(`.theme-btn[data-theme="${theme}"]`);
+  if(btn) setTheme(btn, theme);
+}
+
+function setGoal(btn, goal){
+  document.querySelectorAll('.goal-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+async function loadSettings(){
+  const p=STATE.profile;
+  if(!p) return;
+  document.getElementById('set-firstname').value=p.firstname||'';
+  document.getElementById('set-lastname').value=p.lastname||'';
+  document.getElementById('set-email').value=p.email||STATE.user?.email||'';
+  document.getElementById('set-phone').value=p.phone||'';
+  document.getElementById('set-pseudo').value=p.pseudo||'';
+  document.getElementById('set-motivation').value=p.motivation||'';
+  // Parcours
+  if(p.practice_start) document.getElementById('set-practice-start').value=p.practice_start;
+  const goal=p.weekly_goal||1;
+  document.querySelectorAll('.goal-btn').forEach(b=>b.classList.toggle('active',parseInt(b.dataset.goal)===goal));
+  // Prefs stored in localStorage
+  const prefs=JSON.parse(localStorage.getItem('pbv_prefs')||'{}');
+  document.getElementById('set-public-default').checked=prefs.publicDefault!==false;
+  document.getElementById('set-notif-seance').checked=prefs.notifSeance!==false;
+  document.getElementById('set-notif-citation').checked=prefs.notifCitation!==false;
+  // Theme
+  applyStoredTheme();
+  const theme=localStorage.getItem('pbv_theme')||'rose';
+  document.querySelectorAll('.theme-btn').forEach(b=>{
+    const active=b.dataset.theme===theme;
+    b.style.border=active?'2px solid var(--rose-deep)':'2px solid transparent';
+  });
+}
+
+async function saveAccountSettings(){
+  const firstname=document.getElementById('set-firstname').value.trim();
+  const lastname=document.getElementById('set-lastname').value.trim();
+  const phone=document.getElementById('set-phone').value.trim();
+  const pseudo=document.getElementById('set-pseudo').value.trim();
+  const motivation=document.getElementById('set-motivation').value.trim();
+  const newEmail=document.getElementById('set-email').value.trim();
+  const {error}=await sb.from('users').update({firstname,lastname,phone,pseudo,motivation}).eq('id',STATE.user.id);
+  if(error){ showToast('Erreur: '+error.message); return; }
+  // Update email in Auth if changed
+  if(newEmail && newEmail!==STATE.user.email){
+    const {error:emailErr}=await sb.auth.updateUser({email:newEmail});
+    if(emailErr){ showToast('Email: '+emailErr.message); }
+    else { showToast('Un email de confirmation a été envoyé'); }
+  }
+  STATE.profile={...STATE.profile,firstname,lastname,phone,pseudo,motivation};
+  document.getElementById('prof-name').textContent=(firstname+' '+lastname).trim();
+  showToast('Informations sauvegardées ✓');
+}
+
+function savePrivacySettings(){
+  const prefs=JSON.parse(localStorage.getItem('pbv_prefs')||'{}');
+  prefs.publicDefault=document.getElementById('set-public-default').checked;
+  localStorage.setItem('pbv_prefs', JSON.stringify(prefs));
+  // Apply to post modal default
+  postVis=prefs.publicDefault?'public':'private';
+}
+
+function saveNotifSettings(){
+  const prefs=JSON.parse(localStorage.getItem('pbv_prefs')||'{}');
+  prefs.notifSeance=document.getElementById('set-notif-seance').checked;
+  prefs.notifCitation=document.getElementById('set-notif-citation').checked;
+  localStorage.setItem('pbv_prefs', JSON.stringify(prefs));
+  showToast('Préférences sauvegardées');
+}
+
+async function saveParcours(){
+  const practice_start=document.getElementById('set-practice-start').value;
+  const weekly_goal=parseInt(document.querySelector('.goal-btn.active')?.dataset.goal||1);
+  const {error}=await sb.from('users').update({practice_start,weekly_goal}).eq('id',STATE.user.id);
+  if(error){ showToast('Erreur: '+error.message); return; }
+  STATE.profile={...STATE.profile,practice_start,weekly_goal};
+  showToast('Parcours sauvegardé ✓');
+}
+
+async function deleteAccount(){
+  const confirmed=confirm('Es-tu sûre de vouloir supprimer définitivement ton compte ? Cette action est irréversible.');
+  if(!confirmed) return;
+  const doubleConfirm=confirm('Dernière confirmation — toutes tes données seront supprimées. Continuer ?');
+  if(!doubleConfirm) return;
+  // Delete user data
+  await Promise.all([
+    sb.from('sessions').delete().eq('user_id',STATE.user.id),
+    sb.from('bookings').delete().eq('user_id',STATE.user.id),
+    sb.from('messages').delete().eq('sender_id',STATE.user.id),
+    sb.from('messages').delete().eq('receiver_id',STATE.user.id),
+    sb.from('posts').delete().eq('user_id',STATE.user.id),
+    sb.from('encaissements').delete().eq('user_id',STATE.user.id),
+    sb.from('users').delete().eq('id',STATE.user.id),
+  ]);
+  await sb.auth.signOut();
+  location.reload();
 }
 
 </script>
