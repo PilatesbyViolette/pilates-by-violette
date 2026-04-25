@@ -205,9 +205,13 @@ body{font-family:var(--sans);color:var(--ink)}
 .cal-day.empty{cursor:default;color:transparent}
 .cal-day.today{background:var(--rose-light);font-weight:500;color:var(--rose-deep)}
 .cal-day.selected{background:var(--rose-deep);color:white}
-.cal-day.has-slots::after{content:"";width:4px;height:4px;border-radius:50%;background:var(--sage);margin-top:2px}
-.cal-day.selected.has-slots::after,.cal-day.selected.has-booking::after{background:var(--white)}
-.cal-day.has-booking::after{content:"";width:4px;height:4px;border-radius:50%;background:var(--rose-deep);margin-top:2px}
+.cal-day.has-slots::after{content:"";width:5px;height:5px;border-radius:50%;background:#4caf50;margin-top:2px}
+.cal-day.has-slot-taken::after{content:"";width:5px;height:5px;border-radius:50%;background:#e74c3c;margin-top:2px}
+.cal-day.has-booking::after{content:"";width:5px;height:5px;border-radius:50%;background:var(--rose-deep);margin-top:2px}
+.cal-day.has-solo::after{content:"";width:5px;height:5px;border-radius:50%;background:#9b59b6;margin-top:2px}
+.cal-day.selected.has-slots::after,.cal-day.selected.has-booking::after,.cal-day.selected.has-solo::after,.cal-day.selected.has-slot-taken::after{background:var(--white)}
+.cal-dots{display:flex;gap:2px;margin-top:2px}
+.cal-dot{width:5px;height:5px;border-radius:50%}
 .slots-list{margin:12px 16px 0;display:flex;flex-direction:column;gap:8px}
 .slot-card{background:var(--white);border-radius:var(--radius-sm);padding:12px 14px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 6px rgba(200,100,140,.06)}
 .slot-time{font-family:var(--serif);font-size:18px;font-weight:400;color:var(--ink);min-width:56px}
@@ -534,11 +538,24 @@ body{font-family:var(--sans);color:var(--ink)}
 
 <div class="screen" id="screen-agenda">
   <div class="screen-scroll">
-    <div class="top-bar"><div class="top-bar-inner"><div class="app-wordmark">Pilates by Violette</div><div class="screen-heading">Reserver un <em>creneau</em></div><div class="screen-sub">Choisis une date disponible</div></div></div>
+    <div class="top-bar"><div class="top-bar-inner"><div class="app-wordmark">Pilates by Violette</div><div class="screen-heading">Mon <em>agenda</em></div><div class="screen-sub">Seances & reservations</div></div></div>
+    <!-- Légende -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap;padding:8px 16px 0;font-size:11px;color:var(--mid)">
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#4caf50;margin-right:4px"></span>Dispo</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e74c3c;margin-right:4px"></span>Pris</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--rose-deep);margin-right:4px"></span>Avec Violette</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#9b59b6;margin-right:4px"></span>Solo</span>
+    </div>
     <div class="calendar-header"><button class="cal-nav" onclick="calPrev()">‹</button><div class="cal-month" id="cal-month"></div><button class="cal-nav" onclick="calNext()">›</button></div>
     <div class="cal-grid" id="cal-dows"></div>
     <div class="cal-grid" id="cal-grid" style="margin-top:4px"></div>
-    <div id="slots-display" style="margin-top:14px"><div class="empty-state"><div class="empty-emoji">📅</div><div class="empty-title">Choisis une date</div><div class="empty-sub">Les points verts = creneaux disponibles</div></div></div>
+    <div id="slots-display" style="margin-top:14px"><div class="empty-state"><div class="empty-emoji">📅</div><div class="empty-title">Choisis une date</div><div class="empty-sub">Les points = creneaux & seances</div></div></div>
+    <!-- Bouton ajouter séance solo -->
+    <div style="padding:12px 16px 4px">
+      <button onclick="openAddSoloSession()" style="width:100%;padding:14px;background:var(--white);border:1.5px dashed rgba(155,89,182,.4);border-radius:var(--radius-sm);color:#9b59b6;font-size:13px;font-family:var(--sans);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+        <span style="font-size:18px">➕</span> Ajouter une seance solo
+      </button>
+    </div>
   </div>
 </div>
 
@@ -555,7 +572,7 @@ body{font-family:var(--sans);color:var(--ink)}
 
 <div class="screen" id="screen-galerie">
   <div class="screen-scroll">
-    <div class="top-bar"><div class="top-bar-inner"><div class="app-wordmark">Pilates by Violette</div><div class="screen-heading">La <em>galerie</em></div><div class="screen-sub">Partage tes moments pilates</div></div></div>
+    <div class="top-bar"><div class="top-bar-inner"><div class="app-wordmark">Pilates by Violette</div><div class="screen-heading">La <em>communaute</em></div><div class="screen-sub">Partage tes moments pilates</div></div></div>
     <div class="gal-tabs"><button class="gal-tab active" onclick="setGalTab(this,'feed')">Fil communaute</button><button class="gal-tab" onclick="setGalTab(this,'mine')">Mes posts</button></div>
     <button class="post-btn" onclick="openPostModal()">+ Partager une photo</button>
     <div id="gal-content"></div>
@@ -957,9 +974,9 @@ body{font-family:var(--sans);color:var(--ink)}
   <div id="nav-client" style="display:flex;flex:1">
     <button class="nav-btn active" id="nav-home" onclick="goTo('home',this)"><span class="nav-icon">🏠</span><span class="nav-label">Accueil</span></button>
     <button class="nav-btn" onclick="goTo('progress',this)"><span class="nav-icon">📈</span><span class="nav-label">Progres</span></button>
-    <button class="nav-btn" id="nav-seances" onclick="goTo('seances',this)"><span class="nav-icon">📅</span><span class="nav-label">Seances</span></button>
     <button class="nav-btn" onclick="goTo('agenda',this)"><span class="nav-icon">🗓️</span><span class="nav-label">Agenda</span></button>
     <button class="nav-btn" onclick="goTo('badges',this)"><span class="nav-icon">🏅</span><span class="nav-label">Badges</span></button>
+    <button class="nav-btn" onclick="goTo('galerie',this)"><span class="nav-icon">🌸</span><span class="nav-label">Communaute</span></button>
     <button class="nav-btn" id="nav-cl-messages" onclick="goTo('cl-messages',this)"><span class="nav-icon">💬</span><span class="nav-label">Messages<span id="cl-msg-badge" style="display:none;position:absolute;top:6px;right:12px;width:8px;height:8px;background:var(--rose-deep);border-radius:50%"></span></span></button>
     <button class="nav-btn" onclick="goTo('profile',this)"><span class="nav-icon">👤</span><span class="nav-label">Moi</span></button>
   </div>
@@ -1404,6 +1421,30 @@ async function loadClientData(){
 // ── CLIENT SESSION EDIT (solo only) ──
 let cseSessionId=null, cseDuration=60;
 
+function openAddSoloSession(){
+  // Open the session modal in "create" mode for today
+  cseSessionId=null;
+  cseDuration=60;
+  const today=dateKey(new Date());
+  document.getElementById('cse-title').textContent='Nouvelle seance solo';
+  document.getElementById('cse-note').value='';
+  document.querySelectorAll('.cse-dur-btn').forEach(b=>b.classList.toggle('active',parseInt(b.dataset.dur)===60));
+  // Add date field if not already present
+  let dateRow=document.getElementById('cse-date-row');
+  if(!dateRow){
+    const modal=document.querySelector('#modal-client-session-edit .modal-sheet');
+    dateRow=document.createElement('div');
+    dateRow.id='cse-date-row';
+    dateRow.className='form-field';
+    dateRow.innerHTML=`<label class="form-label">Date</label><input type="date" class="form-input" id="cse-date" value="${today}">`;
+    modal.insertBefore(dateRow, modal.querySelector('.form-field'));
+  } else {
+    document.getElementById('cse-date').value=today;
+    dateRow.style.display='block';
+  }
+  document.getElementById('modal-client-session-edit').classList.add('open');
+}
+
 function openClientSessionEdit(id, date, duration, note){
   cseSessionId=id;
   cseDuration=duration;
@@ -1421,11 +1462,21 @@ function setCseDur(btn, dur){
 }
 async function submitClientSessionEdit(){
   const note=document.getElementById('cse-note').value.trim();
-  const {error}=await sb.from('sessions').update({duration:cseDuration,note}).eq('id',cseSessionId);
+  let error;
+  if(cseSessionId){
+    ({error}=await sb.from('sessions').update({duration:cseDuration,note}).eq('id',cseSessionId));
+  } else {
+    const dateEl=document.getElementById('cse-date');
+    const date=dateEl?dateEl.value:dateKey(new Date());
+    ({error}=await sb.from('sessions').insert({user_id:STATE.user.id,date,type:'solo',duration:cseDuration,note}));
+    // Hide date field after creation
+    const dr=document.getElementById('cse-date-row');
+    if(dr) dr.style.display='none';
+  }
   if(error){ showToast('Erreur : '+error.message); return; }
   closeModal('modal-client-session-edit');
-  loadSessions();
-  showToast('Seance mise a jour !');
+  renderCalendar();
+  showToast(cseSessionId?'Seance mise a jour !':'Seance ajoutee !');
 }
 async function deleteClientSession(){
   if(!confirm('Supprimer cette seance ?')) return;
@@ -1558,8 +1609,21 @@ async function renderCalendar(){
   if (dowsEl.children.length===0) DOWS.forEach(d=>{const el=document.createElement('div');el.className='cal-dow';el.textContent=d;dowsEl.appendChild(el);});
   const year=calDate.getFullYear(), month=calDate.getMonth();
   document.getElementById('cal-month').textContent=calDate.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
-  const {data:slots}=await sb.from('slots').select('date').gte('date',dateKey(new Date(year,month,1))).lte('date',dateKey(new Date(year,month+1,0)));
+  const from=dateKey(new Date(year,month,1)), to=dateKey(new Date(year,month+1,0));
+  // Fetch slots, bookings (mine), all bookings (taken), sessions (solo)
+  const [{data:slots},{data:myBookings},{data:allBookings},{data:sessions}]=await Promise.all([
+    sb.from('slots').select('date,id').gte('date',from).lte('date',to),
+    sb.from('bookings').select('slot_id,slots(date)').eq('user_id',STATE.user?.id||'').neq('status','cancelled'),
+    sb.from('bookings').select('slot_id').neq('status','cancelled'),
+    STATE.user?sb.from('sessions').select('date,type').eq('user_id',STATE.user.id).gte('date',from).lte('date',to):{data:[]}
+  ]);
+  // Build date maps
   const slotDates=new Set((slots||[]).map(s=>s.date));
+  const myBookingDates=new Set((myBookings||[]).map(b=>b.slots?.date).filter(Boolean));
+  const takenSlotIds=new Set((allBookings||[]).map(b=>b.slot_id));
+  const takenDates=new Set((slots||[]).filter(s=>takenSlotIds.has(s.id)).map(s=>s.date));
+  const soloDates=new Set((sessions||[]).filter(s=>s.type==='solo').map(s=>s.date));
+  const violetteDates=new Set((sessions||[]).filter(s=>s.type!=='solo').map(s=>s.date));
   const firstDay=new Date(year,month,1), lastDay=new Date(year,month+1,0);
   let startOffset=(firstDay.getDay()+6)%7;
   const grid=document.getElementById('cal-grid'); grid.innerHTML='';
@@ -1570,23 +1634,59 @@ async function renderCalendar(){
     const btn=document.createElement('button'); btn.className='cal-day'; btn.textContent=d;
     if (key===todayKey) btn.classList.add('today');
     if (selectedDate===key) btn.classList.add('selected');
-    if (slotDates.has(key)) btn.classList.add('has-slots');
+    // Build dots
+    const dots=[];
+    if (myBookingDates.has(key)||violetteDates.has(key)) dots.push(selectedDate===key?'white':'var(--rose-deep)');
+    if (soloDates.has(key)) dots.push(selectedDate===key?'white':'#9b59b6');
+    if (slotDates.has(key)&&!myBookingDates.has(key)){
+      const hasFree=[...(slots||[])].filter(s=>s.date===key&&!takenSlotIds.has(s.id)).length>0;
+      if(hasFree) dots.push(selectedDate===key?'white':'#4caf50');
+      else if(takenDates.has(key)) dots.push(selectedDate===key?'white':'#e74c3c');
+    }
+    if(dots.length>0){
+      const dotsEl=document.createElement('div');
+      dotsEl.className='cal-dots';
+      dots.forEach(c=>{const dot=document.createElement('div');dot.className='cal-dot';dot.style.background=c;dotsEl.appendChild(dot);});
+      btn.appendChild(dotsEl);
+    }
     btn.onclick=()=>selectDate(key); grid.appendChild(btn);
   }
-  if (selectedDate) renderSlotsFor(selectedDate);
+  if (selectedDate) renderSlotsAndSessions(selectedDate);
 }
 function calPrev(){ calDate.setMonth(calDate.getMonth()-1); renderCalendar(); }
 function calNext(){ calDate.setMonth(calDate.getMonth()+1); renderCalendar(); }
 function selectDate(key){ selectedDate=key; renderCalendar(); }
 
-async function renderSlotsFor(key){
+async function renderSlotsFor(key){ return renderSlotsAndSessions(key); }
+async function renderSlotsAndSessions(key){
   const container=document.getElementById('slots-display');
-  const {data:slots}=await sb.from('slots').select('*').eq('date',key).order('time');
+  const [{data:slots},{data:sessions}]=await Promise.all([
+    sb.from('slots').select('*').eq('date',key).order('time'),
+    STATE.user?sb.from('sessions').select('*').eq('user_id',STATE.user.id).eq('date',key):Promise.resolve({data:[]})
+  ]);
   let html=`<div style="padding:12px 16px 4px;font-family:var(--serif);font-size:15px;color:var(--mid);font-style:italic">${formatDateFR(key)}</div>`;
+  // Sessions section
+  if(sessions&&sessions.length>0){
+    html+='<div style="padding:0 16px;margin-bottom:8px"><div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Mes seances ce jour</div>';
+    sessions.forEach(s=>{
+      const isSolo=s.type==='solo';
+      const dotColor=isSolo?'#9b59b6':'var(--rose-deep)';
+      html+=`<div class="slot-card" style="border-left:3px solid ${dotColor};cursor:${isSolo?'pointer':'default'}" ${isSolo?`onclick="openClientSessionEdit('${s.id}','${s.date}',${s.duration},'${s.note||''}')"`:''}>
+        <div class="slot-time" style="color:${dotColor}">${s.duration}min</div>
+        <div class="slot-info">
+          <div class="slot-title">${isSolo?'Seance solo':'Avec Violette'}</div>
+          <div class="slot-sub">${s.note||'Pas de note'}</div>
+        </div>
+        ${isSolo?'<span style="color:var(--muted);font-size:14px">✏️</span>':''}
+      </div>`;
+    });
+    html+='</div>';
+  }
+  // Slots section
   if (!slots||slots.length===0){
-    html+='<div style="margin:4px 16px 0"><div class="empty-state"><div class="empty-emoji">🌙</div><div class="empty-title">Aucun creneau ce jour</div></div></div>';
+    if(!sessions||sessions.length===0) html+='<div style="margin:4px 16px 0"><div class="empty-state"><div class="empty-emoji">🌙</div><div class="empty-title">Aucun creneau ce jour</div></div></div>';
   } else {
-    html+='<div class="slots-list">';
+    html+='<div style="padding:0 16px"><div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Creneaux avec Violette</div><div class="slots-list">';
     for (const s of slots){
       const myBooking=STATE.bookings.find(b=>b.slot_id===s.id);
       let btnHtml;
@@ -1594,12 +1694,12 @@ async function renderSlotsFor(key){
       else if (myBooking) btnHtml=`<button class="slot-btn slot-btn-pending" onclick="openClientBookingDetail('${myBooking.id}')">En attente ›</button>`;
       else {
         const {data:existing}=await sb.from('bookings').select('id').eq('slot_id',s.id).limit(1);
-        if (existing&&existing.length>0) btnHtml='<button class="slot-btn slot-btn-disabled">Reserve</button>';
+        if (existing&&existing.length>0) btnHtml='<button class="slot-btn slot-btn-disabled" style="background:#e74c3c20;color:#e74c3c">Reserve</button>';
         else btnHtml=`<button class="slot-btn slot-btn-book" onclick="openBookModal('${s.id}','${s.date}','${s.time}','${s.duration}','${s.type}','${s.note||''}')">Reserver</button>`;
       }
       html+=`<div class="slot-card"><div class="slot-time">${s.time}</div><div class="slot-info"><div class="slot-title">${s.type} - ${s.duration} min</div><div class="slot-sub">${s.note||'Avec Violette'}</div></div>${btnHtml}</div>`;
     }
-    html+='</div>';
+    html+='</div></div>';
   }
   container.innerHTML=html;
 }
