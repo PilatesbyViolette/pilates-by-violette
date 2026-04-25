@@ -499,7 +499,7 @@ body{font-family:var(--sans);color:var(--ink)}
         </div>
         <div id="home-week-dots" style="display:flex;gap:6px;margin-bottom:10px"></div>
         <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:13px;color:var(--mid)">Streak actuel</span>
+          <span style="font-size:13px;color:var(--mid)">Série actuelle</span>
           <span style="font-family:var(--serif);font-size:18px;color:var(--rose-deep)" id="home-streak">0 🔥</span>
         </div>
       </div>
@@ -1563,111 +1563,138 @@ async function loadClientData(){
 
 async function loadHomeScreen(){
   const p=STATE.profile;
-  const today=dateKey(new Date());
+  const now=new Date();
+  const today=dateKey(now);
+  const nowTime=now.toTimeString().substring(0,5);
 
-  // ── PROCHAINE SÉANCE ──
-  const {data:nextBookings}=await sb.from('bookings')
+  // All bookings
+  const {data:allBookings}=await sb.from('bookings')
     .select('*,slots(date,time,type,duration)')
     .eq('user_id',STATE.user.id)
-    .neq('status','cancelled')
-    .gte('slots.date',today)
-    .order('slots(date)',{ascending:true})
-    .limit(3);
-  const upcoming=(nextBookings||[]).filter(b=>b.slots&&b.slots.date>=today);
+    .neq('status','cancelled');
+
+  // PROCHAINE SEANCE: future (date > today OR date = today + time > now)
+  const future=(allBookings||[]).filter(b=>{
+    if(!b.slots) return false;
+    if(b.slots.date>today) return true;
+    if(b.slots.date===today && b.slots.time>nowTime) return true;
+    return false;
+  }).sort((a,b2)=>a.slots.date.localeCompare(b2.slots.date)||a.slots.time.localeCompare(b2.slots.time));
+
   const nextEl=document.getElementById('home-next-content');
   const bookBtn=document.getElementById('home-book-btn');
-  if(upcoming.length>0){
-    const b=upcoming[0];
+  const nextBlock=document.getElementById('home-next-booking');
+  if(future.length>0){
+    const b=future[0];
     const isConfirmed=b.status==='confirmed';
-    nextEl.innerHTML=`
-      <div style="display:flex;align-items:center;gap:12px">
-        <div style="width:44px;height:44px;border-radius:12px;background:${isConfirmed?'var(--sage-light)':'var(--rose-light)'};display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">${isConfirmed?'✅':'⏳'}</div>
-        <div>
-          <div style="font-size:14px;font-weight:500;color:var(--ink)">${formatDateFR(b.slots.date)} à ${b.slots.time}</div>
-          <div style="font-size:12px;color:var(--mid);margin-top:2px">${b.slots.type} · ${b.slots.duration} min · <span style="color:${isConfirmed?'var(--sage)':'var(--rose-deep)'}">${isConfirmed?'Confirmée':'En attente'}</span></div>
-        </div>
-      </div>`;
+    nextEl.innerHTML='<div style="display:flex;align-items:center;gap:12px">'
+      +'<div style="width:44px;height:44px;border-radius:12px;background:'+(isConfirmed?'var(--sage-light)':'var(--rose-light)')+';display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">'+(isConfirmed?'\u2705':'\u23F3')+'</div>'
+      +'<div><div style="font-size:14px;font-weight:500;color:var(--ink)">'+formatDateFR(b.slots.date)+' \u00E0 '+b.slots.time+'</div>'
+      +'<div style="font-size:12px;color:var(--mid);margin-top:2px">'+b.slots.type+' \u00B7 '+b.slots.duration+' min \u00B7 <span style="color:'+(isConfirmed?'var(--sage)':'var(--rose-deep)')+'">'+(isConfirmed?'Confirm\u00E9e':'En attente')+'</span></div></div></div>';
     bookBtn.style.display='none';
+    nextBlock.style.cursor='pointer';
+    nextBlock.onclick=()=>openClientBookingDetail(b.id);
   } else {
-    nextEl.innerHTML='<div style="font-size:13px;color:var(--muted);font-style:italic">Aucune séance prévue avec Violette</div>';
+    nextEl.innerHTML='<div style="font-size:13px;color:var(--muted);font-style:italic">Aucune s\u00E9ance pr\u00E9vue avec Violette</div>';
     bookBtn.style.display='block';
+    nextBlock.onclick=null;
   }
 
-  // ── SEMAINE + STREAK ──
-  const monday=new Date(); monday.setDate(monday.getDate()-((monday.getDay()+6)%7));
+  // SEMAINE
+  const monday=new Date(now); monday.setHours(0,0,0,0);
+  monday.setDate(monday.getDate()-((monday.getDay()+6)%7));
   const mondayKey=dateKey(monday);
   const sunday=new Date(monday); sunday.setDate(monday.getDate()+6);
   const sundayKey=dateKey(sunday);
   const {data:weekSessions}=await sb.from('sessions').select('date,type').eq('user_id',STATE.user.id).gte('date',mondayKey).lte('date',sundayKey);
-  const weekCount=(weekSessions||[]).filter(s=>s.type!=='solo').length + (weekSessions||[]).filter(s=>s.type==='solo').length;
+  const weekBk=(allBookings||[]).filter(b=>b.slots&&b.slots.date>=mondayKey&&b.slots.date<=sundayKey&&b.status==='confirmed'&&(b.slots.date<today||(b.slots.date===today&&b.slots.time<=nowTime)));
+  const weekDates=new Set((weekSessions||[]).map(s=>s.date));
+  weekBk.forEach(b=>weekDates.add(b.slots.date));
+  const weekCount=weekDates.size;
   const goal=p.weekly_goal||2;
   document.getElementById('home-week-count').textContent=weekCount+'/'+goal;
-  // Dots
   const dotsEl=document.getElementById('home-week-dots');
   dotsEl.innerHTML='';
   const dayNames=['L','M','M','J','V','S','D'];
   for(let i=0;i<7;i++){
     const d=new Date(monday); d.setDate(monday.getDate()+i);
     const dk=dateKey(d);
-    const hasSess=(weekSessions||[]).some(s=>s.date===dk);
+    const hasSess=weekDates.has(dk);
     const isToday=dk===today;
     const dot=document.createElement('div');
-    dot.style.cssText=`width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;background:${hasSess?'var(--rose-deep)':isToday?'var(--rose-light)':'var(--cream)'};color:${hasSess?'white':isToday?'var(--rose-deep)':'var(--muted)'};border:${isToday&&!hasSess?'1.5px solid var(--rose-deep)':'none'}`;
+    dot.style.cssText='width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;background:'+(hasSess?'var(--rose-deep)':isToday?'var(--rose-light)':'var(--cream)')+';color:'+(hasSess?'white':isToday?'var(--rose-deep)':'var(--muted)')+';border:'+(isToday&&!hasSess?'1.5px solid var(--rose-deep)':'none');
     dot.textContent=dayNames[i];
     dotsEl.appendChild(dot);
   }
-  // Streak
-  const {data:allSess}=await sb.from('sessions').select('date').eq('user_id',STATE.user.id).order('date',{ascending:false});
-  let streak=0;
-  if(allSess&&allSess.length>0){
-    const dates=new Set(allSess.map(s=>s.date));
-    let cur=new Date();
-    while(dates.has(dateKey(cur))){ streak++; cur.setDate(cur.getDate()-1); }
-  }
-  document.getElementById('home-streak').textContent=streak>0?streak+' 🔥':'0';
+  // Week block clickable
+  const weekCard=dotsEl.closest('[style*="background:var(--white)"]')||dotsEl.parentElement.parentElement;
+  if(weekCard){ weekCard.style.cursor='pointer'; weekCard.onclick=()=>goTo('agenda',document.querySelector('#nav-client .nav-btn[onclick*=agenda]')); }
 
-  // ── PROCHAIN BADGE ──
+  // SERIE (semaines consecutives avec au moins 1 seance)
+  const {data:allSess}=await sb.from('sessions').select('date').eq('user_id',STATE.user.id).order('date',{ascending:false});
+  let weekStreak=0;
+  if(allSess&&allSess.length>0){
+    const sessDates=new Set(allSess.map(s=>s.date));
+    let checkMon=new Date(monday);
+    while(weekStreak<52){
+      const wMon=dateKey(checkMon);
+      const wSun=dateKey(new Date(checkMon.getFullYear(),checkMon.getMonth(),checkMon.getDate()+6));
+      const has=[...sessDates].some(d=>d>=wMon&&d<=wSun);
+      if(!has) break;
+      weekStreak++;
+      checkMon.setDate(checkMon.getDate()-7);
+    }
+  }
+  document.getElementById('home-streak').textContent=weekStreak>0?weekStreak+(weekStreak>1?' semaines':' semaine')+' \uD83D\uDD25':'0';
+
+  // PROCHAIN BADGE
   const {data:allSessionsFull}=await sb.from('sessions').select('id').eq('user_id',STATE.user.id);
   const n=(allSessionsFull||[]).length;
-  const BADGES_DEF=[
-    {id:'b1',emoji:'🌱',name:'Premier pas',sub:'1ère séance',target:1},
-    {id:'b2',emoji:'🌿',name:'Régulière',sub:'5 séances',target:5},
-    {id:'b3',emoji:'🌸',name:'Épanouie',sub:'10 séances',target:10},
-    {id:'b4',emoji:'💪',name:'Déterminée',sub:'20 séances',target:20},
-    {id:'b5',emoji:'⭐',name:'Étoile',sub:'30 séances',target:30},
-    {id:'b6',emoji:'🏆',name:'Championne',sub:'50 séances',target:50},
-  ];
-  const nextBadge=BADGES_DEF.find(b=>n<b.target);
-  if(nextBadge){
-    document.getElementById('home-next-badge').style.display='block';
-    document.getElementById('home-badge-emoji').textContent=nextBadge.emoji;
-    document.getElementById('home-badge-name').textContent=nextBadge.name;
-    const prev=BADGES_DEF[BADGES_DEF.indexOf(nextBadge)-1];
-    const prevTarget=prev?prev.target:0;
-    const pct=Math.round((n-prevTarget)/(nextBadge.target-prevTarget)*100);
-    document.getElementById('home-badge-sub').textContent=n+'/'+nextBadge.target+' séances';
-    document.getElementById('home-badge-bar').style.width=pct+'%';
+  const BDEFS=[{e:'\uD83C\uDF31',name:'Premier pas',t:1},{e:'\uD83C\uDF3F',name:'R\u00E9guli\u00E8re',t:5},{e:'\uD83C\uDF38',name:'\u00C9panouie',t:10},{e:'\uD83D\uDCAA',name:'D\u00E9termin\u00E9e',t:20},{e:'\u2B50',name:'\u00C9toile',t:30},{e:'\uD83C\uDFC6',name:'Championne',t:50}];
+  const nb=BDEFS.find(b=>n<b.t);
+  const badgeBlock=document.getElementById('home-next-badge');
+  if(nb){
+    badgeBlock.style.display='block';
+    badgeBlock.style.cursor='pointer';
+    badgeBlock.onclick=()=>goTo('badges',document.querySelector('#nav-client .nav-btn[onclick*=badges]'));
+    document.getElementById('home-badge-emoji').textContent=nb.e;
+    document.getElementById('home-badge-name').textContent=nb.name;
+    const prev=BDEFS[BDEFS.indexOf(nb)-1];
+    const prevT=prev?prev.t:0;
+    document.getElementById('home-badge-sub').textContent=n+'/'+nb.t+' s\u00E9ances';
+    document.getElementById('home-badge-bar').style.width=Math.max(0,Math.round((n-prevT)/(nb.t-prevT)*100))+'%';
   }
 
-  // ── DERNIÈRE SÉANCE ──
-  const {data:lastSess}=await sb.from('sessions').select('*').eq('user_id',STATE.user.id).order('date',{ascending:false}).limit(1);
-  if(lastSess&&lastSess.length>0){
-    const s=lastSess[0];
+  // DERNIERE SEANCE: past booking or session, whichever is more recent
+  const past=(allBookings||[]).filter(b=>{
+    if(!b.slots||b.status!=='confirmed') return false;
+    return b.slots.date<today||(b.slots.date===today&&b.slots.time<=nowTime);
+  }).sort((a,b2)=>b2.slots.date.localeCompare(a.slots.date)||b2.slots.time.localeCompare(a.slots.time));
+  const lastBkItem=past.length>0?past[0]:null;
+  const lastSessItem=allSess&&allSess.length>0?allSess[0]:null;
+  let lastDate=null, lastIsBk=false;
+  if(lastBkItem){ lastDate=lastBkItem.slots.date; lastIsBk=true; }
+  if(lastSessItem&&(!lastDate||lastSessItem.date>lastDate)){ lastDate=lastSessItem.date; lastIsBk=false; }
+  const lastBlock=document.getElementById('home-last-session');
+  if(lastDate){
     const today2=new Date(); today2.setHours(0,0,0,0);
-    const sessDate=new Date(s.date+'T00:00:00');
-    const daysDiff=Math.max(0,Math.floor((today2-sessDate)/(1000*60*60*24)));
-    document.getElementById('home-last-session').style.display='block';
-    document.getElementById('home-last-content').innerHTML=`
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="font-size:24px">${s.type==='solo'?'🟣':'🩷'}</div>
-        <div>
-          <div style="font-size:13px;font-weight:500;color:var(--ink)">${formatDateFR(s.date)} · ${s.duration} min</div>
-          ${s.note?`<div style="font-size:12px;color:var(--mid);margin-top:2px;font-style:italic">"${s.note}"</div>`:''}
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">Il y a ${daysDiff===0?'aujourd’hui':daysDiff===1?'hier':daysDiff+' jours'}</div>
-        </div>
-      </div>`;
-    // Inactivity nudge
-    if(daysDiff>=7) document.getElementById('home-inactive-nudge').style.display='block';
+    const sessDate=new Date(lastDate+'T00:00:00');
+    const diff=Math.max(0,Math.floor((today2-sessDate)/(1000*60*60*24)));
+    const ago=diff===0?'Aujourd\u2019hui':diff===1?'Hier':'Il y a '+diff+' jours';
+    let icon,title,sub='';
+    if(lastIsBk&&lastBkItem){
+      icon='\uD83D\uDC9C';
+      title=formatDateFR(lastDate)+' \u00B7 '+lastBkItem.slots.duration+' min \u00B7 '+lastBkItem.slots.type;
+      lastBlock.style.cursor='pointer';
+      lastBlock.onclick=()=>openClientBookingDetail(lastBkItem.id);
+    } else {
+      const sess=(allSess||[]).find(x=>x.date===lastDate)||{type:'solo',duration:60};
+      icon=sess.type==='solo'?'\uD83D\uDFE3':'\uD83D\uDC9C';
+      title=formatDateFR(lastDate)+' \u00B7 '+(sess.duration||60)+' min';
+    }
+    lastBlock.style.display='block';
+    document.getElementById('home-last-content').innerHTML='<div style="display:flex;align-items:center;gap:10px"><div style="font-size:24px">'+icon+'</div><div><div style="font-size:13px;font-weight:500;color:var(--ink)">'+title+'</div>'+sub+'<div style="font-size:11px;color:var(--muted);margin-top:2px">'+ago+'</div></div></div>';
+    if(diff>=7) document.getElementById('home-inactive-nudge').style.display='block';
   }
 }
 
