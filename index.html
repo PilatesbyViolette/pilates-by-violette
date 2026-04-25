@@ -7,6 +7,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Pilates by Violette">
 <meta name="theme-color" content="#fce8f0">
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj48cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQ4IiBmaWxsPSIjZjRhMGJjIi8+PHRleHQgeD0iOTYiIHk9IjExMCIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc2l6ZT0iNzIiIGZvbnQtc3R5bGU9Iml0YWxpYyIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPlBiVjwvdGV4dD48L3N2Zz4=">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj48cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQ4IiBmaWxsPSIjZjRhMGJjIi8+PHRleHQgeD0iOTYiIHk9IjExMCIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc2l6ZT0iNzIiIGZvbnQtc3R5bGU9Iml0YWxpYyIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPlBiVjwvdGV4dD48L3N2Zz4=">
 <title>Pilates by Violette</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -369,6 +371,11 @@ body{font-family:var(--sans);color:var(--ink)}
 .goal-btn{width:48px;height:40px;border-radius:10px;border:1px solid rgba(244,160,188,.4);background:var(--white);color:var(--mid);font-size:13px;font-family:var(--sans);cursor:pointer;transition:all .2s}
 .goal-btn.active{background:var(--rose-deep);color:white;border-color:var(--rose-deep)}
 
+.typing-dots{display:inline-flex;gap:4px;padding:10px 14px;background:var(--white);border-radius:18px;border-bottom-left-radius:4px;align-self:flex-start;box-shadow:0 1px 4px rgba(200,100,140,.1)}
+.typing-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:typing-bounce .8s infinite}
+.typing-dot:nth-child(2){animation-delay:.15s}
+.typing-dot:nth-child(3){animation-delay:.3s}
+@keyframes typing-bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
 </style>
 </head>
 <body>
@@ -650,6 +657,7 @@ body{font-family:var(--sans);color:var(--ink)}
       <div class="menu-item" onclick="showToast('Bientot disponible 🌸')"><div class="menu-item-icon">✨</div><div class="menu-item-text"><div class="menu-item-title">Passer Premium</div><div class="menu-item-sub">9,90 euros/mois</div></div><div class="menu-item-arrow">›</div></div>
       <div class="menu-item" onclick="logout()"><div class="menu-item-icon">🚪</div><div class="menu-item-text"><div class="menu-item-title">Se deconnecter</div></div><div class="menu-item-arrow">›</div></div>
     </div>
+    <div style="margin:0 16px 16px;background:var(--white);border-radius:var(--radius-sm);padding:14px;box-shadow:0 1px 6px rgba(200,100,140,.06)" id="storage-indicator"></div>
   </div>
 </div>
 
@@ -841,11 +849,11 @@ body{font-family:var(--sans);color:var(--ink)}
       <div style="background:var(--white);border-radius:var(--radius-sm);padding:14px;box-shadow:0 1px 6px rgba(200,100,140,.06);margin-bottom:12px">
         <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Periode principale</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px" id="stats-preset-btns">
-          <button class="stats-preset active" onclick="setStatsPreset(this,'week')">Cette semaine</button>
-          <button class="stats-preset" onclick="setStatsPreset(this,'month')">Ce mois</button>
-          <button class="stats-preset" onclick="setStatsPreset(this,'quarter')">Ce trimestre</button>
-          <button class="stats-preset" onclick="setStatsPreset(this,'year')">Cette annee</button>
-          <button class="stats-preset" onclick="setStatsPreset(this,'custom')">Personnalise</button>
+          <button class="stats-preset active" data-preset="week" onclick="setStatsPreset(this,'week')">Cette semaine</button>
+          <button class="stats-preset" data-preset="month" onclick="setStatsPreset(this,'month')">Ce mois</button>
+          <button class="stats-preset" data-preset="quarter" onclick="setStatsPreset(this,'quarter')">Ce trimestre</button>
+          <button class="stats-preset" data-preset="year" onclick="setStatsPreset(this,'year')">Cette annee</button>
+          <button class="stats-preset" data-preset="custom" onclick="setStatsPreset(this,'custom')">Personnalise</button>
         </div>
         <div id="stats-custom-dates" style="display:none;gap:8px;align-items:center;margin-bottom:10px">
           <div style="display:flex;gap:8px;align-items:center">
@@ -1122,7 +1130,7 @@ body{font-family:var(--sans);color:var(--ink)}
     <div class="top-bar" style="flex-shrink:0"><div class="top-bar-inner"><div class="app-wordmark">Pilates by Violette</div><div class="screen-heading">Mes <em>messages</em></div></div></div>
     <div id="cl-chat-box" style="flex:1;overflow-y:auto;padding:12px 16px 8px;display:flex;flex-direction:column;gap:8px;min-height:0"></div>
     <div style="flex-shrink:0;padding:10px 12px;background:var(--white);border-top:.5px solid rgba(244,160,188,.2);display:flex;gap:8px;align-items:flex-end">
-      <textarea id="cl-msg-input" placeholder="Ecris un message..." style="flex:1;resize:none;border:1px solid rgba(244,160,188,.4);border-radius:20px;padding:10px 14px;font-family:var(--sans);font-size:13px;color:var(--ink);background:var(--cream);outline:none;max-height:100px;overflow-y:auto" rows="1" oninput="autoResizeTextarea(this)"></textarea>
+      <textarea id="cl-msg-input" placeholder="Ecris un message..." oninput="autoResizeTextarea(this);sendTyping('cl')" style="flex:1;resize:none;border:1px solid rgba(244,160,188,.4);border-radius:20px;padding:10px 14px;font-family:var(--sans);font-size:13px;color:var(--ink);background:var(--cream);outline:none;max-height:100px;overflow-y:auto" rows="1" oninput="autoResizeTextarea(this)"></textarea>
       <button onclick="sendClientMessage()" style="width:40px;height:40px;border-radius:50%;background:var(--rose-deep);border:none;color:white;font-size:18px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center">➤</button>
     </div>
 </div>
@@ -1148,7 +1156,7 @@ body{font-family:var(--sans);color:var(--ink)}
     </div>
     <div id="adm-chat-box" style="flex:1;overflow-y:auto;padding:12px 16px 8px;display:flex;flex-direction:column;gap:8px;min-height:0"></div>
     <div style="flex-shrink:0;padding:10px 12px;background:var(--white);border-top:.5px solid rgba(244,160,188,.2);display:flex;gap:8px;align-items:flex-end">
-      <textarea id="adm-msg-input" placeholder="Repondre..." style="flex:1;resize:none;border:1px solid rgba(244,160,188,.4);border-radius:20px;padding:10px 14px;font-family:var(--sans);font-size:13px;color:var(--ink);background:var(--cream);outline:none;max-height:100px;overflow-y:auto" rows="1" oninput="autoResizeTextarea(this)"></textarea>
+      <textarea id="adm-msg-input" placeholder="Repondre..." oninput="autoResizeTextarea(this);sendTyping('adm')" style="flex:1;resize:none;border:1px solid rgba(244,160,188,.4);border-radius:20px;padding:10px 14px;font-family:var(--sans);font-size:13px;color:var(--ink);background:var(--cream);outline:none;max-height:100px;overflow-y:auto" rows="1" oninput="autoResizeTextarea(this)"></textarea>
       <button onclick="sendAdminMessage()" style="width:40px;height:40px;border-radius:50%;background:var(--rose-deep);border:none;color:white;font-size:18px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center">➤</button>
     </div>
 </div>
@@ -1515,6 +1523,7 @@ function goTo(id, btn){
   if (id==='adm-client') { /* loaded by openAdmClientDetail */ }
   if (id==='adm-offre') loadOffre();
   if (id==='adm-stats') { /* loaded by openStats */ }
+  if (id==='adm-profile') checkStorageUsage();
   if (id==='cl-messages'){ loadClientMessages(); }
   if (id==='adm-messages'){ loadAdmConversations(); }
   if (id==='adm-chat'){ /* loaded by openAdmChat */ }
@@ -1904,7 +1913,6 @@ async function submitSession(){
   closeModal('modal-session');
   await loadSessions();
   showToast('Seance enregistree !');
-  completeStep('step-seance');
 }
 
 // ── AGENDA CLIENT ──
@@ -2047,8 +2055,8 @@ async function submitBooking(){
   closeModal('modal-book');
   await loadBookings();
   await renderSlotsFor(selectedDate);
-  completeStep('step-booking');
-  showToast('Demande envoyee a Violette !');
+  await loadHomeScreen();
+  showToast('Demande envoy\u00E9e \u00E0 Violette ! 🌸');
 }
 
 // ── BADGES ──
@@ -2111,7 +2119,15 @@ function openPostModal(){
     b.style.background=i===0?'var(--rose-deep)':'transparent';
     b.style.color=i===0?'white':'var(--mid)';
   });
-  postVis='public';
+  const prefs=JSON.parse(localStorage.getItem('pbv_prefs')||'{}');
+  postVis=prefs.publicDefault===false?'private':'public';
+  // Update button states accordingly
+  document.querySelectorAll('#modal-post .type-btn').forEach(b=>{
+    const isActive=b.dataset.vis===postVis;
+    b.classList.toggle('active',isActive);
+    b.style.background=isActive?'var(--rose-deep)':'transparent';
+    b.style.color=isActive?'white':'var(--mid)';
+  });
   document.getElementById('modal-post').classList.add('open');
 }
 
@@ -2185,13 +2201,17 @@ async function loadAndRenderGallery(tab){
   let query=sb.from('posts').select('*, users(firstname,lastname,role,pseudo)').order('created_at',{ascending:false});
   if(tab==='feed') query=query.eq('visibility','public');
   else query=query.eq('user_id',STATE.user.id);
-  const {data:posts}=await query;
+  const [{data:posts},{data:myLikes}]=await Promise.all([
+    query,
+    STATE.user?sb.from('post_likes').select('post_id').eq('user_id',STATE.user.id):{data:[]}
+  ]);
+  const likedSet=new Set((myLikes||[]).map(l=>l.post_id));
   const el=document.getElementById('gal-content');
-  if(!posts||posts.length===0){ el.innerHTML='<div style="margin:16px"><div class="empty-state"><div class="empty-emoji">🌸</div><div class="empty-title">Sois la premiere a partager !</div><div class="empty-sub">Partage un moment de ta pratique</div></div></div>'; return; }
-  el.innerHTML=posts.map(p=>renderPost(p)).join('');
+  if(!posts||posts.length===0){ el.innerHTML='<div style="margin:16px"><div class="empty-state"><div class="empty-emoji">🌸</div><div class="empty-title">Sois la première à partager !</div></div></div>'; return; }
+  el.innerHTML=posts.map(p=>renderPost(p,likedSet.has(p.id))).join('');
 }
 
-function renderPost(p){
+function renderPost(p, isLiked=false){
   const name=p.users?(p.users.pseudo||(p.users.firstname||'')+' '+(p.users.lastname||'').trim()):'Anonyme';
   const initial=name.trim()[0]?.toUpperCase()||'?';
   const isViolette=p.users&&p.users.role==='admin';
@@ -2210,20 +2230,26 @@ function renderPost(p){
     ${imgHtml}
     <div class="post-caption">${p.caption}</div>
     <div class="post-actions">
-      <button class="post-action" onclick="toggleLike('${p.id}',this)">🤍 J’aime</button>
+      <button class="post-action" onclick="toggleLike('${p.id}',this)">${isLiked?'❤️':'🤍'} J’aime</button>
       <span class="post-like-count" id="likes-${p.id}">${p.likes||0} j’aimes</span>
     </div>
   </div>`;
 }
 
 async function toggleLike(postId, btn){
+  if(!STATE.user) return;
   const liked=btn.dataset.liked==='1';
-  const {data:post}=await sb.from('posts').select('likes').eq('id',postId).single();
-  const newLikes=Math.max(0,(post?.likes||0)+(liked?-1:1));
-  await sb.from('posts').update({likes:newLikes}).eq('id',postId);
-  document.getElementById('likes-'+postId).textContent=newLikes+" j\u2019aimes";
+  if(liked){
+    await sb.from('post_likes').delete().eq('post_id',postId).eq('user_id',STATE.user.id);
+  } else {
+    await sb.from('post_likes').upsert({post_id:postId,user_id:STATE.user.id},{onConflict:'post_id,user_id'});
+  }
+  const {count}=await sb.from('post_likes').select('id',{count:'exact',head:true}).eq('post_id',postId);
+  await sb.from('posts').update({likes:count||0}).eq('id',postId);
+  const cnt=count||0;
+  document.getElementById('likes-'+postId).textContent=cnt+(cnt===1?' j’aime':' j’aimes');
   btn.dataset.liked=liked?'0':'1';
-  btn.textContent=liked?"\u{1F90D} J\u2019aime":"\u2764\uFE0F J\u2019aime";
+  btn.textContent=liked?'🤍 J’aime':'❤️ J’aime';
 }
 
 async function deletePost(postId, imageUrl){
@@ -2816,7 +2842,8 @@ const BAR_COLORS=['var(--rose-deep)','var(--sage)','var(--gold)','var(--lilac)',
 
 function openStats(){
   goTo('adm-stats', null);
-  setStatsPreset(document.querySelector('.stats-preset'), 'month');
+  const btn=document.querySelector('.stats-preset.active')||document.querySelector('.stats-preset');
+  if(btn) setStatsPreset(btn, btn.dataset.preset||'month');
 }
 
 function setStatsPreset(btn, preset){
@@ -3072,27 +3099,35 @@ function renderMessages(messages, myId, box){
 }
 
 // ── CLIENT MESSAGES ──
+let _clMsgChannel=null;
 async function loadClientMessages(){
   if(!STATE.user) return;
   const violetteId=await getVioletteId();
   const box=document.getElementById('cl-chat-box');
   if(!violetteId){
-    box.innerHTML='<div style="text-align:center;padding:2rem;font-size:13px;color:var(--muted)">La messagerie sera disponible apres ta premiere connexion avec Violette</div>';
+    box.innerHTML='<div style="text-align:center;padding:2rem;font-size:13px;color:var(--muted)">La messagerie sera disponible après ta première connexion avec Violette</div>';
     return;
   }
-  const {data}=await sb.from('messages')
-    .select('*')
-    .or(`and(sender_id.eq.${STATE.user.id},receiver_id.eq.${violetteId}),and(sender_id.eq.${violetteId},receiver_id.eq.${STATE.user.id}),sender_id.is.null`)
-    .order('created_at',{ascending:true});
-  const msgs=data||[];
-  if(msgs.length===0){
-    box.innerHTML='<div style="text-align:center;padding:2rem"><div style="font-size:32px;margin-bottom:8px">💬</div><div style="font-size:13px;color:var(--muted)">Envoie un premier message a Violette !</div></div>';
-  } else {
-    renderMessages(msgs, STATE.user.id, box);
-  }
-  // Mark as read
-  await sb.from('messages').update({read:true}).eq('receiver_id',STATE.user.id).eq('read',false);
-  updateClientMsgBadge();
+  const fetchAndRender=async()=>{
+    const {data}=await sb.from('messages')
+      .select('*')
+      .or(`and(sender_id.eq.${STATE.user.id},receiver_id.eq.${violetteId}),and(sender_id.eq.${violetteId},receiver_id.eq.${STATE.user.id}),sender_id.is.null`)
+      .order('created_at',{ascending:true});
+    const msgs=data||[];
+    if(msgs.length===0){
+      box.innerHTML='<div style="text-align:center;padding:2rem"><div style="font-size:32px;margin-bottom:8px">💬</div><div style="font-size:13px;color:var(--muted)">Envoie un premier message à Violette !</div></div>';
+    } else {
+      renderMessages(msgs, STATE.user.id, box);
+    }
+    await sb.from('messages').update({read:true}).eq('receiver_id',STATE.user.id).eq('read',false);
+    updateClientMsgBadge();
+  };
+  await fetchAndRender();
+  // Realtime subscription
+  if(_clMsgChannel) sb.removeChannel(_clMsgChannel);
+  _clMsgChannel=sb.channel('cl-messages-'+STATE.user.id)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},()=>fetchAndRender())
+    .subscribe();
 }
 
 async function sendClientMessage(){
@@ -3170,13 +3205,21 @@ async function openAdmChat(clientId, clientName){
   updateAdmMsgBadge();
 }
 
+let _admMsgChannel=null;
 async function loadAdmChatMessages(){
   const violetteId=await getVioletteId();
-  const {data}=await sb.from('messages')
-    .select('*')
-    .or(`and(sender_id.eq.${admChatClientId},receiver_id.eq.${violetteId}),and(sender_id.eq.${violetteId},receiver_id.eq.${admChatClientId}),sender_id.is.null`)
-    .order('created_at',{ascending:true});
-  renderMessages(data||[], violetteId, document.getElementById('adm-chat-box'));
+  const fetchAndRender=async()=>{
+    const {data}=await sb.from('messages')
+      .select('*')
+      .or(`and(sender_id.eq.${admChatClientId},receiver_id.eq.${violetteId}),and(sender_id.eq.${violetteId},receiver_id.eq.${admChatClientId}),sender_id.is.null`)
+      .order('created_at',{ascending:true});
+    renderMessages(data||[], violetteId, document.getElementById('adm-chat-box'));
+  };
+  await fetchAndRender();
+  if(_admMsgChannel) sb.removeChannel(_admMsgChannel);
+  _admMsgChannel=sb.channel('adm-messages-'+admChatClientId)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},()=>fetchAndRender())
+    .subscribe();
 }
 
 async function sendAdminMessage(){
@@ -3201,6 +3244,56 @@ function updateAdmMsgBadge(count){
   } else {
     badge.style.display=count>0?'inline-block':'none';
   }
+}
+
+// ── TYPING INDICATOR ──
+let _typingTimeout=null;
+async function sendTyping(side){
+  if(!STATE.user) return;
+  const vid=await getVioletteId(); if(!vid) return;
+  const channelName=side==='cl'?'typing-'+STATE.user.id+'-'+vid:'typing-'+admChatClientId+'-'+vid;
+  sb.channel(channelName).send({type:'broadcast',event:'typing',payload:{user:STATE.user.id}});
+}
+function subscribeTyping(channelName, box){
+  return sb.channel(channelName)
+    .on('broadcast',{event:'typing'},()=>{
+      let dots=box.querySelector('.typing-indicator');
+      if(!dots){
+        dots=document.createElement('div');
+        dots.className='typing-indicator';
+        dots.style.display='flex';
+        dots.innerHTML='<div class="typing-dots"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
+        box.appendChild(dots);
+        box.scrollTop=box.scrollHeight;
+      }
+      clearTimeout(_typingTimeout);
+      _typingTimeout=setTimeout(()=>dots.remove(),3000);
+    })
+    .subscribe();
+}
+
+// ── STORAGE MONITORING ──
+async function checkStorageUsage(){
+  try{
+    const [{data:community},{data:avatars}]=await Promise.all([
+      sb.storage.from('community').list('',{limit:1000}),
+      sb.storage.from('avatars').list('',{limit:1000})
+    ]);
+    const totalFiles=(community||[]).length+(avatars||[]).length;
+    // Estimate: avg 200KB per photo, 1GB free = ~5000 files
+    const pct=Math.round(totalFiles/50); // 50 files ~ 10MB ~ 1% of 1GB
+    const el=document.getElementById('storage-indicator');
+    if(el){
+      el.innerHTML='';
+      const used=Math.min(pct,100);
+      el.innerHTML='<div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Stockage photos</div>'
+        +'<div style="display:flex;align-items:center;gap:10px">'
+        +'<div style="flex:1;height:8px;background:var(--rose-light);border-radius:4px"><div style="height:100%;border-radius:4px;width:'+used+'%;background:'+(used>90?'var(--danger)':used>70?'var(--gold)':'var(--sage)')+';"></div></div>'
+        +'<span style="font-size:12px;color:var(--mid)">'+totalFiles+' fichiers</span>'
+        +'</div>';
+      if(used>=90) el.insertAdjacentHTML('beforeend','<div style="font-size:11px;color:var(--danger);margin-top:4px">⚠️ Stockage presque plein - pensez à nettoyer</div>');
+    }
+  }catch(e){}
 }
 
 let _violetteIdCache=null;
@@ -3264,7 +3357,7 @@ async function loadSettings(){
   document.getElementById('set-motivation').value=p.motivation||'';
   // Parcours
   if(p.practice_start) document.getElementById('set-practice-start').value=p.practice_start;
-  const goal=p.weekly_goal||1;
+  const goal=p.weekly_goal||2;
   document.querySelectorAll('.goal-btn').forEach(b=>b.classList.toggle('active',parseInt(b.dataset.goal)===goal));
   // Prefs stored in localStorage
   const prefs=JSON.parse(localStorage.getItem('pbv_prefs')||'{}');
