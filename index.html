@@ -9,7 +9,128 @@
 <meta name="theme-color" content="#fce8f0">
 <title>Pilates by Violette</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+// ── PARAMÈTRES ──
+const THEMES = {
+  rose:  {main:'#f4a0bc',light:'#fce8f0',mid:'#e8789a',deep:'#c45878',cream:'#fdf8f3'},
+  sage:  {main:'#8aab8e',light:'#d4e8d4',mid:'#5a8a5e',deep:'#3a6e40',cream:'#f4f9f4'},
+  gold:  {main:'#c8a870',light:'#f5ecd8',mid:'#a08040',deep:'#7a6020',cream:'#fdf8ee'},
+  lilac: {main:'#b89bc8',light:'#ecdaf5',mid:'#9070b0',deep:'#6b3fa0',cream:'#f8f4fd'}
+};
+
+function setTheme(btn, theme){
+  document.querySelectorAll('.theme-btn').forEach(b=>{
+    b.style.border='2px solid transparent';
+  });
+  btn.style.border='2px solid var(--rose-deep)';
+  btn.classList.add('active');
+  const t=THEMES[theme];
+  if(!t) return;
+  const root=document.documentElement;
+  root.style.setProperty('--rose', t.main);
+  root.style.setProperty('--rose-light', t.light);
+  root.style.setProperty('--rose-mid', t.mid);
+  root.style.setProperty('--rose-deep', t.deep);
+  root.style.setProperty('--cream', t.cream);
+  localStorage.setItem('pbv_theme', theme);
+}
+
+function applyStoredTheme(){
+  const theme=localStorage.getItem('pbv_theme')||'rose';
+  const btn=document.querySelector(`.theme-btn[data-theme="${theme}"]`);
+  if(btn) setTheme(btn, theme);
+}
+
+function setGoal(btn, goal){
+  document.querySelectorAll('.goal-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+async function loadSettings(){
+  const p=STATE.profile;
+  if(!p) return;
+  document.getElementById('set-firstname').value=p.firstname||'';
+  document.getElementById('set-lastname').value=p.lastname||'';
+  document.getElementById('set-email').value=p.email||STATE.user?.email||'';
+  document.getElementById('set-phone').value=p.phone||'';
+  document.getElementById('set-pseudo').value=p.pseudo||'';
+  document.getElementById('set-motivation').value=p.motivation||'';
+  // Parcours
+  if(p.practice_start) document.getElementById('set-practice-start').value=p.practice_start;
+  const goal=p.weekly_goal||1;
+  document.querySelectorAll('.goal-btn').forEach(b=>b.classList.toggle('active',parseInt(b.dataset.goal)===goal));
+  // Prefs stored in localStorage
+  const prefs=JSON.parse(localStorage.getItem('pbv_prefs')||'{}');
+  document.getElementById('set-public-default').checked=prefs.publicDefault!==false;
+  document.getElementById('set-notif-seance').checked=prefs.notifSeance!==false;
+  document.getElementById('set-notif-citation').checked=prefs.notifCitation!==false;
+  // Theme
+  applyStoredTheme();
+  const theme=localStorage.getItem('pbv_theme')||'rose';
+  document.querySelectorAll('.theme-btn').forEach(b=>{
+    const active=b.dataset.theme===theme;
+    b.style.border=active?'2px solid var(--rose-deep)':'2px solid transparent';
+  });
+}
+
+async function saveAccountSettings(){
+  const firstname=document.getElementById('set-firstname').value.trim();
+  const lastname=document.getElementById('set-lastname').value.trim();
+  const phone=document.getElementById('set-phone').value.trim();
+  const pseudo=document.getElementById('set-pseudo').value.trim();
+  const motivation=document.getElementById('set-motivation').value.trim();
+  const {error}=await sb.from('users').update({firstname,lastname,phone,pseudo,motivation}).eq('id',STATE.user.id);
+  if(error){ showToast('Erreur: '+error.message); return; }
+  STATE.profile={...STATE.profile,firstname,lastname,phone,pseudo,motivation};
+  document.getElementById('prof-name').textContent=(firstname+' '+lastname).trim();
+  showToast('Informations sauvegardées ✓');
+}
+
+function savePrivacySettings(){
+  const prefs=JSON.parse(localStorage.getItem('pbv_prefs')||'{}');
+  prefs.publicDefault=document.getElementById('set-public-default').checked;
+  localStorage.setItem('pbv_prefs', JSON.stringify(prefs));
+  // Apply to post modal default
+  postVis=prefs.publicDefault?'public':'private';
+}
+
+function saveNotifSettings(){
+  const prefs=JSON.parse(localStorage.getItem('pbv_prefs')||'{}');
+  prefs.notifSeance=document.getElementById('set-notif-seance').checked;
+  prefs.notifCitation=document.getElementById('set-notif-citation').checked;
+  localStorage.setItem('pbv_prefs', JSON.stringify(prefs));
+  showToast('Préférences sauvegardées');
+}
+
+async function saveParcours(){
+  const practice_start=document.getElementById('set-practice-start').value;
+  const weekly_goal=parseInt(document.querySelector('.goal-btn.active')?.dataset.goal||1);
+  const {error}=await sb.from('users').update({practice_start,weekly_goal}).eq('id',STATE.user.id);
+  if(error){ showToast('Erreur: '+error.message); return; }
+  STATE.profile={...STATE.profile,practice_start,weekly_goal};
+  showToast('Parcours sauvegardé ✓');
+}
+
+async function deleteAccount(){
+  const confirmed=confirm('Es-tu sûre de vouloir supprimer définitivement ton compte ? Cette action est irréversible.');
+  if(!confirmed) return;
+  const doubleConfirm=confirm('Dernière confirmation — toutes tes données seront supprimées. Continuer ?');
+  if(!doubleConfirm) return;
+  // Delete user data
+  await Promise.all([
+    sb.from('sessions').delete().eq('user_id',STATE.user.id),
+    sb.from('bookings').delete().eq('user_id',STATE.user.id),
+    sb.from('messages').delete().eq('sender_id',STATE.user.id),
+    sb.from('messages').delete().eq('receiver_id',STATE.user.id),
+    sb.from('posts').delete().eq('user_id',STATE.user.id),
+    sb.from('encaissements').delete().eq('user_id',STATE.user.id),
+    sb.from('users').delete().eq('id',STATE.user.id),
+  ]);
+  await sb.auth.signOut();
+  location.reload();
+}
+
+</script>
 <style>
 :root{--rose:#f4a0bc;--rose-light:#fce8f0;--rose-mid:#e8789a;--rose-deep:#c45878;--cream:#fdf8f3;--sage:#8aab8e;--sage-light:#d4e8d4;--gold:#c8a870;--gold-light:#f0e4c8;--lilac:#c8a8d8;--lilac-light:#f0e8f8;--peach:#f8c8a0;--peach-light:#fef0e4;--ink:#2a2420;--mid:#6b5e58;--muted:#a89890;--white:#ffffff;--danger:#d85050;--serif:'Cormorant Garamond',Georgia,serif;--sans:'DM Sans',sans-serif;--radius:20px;--radius-sm:12px}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -359,6 +480,16 @@ body{font-family:var(--sans);color:var(--ink)}
 .conv-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:.5px solid rgba(244,160,188,.15);cursor:pointer}
 .conv-unread-dot{width:10px;height:10px;background:var(--rose-deep);border-radius:50%;flex-shrink:0}
 
+
+.toggle-switch{position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:rgba(200,150,170,.3);border-radius:24px;transition:.3s}
+.toggle-slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.3s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle-switch input:checked+.toggle-slider{background:var(--rose-deep)}
+.toggle-switch input:checked+.toggle-slider:before{transform:translateX(20px)}
+.goal-btn{width:48px;height:40px;border-radius:10px;border:1px solid rgba(244,160,188,.4);background:var(--white);color:var(--mid);font-size:13px;font-family:var(--sans);cursor:pointer;transition:all .2s}
+.goal-btn.active{background:var(--rose-deep);color:white;border-color:var(--rose-deep)}
+
 </style>
 </head>
 <body>
@@ -588,11 +719,12 @@ body{font-family:var(--sans);color:var(--ink)}
           <div style="position:absolute;bottom:0;right:0;width:22px;height:22px;border-radius:50%;background:var(--rose-deep);display:flex;align-items:center;justify-content:center;border:2px solid white;font-size:11px">📷</div>
           <input type="file" id="avatar-file-input" accept="image/*" style="display:none" onchange="handleAvatarSelect(this)">
         </div>
-        <div>
+        <div style="flex:1">
           <div class="profile-name" id="prof-name">—</div>
           <div class="profile-since">Pilates by Violette 🌸</div>
           <div class="profile-type">🌸 Cliente</div>
         </div>
+        <button onclick="goTo('settings',document.querySelector('#nav-client .nav-btn.active'))" style="background:none;border:none;cursor:pointer;font-size:22px;padding:4px;color:var(--mid);align-self:flex-start">⚙️</button>
       </div>
     </div>
     <div class="profile-stats">
@@ -608,6 +740,87 @@ body{font-family:var(--sans);color:var(--ink)}
     <div class="menu-section">
       <div class="menu-item" onclick="showToast('Bientot disponible 🌸')"><div class="menu-item-icon">✨</div><div class="menu-item-text"><div class="menu-item-title">Passer Premium</div><div class="menu-item-sub">9,90 euros/mois</div></div><div class="menu-item-arrow">›</div></div>
       <div class="menu-item" onclick="logout()"><div class="menu-item-icon">🚪</div><div class="menu-item-text"><div class="menu-item-title">Se deconnecter</div></div><div class="menu-item-arrow">›</div></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- PARAMÈTRES -->
+<div class="screen" id="screen-settings">
+  <div class="screen-scroll">
+    <div class="top-bar">
+      <div class="top-bar-inner">
+        <button onclick="goTo('profile',document.querySelector('#nav-client .nav-btn[onclick*=profile]'))" style="background:none;border:none;color:var(--rose-deep);font-size:13px;cursor:pointer;padding:0;font-family:var(--sans);margin-bottom:6px">‹ Retour</button>
+        <div class="screen-heading">Mes <em>paramètres</em></div>
+      </div>
+    </div>
+
+    <!-- INFOS DU COMPTE -->
+    <div style="padding:12px 16px 0">
+      <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;padding:0 2px">Infos du compte</div>
+      <div style="background:var(--white);border-radius:var(--radius-sm);padding:14px;box-shadow:0 1px 6px rgba(200,100,140,.06);margin-bottom:14px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div class="form-field" style="margin:0"><label class="form-label">Prénom</label><input type="text" class="form-input" id="set-firstname"></div>
+          <div class="form-field" style="margin:0"><label class="form-label">Nom</label><input type="text" class="form-input" id="set-lastname"></div>
+        </div>
+        <div class="form-field"><label class="form-label">Email</label><input type="email" class="form-input" id="set-email" disabled style="opacity:.6"></div>
+        <div class="form-field"><label class="form-label">Téléphone</label><input type="tel" class="form-input" id="set-phone"></div>
+        <div class="form-field"><label class="form-label">Pseudo <span style="font-weight:400;font-size:10px;color:var(--muted)">(affiché dans la communauté)</span></label><input type="text" class="form-input" id="set-pseudo" placeholder="Laisser vide = nom complet"></div>
+        <div class="form-field" style="margin-bottom:0"><label class="form-label">Ma motivation</label><textarea class="form-textarea" id="set-motivation" placeholder="Pourquoi je pratique le pilates..."></textarea></div>
+        <button onclick="saveAccountSettings()" class="submit-btn" style="margin-top:12px">Sauvegarder</button>
+      </div>
+
+      <!-- PRÉFÉRENCES D'AFFICHAGE -->
+      <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;padding:0 2px">Thème</div>
+      <div style="background:var(--white);border-radius:var(--radius-sm);padding:14px;box-shadow:0 1px 6px rgba(200,100,140,.06);margin-bottom:14px">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+          <button class="theme-btn active" data-theme="rose" onclick="setTheme(this,'rose')" style="padding:10px 4px;border-radius:10px;border:2px solid var(--rose-deep);background:var(--rose-light);cursor:pointer;font-size:11px;color:var(--rose-deep);font-family:var(--sans)">🌸 Rose</button>
+          <button class="theme-btn" data-theme="sage" onclick="setTheme(this,'sage')" style="padding:10px 4px;border-radius:10px;border:2px solid transparent;background:var(--sage-light);cursor:pointer;font-size:11px;color:#3a6e40;font-family:var(--sans)">🌿 Sauge</button>
+          <button class="theme-btn" data-theme="gold" onclick="setTheme(this,'gold')" style="padding:10px 4px;border-radius:10px;border:2px solid transparent;background:var(--gold-light);cursor:pointer;font-size:11px;color:#8a6a00;font-family:var(--sans)">✨ Doré</button>
+          <button class="theme-btn" data-theme="lilac" onclick="setTheme(this,'lilac')" style="padding:10px 4px;border-radius:10px;border:2px solid transparent;background:var(--lilac-light);cursor:pointer;font-size:11px;color:#6b3fa0;font-family:var(--sans)">💜 Lavande</button>
+        </div>
+      </div>
+
+      <!-- CONFIDENTIALITÉ -->
+      <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;padding:0 2px">Confidentialité</div>
+      <div style="background:var(--white);border-radius:var(--radius-sm);padding:14px;box-shadow:0 1px 6px rgba(200,100,140,.06);margin-bottom:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div><div style="font-size:13px;color:var(--ink)">Posts publics par défaut</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Tes photos sont visibles par la communauté</div></div>
+          <label class="toggle-switch"><input type="checkbox" id="set-public-default" checked onchange="savePrivacySettings()"><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+
+      <!-- NOTIFICATIONS -->
+      <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;padding:0 2px">Notifications</div>
+      <div style="background:var(--white);border-radius:var(--radius-sm);padding:14px;box-shadow:0 1px 6px rgba(200,100,140,.06);margin-bottom:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:12px;border-bottom:.5px solid rgba(244,160,188,.15)">
+          <div><div style="font-size:13px;color:var(--ink)">Rappel avant séance</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Message la veille de ta réservation</div></div>
+          <label class="toggle-switch"><input type="checkbox" id="set-notif-seance" checked onchange="saveNotifSettings()"><span class="toggle-slider"></span></label>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding-top:12px">
+          <div><div style="font-size:13px;color:var(--ink)">Citation du jour</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Reçois la citation de Violette</div></div>
+          <label class="toggle-switch"><input type="checkbox" id="set-notif-citation" checked onchange="saveNotifSettings()"><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+
+      <!-- MON PARCOURS -->
+      <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;padding:0 2px">Mon parcours</div>
+      <div style="background:var(--white);border-radius:var(--radius-sm);padding:14px;box-shadow:0 1px 6px rgba(200,100,140,.06);margin-bottom:14px">
+        <div class="form-field"><label class="form-label">Début de ma pratique</label><input type="date" class="form-input" id="set-practice-start"></div>
+        <div class="form-field" style="margin-bottom:0">
+          <label class="form-label">Objectif de séances par semaine</label>
+          <div style="display:flex;gap:8px;margin-top:6px">
+            <button class="goal-btn active" data-goal="1" onclick="setGoal(this,1)">1</button>
+            <button class="goal-btn" data-goal="2" onclick="setGoal(this,2)">2</button>
+            <button class="goal-btn" data-goal="3" onclick="setGoal(this,3)">3</button>
+            <button class="goal-btn" data-goal="4" onclick="setGoal(this,4)">4+</button>
+          </div>
+        </div>
+        <button onclick="saveParcours()" class="submit-btn" style="margin-top:12px">Sauvegarder</button>
+      </div>
+
+      <!-- SUPPRIMER MON COMPTE -->
+      <button onclick="deleteAccount()" style="width:100%;padding:14px;background:none;border:1px solid rgba(220,50,50,.3);border-radius:var(--radius-sm);color:#c0392b;font-size:13px;font-family:var(--sans);cursor:pointer;margin-bottom:24px">Supprimer mon compte</button>
     </div>
   </div>
 </div>
@@ -1374,6 +1587,7 @@ function goTo(id, btn){
   if (id==='cl-messages'){ loadClientMessages(); }
   if (id==='adm-messages'){ loadAdmConversations(); }
   if (id==='adm-chat'){ /* loaded by openAdmChat */ }
+  if (id==='settings'){ loadSettings(); }
 }
 
 // ── AVATAR ──
@@ -1396,6 +1610,7 @@ async function handleAvatarSelect(input){
 
 // ── CLIENT DATA ──
 async function loadClientData(){
+  applyStoredTheme();
   showLoader();
   const p = STATE.profile;
   document.getElementById('hero-name-el').innerHTML = p.firstname + ',<br><em>contente de te voir !</em>';
