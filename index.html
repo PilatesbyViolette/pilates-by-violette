@@ -825,10 +825,28 @@ body{font-family:var(--sans);color:var(--ink)}
 <div class="screen" id="screen-adm-profile">
   <div class="screen-scroll">
     <div class="admin-top"><div class="admin-top-inner"><div class="admin-word">Admin</div><div class="admin-title" style="font-style:italic;color:var(--rose-deep)">Violette</div><div class="admin-sub">Pilates by Violette</div></div></div>
-    <div class="menu-section" style="margin-top:16px">
+
+    <!-- MOT DU JOUR -->
+    <div style="margin:16px 16px 0;background:var(--lilac-light);border-radius:var(--radius-sm);padding:14px;border-left:3px solid var(--lilac)">
+      <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--lilac);margin-bottom:8px">✦ Mot du jour</div>
+      <textarea id="vword-edit" class="form-textarea" placeholder="Ecris ta citation du jour..." style="background:transparent;border:none;padding:0;font-family:var(--serif);font-size:14px;font-style:italic;color:var(--ink);resize:none;width:100%;outline:none"></textarea>
+      <button onclick="saveVword()" style="margin-top:8px;font-size:12px;padding:6px 14px;background:var(--lilac);color:white;border:none;border-radius:20px;cursor:pointer;font-family:var(--sans)">Sauvegarder</button>
+    </div>
+
+    <!-- CITATIONS -->
+    <div style="margin:12px 16px 0;background:var(--white);border-radius:var(--radius-sm);padding:14px;box-shadow:0 1px 6px rgba(200,100,140,.06)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Mes citations</div>
+        <button onclick="openAddQuote()" style="font-size:11px;color:var(--rose-deep);background:none;border:none;cursor:pointer;font-family:var(--sans)">+ Ajouter</button>
+      </div>
+      <div id="quotes-list"></div>
+    </div>
+
+    <div class="menu-section" style="margin-top:12px">
       <div class="menu-item" onclick="openStats()"><div class="menu-item-icon">📊</div><div class="menu-item-text"><div class="menu-item-title">Statistiques business</div><div class="menu-item-sub">Revenus, retention, croissance</div></div><div class="menu-item-arrow">›</div></div>
       <div class="menu-item" onclick="logout()"><div class="menu-item-icon">🚪</div><div class="menu-item-text"><div class="menu-item-title">Se deconnecter</div></div><div class="menu-item-arrow">›</div></div>
     </div>
+    <div style="margin:0 16px 16px;background:var(--white);border-radius:var(--radius-sm);padding:14px;box-shadow:0 1px 6px rgba(200,100,140,.06)" id="storage-indicator"></div>
   </div>
 </div>
 
@@ -1530,7 +1548,7 @@ function goTo(id, btn){
   if (id==='adm-client') { /* loaded by openAdmClientDetail */ }
   if (id==='adm-offre') loadOffre();
   if (id==='adm-stats') { /* loaded by openStats */ }
-  if (id==='adm-profile') checkStorageUsage();
+  if (id==='adm-profile'){ checkStorageUsage(); loadQuotes(); }
   if (id==='cl-messages'){
     loadClientMessages();
     const bar=document.getElementById('cl-input-bar');
@@ -2540,9 +2558,19 @@ async function delAdmSlot(id){
 async function loadQuotes(){
   const {data}=await sb.from('quotes').select('*').order('created_at');
   const list=document.getElementById('quotes-list');
-  list.innerHTML=(data||[]).map(q=>`<div class="quote-item"><div class="quote-text">${q.text}</div><button class="quote-del" onclick="delQuote('${q.id}')">✕</button></div>`).join('');
+  if(!list) return;
+  list.innerHTML=(data||[]).filter(q=>!q.is_word_of_day).map(q=>`<div class="quote-item"><div class="quote-text">${q.text}</div><button class="quote-del" onclick="delQuote('${q.id}')">✕</button></div>`).join('')
+    || '<div style="font-size:12px;color:var(--muted);font-style:italic">Aucune citation</div>';
   const wod=(data||[]).find(q=>q.is_word_of_day);
-  if (wod) document.getElementById('vword-edit').value=wod.text;
+  const el=document.getElementById('vword-edit');
+  if(wod&&el) el.value=wod.text;
+}
+function openAddQuote(){
+  const text=prompt('Nouvelle citation :');
+  if(!text||!text.trim()) return;
+  sb.from('quotes').insert({text:text.trim(),is_word_of_day:false}).then(()=>{
+    loadQuotes(); showToast('Citation ajoutée !');
+  });
 }
 async function addQuote(){
   const v=document.getElementById('new-quote').value.trim();
