@@ -1631,7 +1631,7 @@ async function loadHomeScreen(){
   if(weekCard){ weekCard.style.cursor='pointer'; weekCard.onclick=()=>goTo('agenda',document.querySelector('#nav-client .nav-btn[onclick*=agenda]')); }
 
   // SERIE (semaines consecutives avec au moins 1 seance)
-  const {data:allSess}=await sb.from('sessions').select('date').eq('user_id',STATE.user.id).order('date',{ascending:false});
+  const {data:allSess}=await sb.from('sessions').select('date,type,duration,note').eq('user_id',STATE.user.id).lte('date',today).order('date',{ascending:false});
   let weekStreak=0;
   if(allSess&&allSess.length>0){
     const sessDates=new Set(allSess.map(s=>s.date));
@@ -1949,17 +1949,19 @@ async function renderSlotsAndSessions(key){
   // Sessions section
   if(sessions&&sessions.length>0){
     html+='<div style="padding:0 16px;margin-bottom:8px"><div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Mes seances ce jour</div>';
+    const sessMap={};
+    sessions.forEach(s=>{ sessMap[s.id]={note:s.note||'',date:s.date,duration:s.duration,type:s.type}; });
     sessions.forEach(s=>{
       const isSolo=s.type==='solo';
       const dotColor=isSolo?'#9b59b6':'var(--rose-deep)';
-      html+=`<div class="slot-card" style="border-left:3px solid ${dotColor};cursor:${isSolo?'pointer':'default'}" ${isSolo?`onclick="openClientSessionEdit('${s.id}','${s.date}',${s.duration},'${s.note||''}')"`:''}>
-        <div class="slot-time" style="color:${dotColor}">${s.duration}min</div>
-        <div class="slot-info">
-          <div class="slot-title">${isSolo?'Seance solo':'Avec Violette'}</div>
-          <div class="slot-sub">${s.note||'Pas de note'}</div>
-        </div>
-        ${isSolo?'<span style="color:var(--muted);font-size:14px">✏️</span>':''}
-      </div>`;
+      html+='<div class="slot-card agenda-sess-card" data-sid="'+s.id+'" style="border-left:3px solid '+dotColor+';cursor:'+(isSolo?'pointer':'default')+'">'
+        +'<div class="slot-time" style="color:'+dotColor+'">'+s.duration+'min</div>'
+        +'<div class="slot-info">'
+          +'<div class="slot-title">'+(isSolo?'Séance solo':'Avec Violette')+'</div>'
+          +'<div class="slot-sub">'+(s.note||'Pas de note')+'</div>'
+        +'</div>'
+        +(isSolo?'<span style="color:var(--rose-deep);font-size:18px">✏️</span>':'')
+      +'</div>';
     });
     html+='</div>';
   }
