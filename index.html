@@ -1234,7 +1234,9 @@ function formatDateFR(d){ return new Date(d).toLocaleDateString('fr-FR',{day:'nu
 function goToScreen(id){
   document.querySelectorAll('.screen').forEach(s=>{ s.classList.remove('active'); s.style.display='none'; });
   const sc = document.getElementById('screen-'+id);
-  sc.style.display='block'; sc.classList.add('active');
+  const flexScreens=['cl-messages','adm-chat','adm-stats'];
+  sc.style.display=flexScreens.includes(id)?'flex':'block';
+  sc.classList.add('active');
 }
 
 function checkPwRules(pw){
