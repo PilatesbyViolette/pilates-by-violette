@@ -1227,7 +1227,7 @@ async function loadSessions(){
     empty.style.display='none'; list.style.display='flex';
     list.innerHTML = sessions.map(s=>{
       const isSolo=s.type==='solo';
-      return `<div class="session-item" ${isSolo?`onclick="openClientSessionEdit('${s.id}','${s.date}',${s.duration},'${s.note||''}')" style="cursor:pointer"`:''}> 
+      return `<div class="session-item" data-sid="${s.id}" data-date="${s.date}" data-dur="${s.duration}" data-solo="${isSolo}" style="${isSolo?'cursor:pointer':''}">
         <div class="session-dot ${s.type}"></div>
         <div class="session-info">
           <div class="session-date">${formatDateFR(s.date)}${isSolo?'':' <span style="font-size:10px;color:var(--rose-deep)">✦ avec Violette</span>'}</div>
@@ -1239,6 +1239,16 @@ async function loadSessions(){
         </div>
       </div>`;
     }).join('');
+    // Store notes separately and attach click handlers
+    const sessionMap={};
+    sessions.forEach(s=>{ sessionMap[s.id]={note:s.note||'',date:s.date,duration:s.duration}; });
+    list.querySelectorAll('.session-item[data-solo="true"]').forEach(el=>{
+      el.addEventListener('click',()=>{
+        const id=el.dataset.sid;
+        const d=sessionMap[id];
+        openClientSessionEdit(id,d.date,d.duration,d.note);
+      });
+    });
   }
   document.getElementById('p-seances').textContent = n;
   checkBadgesFromCount(n);
