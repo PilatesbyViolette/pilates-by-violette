@@ -1399,7 +1399,7 @@ async function loadClientData(){
   showLoader();
   const p = STATE.profile;
   document.getElementById('hero-name-el').innerHTML = p.firstname + ',<br><em>contente de te voir !</em>';
-  document.getElementById('prof-name').textContent = p.pseudo||(p.firstname||'')+' '+(p.lastname||'');
+  document.getElementById('prof-name').textContent = (p.firstname||'')+' '+(p.lastname||'');
   const avatarEl=document.getElementById('prof-avatar');
   if(p.avatar_url){
     avatarEl.innerHTML=`<img src="${p.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
