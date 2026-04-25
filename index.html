@@ -1781,11 +1781,12 @@ async function submitClientSessionEdit(){
   showToast(cseSessionId?'Seance mise a jour !':'Seance ajoutee !');
 }
 async function deleteClientSession(){
-  if(!confirm('Supprimer cette seance ?')) return;
+  if(!confirm('Supprimer cette séance ?')) return;
   await sb.from('sessions').delete().eq('id',cseSessionId);
   closeModal('modal-client-session-edit');
-  loadSessions();
-  showToast('Seance supprimee');
+  await renderCalendar();
+  await loadHomeScreen();
+  showToast('Séance supprimée');
 }
 
 async function loadSessions(){
