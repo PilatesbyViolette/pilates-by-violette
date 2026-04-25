@@ -151,6 +151,8 @@ body{font-family:var(--sans);color:var(--ink)}
 .session-date{font-size:13px;font-weight:500;color:var(--ink)}
 .session-meta{font-size:11px;color:var(--muted);margin-top:1px}
 .session-tag{font-size:10px;padding:3px 9px;border-radius:20px;font-weight:400;white-space:nowrap}
+.cse-dur-btn{padding:8px 14px;border-radius:20px;border:1px solid rgba(244,160,188,.4);background:var(--white);color:var(--mid);font-size:12px;font-family:var(--sans);cursor:pointer;transition:all .2s}
+.cse-dur-btn.active{background:var(--rose-deep);color:var(--white);border-color:var(--rose-deep)}
 .tag-solo{background:var(--lilac-light);color:#6b3fa0}.tag-domicile{background:var(--rose-light);color:var(--rose-deep)}.tag-cabinet{background:var(--sage-light);color:#3a6e40}.tag-entreprise{background:var(--gold-light);color:#7a5820}
 
 /* MODAL */
@@ -932,6 +934,28 @@ body{font-family:var(--sans);color:var(--ink)}
 
 <!-- modal-adm-client replaced by full screen-adm-client -->
 
+<div class="modal-backdrop" id="modal-client-session-edit" onclick="if(event.target===this)closeModal('modal-client-session-edit')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="cse-title">Seance solo</div>
+    <div class="form-field">
+      <label class="form-label">Duree (minutes)</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="cse-dur-btn active" data-dur="30" onclick="setCseDur(this,30)">30 min</button>
+        <button class="cse-dur-btn" data-dur="45" onclick="setCseDur(this,45)">45 min</button>
+        <button class="cse-dur-btn" data-dur="60" onclick="setCseDur(this,60)">60 min</button>
+        <button class="cse-dur-btn" data-dur="90" onclick="setCseDur(this,90)">90 min</button>
+      </div>
+    </div>
+    <div class="form-field">
+      <label class="form-label">Ce que j'ai travaille</label>
+      <textarea class="form-textarea" id="cse-note" placeholder="Gainage, equilibre, etirements..." style="height:90px"></textarea>
+    </div>
+    <button class="submit-btn" onclick="submitClientSessionEdit()">Sauvegarder</button>
+    <button onclick="deleteClientSession()" style="width:100%;padding:12px;margin-top:8px;background:none;border:1px solid rgba(220,100,120,.3);border-radius:12px;color:var(--rose-deep);font-size:13px;font-family:var(--sans);cursor:pointer">Supprimer cette seance</button>
+  </div>
+</div>
+
 <div class="modal-backdrop" id="modal-add-adresse" onclick="if(event.target===this)closeModal('modal-add-adresse')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -1157,6 +1181,40 @@ async function loadClientData(){
   hideLoader();
 }
 
+// ── CLIENT SESSION EDIT (solo only) ──
+let cseSessionId=null, cseDuration=60;
+
+function openClientSessionEdit(id, date, duration, note){
+  cseSessionId=id;
+  cseDuration=duration;
+  document.getElementById('cse-title').textContent='Seance solo · '+formatDateFR(date);
+  document.getElementById('cse-note').value=note||'';
+  document.querySelectorAll('.cse-dur-btn').forEach(b=>{
+    b.classList.toggle('active', parseInt(b.dataset.dur)===duration);
+  });
+  document.getElementById('modal-client-session-edit').classList.add('open');
+}
+function setCseDur(btn, dur){
+  cseDuration=dur;
+  document.querySelectorAll('.cse-dur-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+async function submitClientSessionEdit(){
+  const note=document.getElementById('cse-note').value.trim();
+  const {error}=await sb.from('sessions').update({duration:cseDuration,note}).eq('id',cseSessionId);
+  if(error){ showToast('Erreur : '+error.message); return; }
+  closeModal('modal-client-session-edit');
+  loadSessions();
+  showToast('Seance mise a jour !');
+}
+async function deleteClientSession(){
+  if(!confirm('Supprimer cette seance ?')) return;
+  await sb.from('sessions').delete().eq('id',cseSessionId);
+  closeModal('modal-client-session-edit');
+  loadSessions();
+  showToast('Seance supprimee');
+}
+
 async function loadSessions(){
   const { data } = await sb.from('sessions').select('*').eq('user_id',STATE.user.id).order('date',{ascending:false});
   const sessions = data || [];
@@ -1167,15 +1225,20 @@ async function loadSessions(){
   if (n===0){ empty.style.display='block'; list.style.display='none'; }
   else {
     empty.style.display='none'; list.style.display='flex';
-    list.innerHTML = sessions.map(s=>`
-      <div class="session-item">
+    list.innerHTML = sessions.map(s=>{
+      const isSolo=s.type==='solo';
+      return `<div class="session-item" ${isSolo?`onclick="openClientSessionEdit('${s.id}','${s.date}',${s.duration},'${s.note||''}')" style="cursor:pointer"`:''}> 
         <div class="session-dot ${s.type}"></div>
         <div class="session-info">
-          <div class="session-date">${formatDateFR(s.date)}</div>
+          <div class="session-date">${formatDateFR(s.date)}${isSolo?'':' <span style="font-size:10px;color:var(--rose-deep)">✦ avec Violette</span>'}</div>
           <div class="session-meta">${s.duration} min${s.note?' · '+s.note:''}</div>
         </div>
-        <span class="session-tag tag-${s.type}">${s.type}</span>
-      </div>`).join('');
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="session-tag tag-${s.type}">${s.type}</span>
+          ${isSolo?'<span style="font-size:14px;color:var(--muted)">›</span>':''}
+        </div>
+      </div>`;
+    }).join('');
   }
   document.getElementById('p-seances').textContent = n;
   checkBadgesFromCount(n);
