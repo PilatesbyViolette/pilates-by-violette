@@ -9,230 +9,7 @@
 <meta name="theme-color" content="#fce8f0">
 <title>Pilates by Violette</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-// ── STATS BUSINESS ──
-let statsFromDate=null, statsToDate=null, statsCmpFrom=null, statsCmpTo=null, statsCompareActive=false;
-const DAYS_FR=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
-const BAR_COLORS=['var(--rose-deep)','var(--sage)','var(--gold)','var(--lilac)','var(--rose)'];
-
-function openStats(){
-  goTo('adm-stats', null);
-  setStatsPreset(document.querySelector('.stats-preset'), 'month');
-}
-
-function setStatsPreset(btn, preset){
-  document.querySelectorAll('.stats-preset').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  const now=new Date();
-  const fmt=d=>d.toISOString().split('T')[0];
-  let from, to=fmt(now);
-  if(preset==='week'){
-    const d=new Date(now); d.setDate(d.getDate()-d.getDay()+1);
-    from=fmt(d);
-  } else if(preset==='month'){
-    from=fmt(new Date(now.getFullYear(),now.getMonth(),1));
-  } else if(preset==='quarter'){
-    const q=Math.floor(now.getMonth()/3);
-    from=fmt(new Date(now.getFullYear(),q*3,1));
-  } else if(preset==='year'){
-    from=fmt(new Date(now.getFullYear(),0,1));
-  } else {
-    document.getElementById('stats-custom-dates').style.display='flex';
-    document.getElementById('stats-custom-dates').style.flexDirection='column';
-    return;
-  }
-  document.getElementById('stats-custom-dates').style.display='none';
-  document.getElementById('stats-from').value=from;
-  document.getElementById('stats-to').value=to;
-  statsFromDate=from; statsToDate=to;
-  updateStatsPeriodLabel();
-  loadStats();
-}
-
-function updateStatsPeriodLabel(){
-  const f=document.getElementById('stats-from').value;
-  const t=document.getElementById('stats-to').value;
-  if(!f||!t) return;
-  statsFromDate=f; statsToDate=t;
-  document.getElementById('stats-period-label').textContent=
-    new Date(f).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'})+
-    ' → '+new Date(t).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'});
-}
-
-function toggleCompare(){
-  statsCompareActive=!statsCompareActive;
-  document.getElementById('stats-compare-section').style.display=statsCompareActive?'block':'none';
-  document.getElementById('stats-compare-toggle').textContent=statsCompareActive?'✕ Retirer':'+ Ajouter';
-}
-
-function setStatsSubtab(btn, id){
-  document.querySelectorAll('.stats-subtab').forEach(b=>{ b.style.color='var(--muted)'; b.style.borderBottom='2px solid transparent'; });
-  btn.style.color='var(--rose-deep)'; btn.style.borderBottom='2px solid var(--rose-deep)';
-  ['top-ca','top-seances'].forEach(i=>document.getElementById(i).style.display=i===id?'block':'none');
-}
-
-function deltaHtml(val, cmp, unit=''){
-  if(cmp===null||cmp===undefined) return '';
-  if(cmp===0&&val===0) return '<span class="stats-kpi-delta neutral">stable</span>';
-  if(cmp===0) return '<span class="stats-kpi-delta up">↑ nouveau</span>';
-  const pct=Math.round((val-cmp)/cmp*100);
-  const cls=pct>=0?'up':'down';
-  const arrow=pct>=0?'↑':'↓';
-  return `<span class="stats-kpi-delta ${cls}">${arrow} ${Math.abs(pct)}% vs periode precedente</span>`;
-}
-
-function barRow(label, val, max, color, suffix=''){
-  const pct=max>0?Math.round(val/max*100):0;
-  return `<div class="stats-bar-row">
-    <div class="stats-bar-label">${label}</div>
-    <div class="stats-bar-track"><div class="stats-bar-fill" style="width:${pct}%;background:${color}"></div></div>
-    <div class="stats-bar-count">${val}${suffix}</div>
-  </div>`;
-}
-
-async function getStatsData(from, to){
-  const [bkRes, encRes, usersRes, slotsRes] = await Promise.all([
-    sb.from('bookings').select('id,user_id,tarif,tarif_type,created_at,slots(date,time,type,duration)').eq('status','confirmed').gte('created_at',from).lte('created_at',to+'T23:59:59'),
-    sb.from('encaissements').select('montant,date,label').gte('date',from).lte('date',to),
-    sb.from('users').select('id,firstname,lastname,tarif_perso,created_at').neq('role','admin'),
-    sb.from('slots').select('id,date,time').gte('date',from).lte('date',to)
-  ]);
-  return {
-    bookings: bkRes.data||[],
-    encaissements: encRes.data||[],
-    users: usersRes.data||[],
-    slots: slotsRes.data||[]
-  };
-}
-
-async function loadStats(){
-  const from=document.getElementById('stats-from').value;
-  const to=document.getElementById('stats-to').value;
-  if(!from||!to){ showToast('Choisis une periode'); return; }
-  statsFromDate=from; statsToDate=to;
-  updateStatsPeriodLabel();
-
-  const d=await getStatsData(from, to);
-  let cmpD=null;
-  if(statsCompareActive){
-    const cf=document.getElementById('stats-cmp-from').value;
-    const ct=document.getElementById('stats-cmp-to').value;
-    if(cf&&ct) cmpD=await getStatsData(cf,ct);
-  }
-
-  // CA
-  const caSeances=d.bookings.reduce((s,b)=>s+(b.tarif||0),0);
-  const caEnc=d.encaissements.reduce((s,e)=>s+(e.montant||0),0);
-  const caTotal=caSeances+caEnc;
-  const cmpCA=cmpD?cmpD.bookings.reduce((s,b)=>s+(b.tarif||0),0)+cmpD.encaissements.reduce((s,e)=>s+(e.montant||0),0):null;
-
-  // Séances (avec Violette = bookings confirmés uniquement)
-  const nbSeances=d.bookings.length;
-  const cmpSeances=cmpD?cmpD.bookings.length:null;
-
-  // Rev moyen
-  const avgRev=nbSeances>0?Math.round(caSeances/nbSeances):0;
-  const cmpAvg=cmpD&&cmpD.bookings.length>0?Math.round(cmpD.bookings.reduce((s,b)=>s+(b.tarif||0),0)/cmpD.bookings.length):null;
-
-  // Clientes actives
-  const activeIds=new Set(d.bookings.map(b=>b.user_id));
-  const cmpActiveIds=cmpD?new Set(cmpD.bookings.map(b=>b.user_id)):null;
-
-  // KPIs
-  document.getElementById('kpi-ca').textContent=caTotal+'€';
-  document.getElementById('kpi-ca-delta').innerHTML=deltaHtml(caTotal,cmpCA);
-  document.getElementById('kpi-seances').textContent=nbSeances;
-  document.getElementById('kpi-seances-delta').innerHTML=deltaHtml(nbSeances,cmpSeances);
-  document.getElementById('kpi-avg').textContent=avgRev+'€';
-  document.getElementById('kpi-avg-delta').innerHTML=deltaHtml(avgRev,cmpAvg);
-  document.getElementById('kpi-actives').textContent=activeIds.size;
-  document.getElementById('kpi-actives-delta').innerHTML=deltaHtml(activeIds.size,cmpActiveIds?cmpActiveIds.size:null);
-
-  // Nouvelles clientes sur la période
-  const newClientes=d.users.filter(u=>u.created_at>=from&&u.created_at<=to+'T23:59:59').length;
-  document.getElementById('acq-new').textContent=newClientes;
-
-  // Taux de rétention (clientes actives cette période ayant aussi été actives la période précédente)
-  let retentionTxt='—';
-  if(cmpD){
-    const retained=[...activeIds].filter(id=>cmpActiveIds.has(id)).length;
-    const retPct=cmpActiveIds.size>0?Math.round(retained/cmpActiveIds.size*100):0;
-    retentionTxt=retPct+'%';
-  }
-  document.getElementById('acq-retention').textContent=retentionTxt;
-
-  // Clientes inactives +30j
-  const thirtyAgo=new Date(); thirtyAgo.setDate(thirtyAgo.getDate()-30);
-  const thirtyAgoStr=thirtyAgo.toISOString().split('T')[0];
-  const {data:recentBk}=await sb.from('bookings').select('user_id,created_at').eq('status','confirmed').gte('created_at',thirtyAgoStr);
-  const recentIds=new Set((recentBk||[]).map(b=>b.user_id));
-  const {data:allBk}=await sb.from('bookings').select('user_id').eq('status','confirmed');
-  const everActiveIds=new Set((allBk||[]).map(b=>b.user_id));
-  const inactiveUsers=d.users.filter(u=>everActiveIds.has(u.id)&&!recentIds.has(u.id));
-  document.getElementById('acq-inactive').textContent=inactiveUsers.length;
-  document.getElementById('stats-inactive-list').innerHTML=inactiveUsers.length>0
-    ?inactiveUsers.slice(0,3).map(u=>`<div style="font-size:12px;color:var(--mid);padding:3px 0">⚠️ ${u.firstname||''} ${u.lastname||''}</div>`).join('')+(inactiveUsers.length>3?`<div style="font-size:11px;color:var(--muted);margin-top:2px">+${inactiveUsers.length-3} autres</div>`:'')
-    :'<div style="font-size:12px;color:var(--sage);font-style:italic">Toutes vos clientes sont actives 🎉</div>';
-
-  // Répartition par type
-  const typeCounts={};
-  d.bookings.forEach(b=>{ const t=b.slots?.type||'autre'; typeCounts[t]=(typeCounts[t]||0)+1; });
-  const maxType=Math.max(...Object.values(typeCounts),1);
-  document.getElementById('stats-types-bars').innerHTML=Object.entries(typeCounts).sort((a,b)=>b[1]-a[1]).map(([t,n],i)=>barRow(t,n,maxType,BAR_COLORS[i%BAR_COLORS.length])).join('')||'<div style="font-size:12px;color:var(--muted);font-style:italic">Aucune donnee</div>';
-
-  // Jours populaires
-  const dayCounts={};
-  d.bookings.forEach(b=>{ if(b.slots?.date){ const day=DAYS_FR[new Date(b.slots.date).getDay()]; dayCounts[day]=(dayCounts[day]||0)+1; }});
-  const maxDay=Math.max(...Object.values(dayCounts),1);
-  document.getElementById('stats-days').innerHTML=Object.entries(dayCounts).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([d,n])=>barRow(d,n,maxDay,'var(--rose)')).join('')||'<div style="font-size:12px;color:var(--muted);font-style:italic">—</div>';
-
-  // Heures populaires
-  const hourCounts={};
-  d.bookings.forEach(b=>{ if(b.slots?.time){ const h=b.slots.time.substring(0,5); hourCounts[h]=(hourCounts[h]||0)+1; }});
-  const maxHour=Math.max(...Object.values(hourCounts),1);
-  document.getElementById('stats-hours').innerHTML=Object.entries(hourCounts).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([h,n])=>barRow(h,n,maxHour,'var(--sage)')).join('')||'<div style="font-size:12px;color:var(--muted);font-style:italic">—</div>';
-
-  // Taux de remplissage
-  const fillPct=d.slots.length>0?Math.round(d.bookings.length/d.slots.length*100):0;
-  document.getElementById('stats-fill-bar').style.width=Math.min(fillPct,100)+'%';
-  document.getElementById('stats-fill-pct').textContent=fillPct+'%';
-
-  // Top clientes par CA
-  const caByClient={};
-  d.bookings.forEach(b=>{ caByClient[b.user_id]=(caByClient[b.user_id]||0)+(b.tarif||0); });
-  d.encaissements; // ignorer pour top client (pas de user_id fiable)
-  const topCaList=Object.entries(caByClient).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  document.getElementById('top-ca').innerHTML=topCaList.length>0?topCaList.map(([uid,ca],i)=>{
-    const u=d.users.find(x=>x.id===uid)||{};
-    return `<div class="stats-rank-item"><div class="stats-rank-num">${i+1}</div><div style="flex:1;font-size:13px;color:var(--ink)">${u.firstname||''} ${u.lastname||''}</div><div style="font-family:var(--serif);font-size:15px;color:var(--ink)">${ca}€</div></div>`;
-  }).join(''):'<div style="font-size:12px;color:var(--muted);font-style:italic">Aucune donnee</div>';
-
-  // Top clientes par séances
-  const seancesByClient={};
-  d.bookings.forEach(b=>{ seancesByClient[b.user_id]=(seancesByClient[b.user_id]||0)+1; });
-  const topSeancesList=Object.entries(seancesByClient).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  document.getElementById('top-seances').innerHTML=topSeancesList.length>0?topSeancesList.map(([uid,nb],i)=>{
-    const u=d.users.find(x=>x.id===uid)||{};
-    return `<div class="stats-rank-item"><div class="stats-rank-num">${i+1}</div><div style="flex:1;font-size:13px;color:var(--ink)">${u.firstname||''} ${u.lastname||''}</div><div style="font-family:var(--serif);font-size:15px;color:var(--ink)">${nb} séances</div></div>`;
-  }).join(''):'<div style="font-size:12px;color:var(--muted);font-style:italic">Aucune donnee</div>';
-
-  // Répartition revenus par type de tarif
-  const revByTarif={};
-  d.bookings.forEach(b=>{ const t=b.tarif_type||'seance'; revByTarif[t]=(revByTarif[t]||0)+(b.tarif||0); });
-  if(caEnc>0) revByTarif['encaissements']=(revByTarif['encaissements']||0)+caEnc;
-  const maxRev=Math.max(...Object.values(revByTarif),1);
-  document.getElementById('stats-revenus-types').innerHTML=Object.entries(revByTarif).sort((a,b)=>b[1]-a[1]).map(([t,n],i)=>barRow(t,n,maxRev,BAR_COLORS[i%BAR_COLORS.length],'€')).join('')||'<div style="font-size:12px;color:var(--muted);font-style:italic">Aucune donnee</div>';
-
-  // Projection mensuelle
-  const fromD=new Date(from), toD=new Date(to);
-  const nbDays=Math.max(1,Math.round((toD-fromD)/(1000*60*60*24)));
-  const caPerDay=caTotal/nbDays;
-  const projection=Math.round(caPerDay*30);
-  document.getElementById('stats-projection').textContent=projection+'€';
-  document.getElementById('stats-projection-sub').textContent=`Base sur ${nbDays}j de donnees (${Math.round(caPerDay)}€/jour)`;
-}
-
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--rose:#f4a0bc;--rose-light:#fce8f0;--rose-mid:#e8789a;--rose-deep:#c45878;--cream:#fdf8f3;--sage:#8aab8e;--sage-light:#d4e8d4;--gold:#c8a870;--gold-light:#f0e4c8;--lilac:#c8a8d8;--lilac-light:#f0e8f8;--peach:#f8c8a0;--peach-light:#fef0e4;--ink:#2a2420;--mid:#6b5e58;--muted:#a89890;--white:#ffffff;--danger:#d85050;--serif:'Cormorant Garamond',Georgia,serif;--sans:'DM Sans',sans-serif;--radius:20px;--radius-sm:12px}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -2436,6 +2213,227 @@ renderBadges();
 sb.auth.getSession().then(({data:{session}})=>{
   if (session) initSession(session.user);
 });
+
+// ── STATS BUSINESS ──
+let statsFromDate=null, statsToDate=null, statsCmpFrom=null, statsCmpTo=null, statsCompareActive=false;
+const DAYS_FR=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+const BAR_COLORS=['var(--rose-deep)','var(--sage)','var(--gold)','var(--lilac)','var(--rose)'];
+
+function openStats(){
+  goTo('adm-stats', null);
+  setStatsPreset(document.querySelector('.stats-preset'), 'month');
+}
+
+function setStatsPreset(btn, preset){
+  document.querySelectorAll('.stats-preset').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const now=new Date();
+  const fmt=d=>d.toISOString().split('T')[0];
+  let from, to=fmt(now);
+  if(preset==='week'){
+    const d=new Date(now); d.setDate(d.getDate()-d.getDay()+1);
+    from=fmt(d);
+  } else if(preset==='month'){
+    from=fmt(new Date(now.getFullYear(),now.getMonth(),1));
+  } else if(preset==='quarter'){
+    const q=Math.floor(now.getMonth()/3);
+    from=fmt(new Date(now.getFullYear(),q*3,1));
+  } else if(preset==='year'){
+    from=fmt(new Date(now.getFullYear(),0,1));
+  } else {
+    document.getElementById('stats-custom-dates').style.display='flex';
+    document.getElementById('stats-custom-dates').style.flexDirection='column';
+    return;
+  }
+  document.getElementById('stats-custom-dates').style.display='none';
+  document.getElementById('stats-from').value=from;
+  document.getElementById('stats-to').value=to;
+  statsFromDate=from; statsToDate=to;
+  updateStatsPeriodLabel();
+  loadStats();
+}
+
+function updateStatsPeriodLabel(){
+  const f=document.getElementById('stats-from').value;
+  const t=document.getElementById('stats-to').value;
+  if(!f||!t) return;
+  statsFromDate=f; statsToDate=t;
+  document.getElementById('stats-period-label').textContent=
+    new Date(f).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'})+
+    ' → '+new Date(t).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'});
+}
+
+function toggleCompare(){
+  statsCompareActive=!statsCompareActive;
+  document.getElementById('stats-compare-section').style.display=statsCompareActive?'block':'none';
+  document.getElementById('stats-compare-toggle').textContent=statsCompareActive?'✕ Retirer':'+ Ajouter';
+}
+
+function setStatsSubtab(btn, id){
+  document.querySelectorAll('.stats-subtab').forEach(b=>{ b.style.color='var(--muted)'; b.style.borderBottom='2px solid transparent'; });
+  btn.style.color='var(--rose-deep)'; btn.style.borderBottom='2px solid var(--rose-deep)';
+  ['top-ca','top-seances'].forEach(i=>document.getElementById(i).style.display=i===id?'block':'none');
+}
+
+function deltaHtml(val, cmp, unit=''){
+  if(cmp===null||cmp===undefined) return '';
+  if(cmp===0&&val===0) return '<span class="stats-kpi-delta neutral">stable</span>';
+  if(cmp===0) return '<span class="stats-kpi-delta up">↑ nouveau</span>';
+  const pct=Math.round((val-cmp)/cmp*100);
+  const cls=pct>=0?'up':'down';
+  const arrow=pct>=0?'↑':'↓';
+  return `<span class="stats-kpi-delta ${cls}">${arrow} ${Math.abs(pct)}% vs periode precedente</span>`;
+}
+
+function barRow(label, val, max, color, suffix=''){
+  const pct=max>0?Math.round(val/max*100):0;
+  return `<div class="stats-bar-row">
+    <div class="stats-bar-label">${label}</div>
+    <div class="stats-bar-track"><div class="stats-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+    <div class="stats-bar-count">${val}${suffix}</div>
+  </div>`;
+}
+
+async function getStatsData(from, to){
+  const [bkRes, encRes, usersRes, slotsRes] = await Promise.all([
+    sb.from('bookings').select('id,user_id,tarif,tarif_type,created_at,slots(date,time,type,duration)').eq('status','confirmed').gte('created_at',from).lte('created_at',to+'T23:59:59'),
+    sb.from('encaissements').select('montant,date,label').gte('date',from).lte('date',to),
+    sb.from('users').select('id,firstname,lastname,tarif_perso,created_at').neq('role','admin'),
+    sb.from('slots').select('id,date,time').gte('date',from).lte('date',to)
+  ]);
+  return {
+    bookings: bkRes.data||[],
+    encaissements: encRes.data||[],
+    users: usersRes.data||[],
+    slots: slotsRes.data||[]
+  };
+}
+
+async function loadStats(){
+  const from=document.getElementById('stats-from').value;
+  const to=document.getElementById('stats-to').value;
+  if(!from||!to){ showToast('Choisis une periode'); return; }
+  statsFromDate=from; statsToDate=to;
+  updateStatsPeriodLabel();
+
+  const d=await getStatsData(from, to);
+  let cmpD=null;
+  if(statsCompareActive){
+    const cf=document.getElementById('stats-cmp-from').value;
+    const ct=document.getElementById('stats-cmp-to').value;
+    if(cf&&ct) cmpD=await getStatsData(cf,ct);
+  }
+
+  // CA
+  const caSeances=d.bookings.reduce((s,b)=>s+(b.tarif||0),0);
+  const caEnc=d.encaissements.reduce((s,e)=>s+(e.montant||0),0);
+  const caTotal=caSeances+caEnc;
+  const cmpCA=cmpD?cmpD.bookings.reduce((s,b)=>s+(b.tarif||0),0)+cmpD.encaissements.reduce((s,e)=>s+(e.montant||0),0):null;
+
+  // Séances (avec Violette = bookings confirmés uniquement)
+  const nbSeances=d.bookings.length;
+  const cmpSeances=cmpD?cmpD.bookings.length:null;
+
+  // Rev moyen
+  const avgRev=nbSeances>0?Math.round(caSeances/nbSeances):0;
+  const cmpAvg=cmpD&&cmpD.bookings.length>0?Math.round(cmpD.bookings.reduce((s,b)=>s+(b.tarif||0),0)/cmpD.bookings.length):null;
+
+  // Clientes actives
+  const activeIds=new Set(d.bookings.map(b=>b.user_id));
+  const cmpActiveIds=cmpD?new Set(cmpD.bookings.map(b=>b.user_id)):null;
+
+  // KPIs
+  document.getElementById('kpi-ca').textContent=caTotal+'€';
+  document.getElementById('kpi-ca-delta').innerHTML=deltaHtml(caTotal,cmpCA);
+  document.getElementById('kpi-seances').textContent=nbSeances;
+  document.getElementById('kpi-seances-delta').innerHTML=deltaHtml(nbSeances,cmpSeances);
+  document.getElementById('kpi-avg').textContent=avgRev+'€';
+  document.getElementById('kpi-avg-delta').innerHTML=deltaHtml(avgRev,cmpAvg);
+  document.getElementById('kpi-actives').textContent=activeIds.size;
+  document.getElementById('kpi-actives-delta').innerHTML=deltaHtml(activeIds.size,cmpActiveIds?cmpActiveIds.size:null);
+
+  // Nouvelles clientes sur la période
+  const newClientes=d.users.filter(u=>u.created_at>=from&&u.created_at<=to+'T23:59:59').length;
+  document.getElementById('acq-new').textContent=newClientes;
+
+  // Taux de rétention (clientes actives cette période ayant aussi été actives la période précédente)
+  let retentionTxt='—';
+  if(cmpD){
+    const retained=[...activeIds].filter(id=>cmpActiveIds.has(id)).length;
+    const retPct=cmpActiveIds.size>0?Math.round(retained/cmpActiveIds.size*100):0;
+    retentionTxt=retPct+'%';
+  }
+  document.getElementById('acq-retention').textContent=retentionTxt;
+
+  // Clientes inactives +30j
+  const thirtyAgo=new Date(); thirtyAgo.setDate(thirtyAgo.getDate()-30);
+  const thirtyAgoStr=thirtyAgo.toISOString().split('T')[0];
+  const {data:recentBk}=await sb.from('bookings').select('user_id,created_at').eq('status','confirmed').gte('created_at',thirtyAgoStr);
+  const recentIds=new Set((recentBk||[]).map(b=>b.user_id));
+  const {data:allBk}=await sb.from('bookings').select('user_id').eq('status','confirmed');
+  const everActiveIds=new Set((allBk||[]).map(b=>b.user_id));
+  const inactiveUsers=d.users.filter(u=>everActiveIds.has(u.id)&&!recentIds.has(u.id));
+  document.getElementById('acq-inactive').textContent=inactiveUsers.length;
+  document.getElementById('stats-inactive-list').innerHTML=inactiveUsers.length>0
+    ?inactiveUsers.slice(0,3).map(u=>`<div style="font-size:12px;color:var(--mid);padding:3px 0">⚠️ ${u.firstname||''} ${u.lastname||''}</div>`).join('')+(inactiveUsers.length>3?`<div style="font-size:11px;color:var(--muted);margin-top:2px">+${inactiveUsers.length-3} autres</div>`:'')
+    :'<div style="font-size:12px;color:var(--sage);font-style:italic">Toutes vos clientes sont actives 🎉</div>';
+
+  // Répartition par type
+  const typeCounts={};
+  d.bookings.forEach(b=>{ const t=b.slots?.type||'autre'; typeCounts[t]=(typeCounts[t]||0)+1; });
+  const maxType=Math.max(...Object.values(typeCounts),1);
+  document.getElementById('stats-types-bars').innerHTML=Object.entries(typeCounts).sort((a,b)=>b[1]-a[1]).map(([t,n],i)=>barRow(t,n,maxType,BAR_COLORS[i%BAR_COLORS.length])).join('')||'<div style="font-size:12px;color:var(--muted);font-style:italic">Aucune donnee</div>';
+
+  // Jours populaires
+  const dayCounts={};
+  d.bookings.forEach(b=>{ if(b.slots?.date){ const day=DAYS_FR[new Date(b.slots.date).getDay()]; dayCounts[day]=(dayCounts[day]||0)+1; }});
+  const maxDay=Math.max(...Object.values(dayCounts),1);
+  document.getElementById('stats-days').innerHTML=Object.entries(dayCounts).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([d,n])=>barRow(d,n,maxDay,'var(--rose)')).join('')||'<div style="font-size:12px;color:var(--muted);font-style:italic">—</div>';
+
+  // Heures populaires
+  const hourCounts={};
+  d.bookings.forEach(b=>{ if(b.slots?.time){ const h=b.slots.time.substring(0,5); hourCounts[h]=(hourCounts[h]||0)+1; }});
+  const maxHour=Math.max(...Object.values(hourCounts),1);
+  document.getElementById('stats-hours').innerHTML=Object.entries(hourCounts).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([h,n])=>barRow(h,n,maxHour,'var(--sage)')).join('')||'<div style="font-size:12px;color:var(--muted);font-style:italic">—</div>';
+
+  // Taux de remplissage
+  const fillPct=d.slots.length>0?Math.round(d.bookings.length/d.slots.length*100):0;
+  document.getElementById('stats-fill-bar').style.width=Math.min(fillPct,100)+'%';
+  document.getElementById('stats-fill-pct').textContent=fillPct+'%';
+
+  // Top clientes par CA
+  const caByClient={};
+  d.bookings.forEach(b=>{ caByClient[b.user_id]=(caByClient[b.user_id]||0)+(b.tarif||0); });
+  d.encaissements; // ignorer pour top client (pas de user_id fiable)
+  const topCaList=Object.entries(caByClient).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  document.getElementById('top-ca').innerHTML=topCaList.length>0?topCaList.map(([uid,ca],i)=>{
+    const u=d.users.find(x=>x.id===uid)||{};
+    return `<div class="stats-rank-item"><div class="stats-rank-num">${i+1}</div><div style="flex:1;font-size:13px;color:var(--ink)">${u.firstname||''} ${u.lastname||''}</div><div style="font-family:var(--serif);font-size:15px;color:var(--ink)">${ca}€</div></div>`;
+  }).join(''):'<div style="font-size:12px;color:var(--muted);font-style:italic">Aucune donnee</div>';
+
+  // Top clientes par séances
+  const seancesByClient={};
+  d.bookings.forEach(b=>{ seancesByClient[b.user_id]=(seancesByClient[b.user_id]||0)+1; });
+  const topSeancesList=Object.entries(seancesByClient).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  document.getElementById('top-seances').innerHTML=topSeancesList.length>0?topSeancesList.map(([uid,nb],i)=>{
+    const u=d.users.find(x=>x.id===uid)||{};
+    return `<div class="stats-rank-item"><div class="stats-rank-num">${i+1}</div><div style="flex:1;font-size:13px;color:var(--ink)">${u.firstname||''} ${u.lastname||''}</div><div style="font-family:var(--serif);font-size:15px;color:var(--ink)">${nb} séances</div></div>`;
+  }).join(''):'<div style="font-size:12px;color:var(--muted);font-style:italic">Aucune donnee</div>';
+
+  // Répartition revenus par type de tarif
+  const revByTarif={};
+  d.bookings.forEach(b=>{ const t=b.tarif_type||'seance'; revByTarif[t]=(revByTarif[t]||0)+(b.tarif||0); });
+  if(caEnc>0) revByTarif['encaissements']=(revByTarif['encaissements']||0)+caEnc;
+  const maxRev=Math.max(...Object.values(revByTarif),1);
+  document.getElementById('stats-revenus-types').innerHTML=Object.entries(revByTarif).sort((a,b)=>b[1]-a[1]).map(([t,n],i)=>barRow(t,n,maxRev,BAR_COLORS[i%BAR_COLORS.length],'€')).join('')||'<div style="font-size:12px;color:var(--muted);font-style:italic">Aucune donnee</div>';
+
+  // Projection mensuelle
+  const fromD=new Date(from), toD=new Date(to);
+  const nbDays=Math.max(1,Math.round((toD-fromD)/(1000*60*60*24)));
+  const caPerDay=caTotal/nbDays;
+  const projection=Math.round(caPerDay*30);
+  document.getElementById('stats-projection').textContent=projection+'€';
+  document.getElementById('stats-projection-sub').textContent=`Base sur ${nbDays}j de donnees (${Math.round(caPerDay)}€/jour)`;
+}
+
 </script>
-</body>
-</html>
