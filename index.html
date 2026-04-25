@@ -1127,7 +1127,7 @@ body{font-family:var(--sans);color:var(--ink)}
 
 <!-- MESSAGERIE CLIENT -->
 <div class="screen" id="screen-cl-messages">
-  <div class="screen-scroll" style="padding-bottom:140px">
+  <div class="screen-scroll" style="padding-bottom:160px">
     <div class="top-bar"><div class="top-bar-inner"><div class="app-wordmark">Pilates by Violette</div><div class="screen-heading">Mes <em>messages</em></div></div></div>
     <div id="cl-chat-box" style="display:flex;flex-direction:column;gap:8px;padding:12px 16px 0"></div>
   </div>
@@ -1147,7 +1147,7 @@ body{font-family:var(--sans);color:var(--ink)}
 
 <!-- MESSAGERIE ADMIN - CONVERSATION INDIVIDUELLE -->
 <div class="screen" id="screen-adm-chat">
-  <div class="screen-scroll" style="padding-bottom:80px">
+  <div class="screen-scroll" style="padding-bottom:160px">
     <div class="admin-top" style="padding-bottom:12px">
       <div class="admin-top-inner">
         <button onclick="goTo('adm-messages',document.getElementById('nav-adm-messages'))" style="background:none;border:none;color:var(--rose-deep);font-size:13px;cursor:pointer;padding:0;font-family:var(--sans);margin-bottom:6px">‹ Retour</button>
@@ -3113,10 +3113,12 @@ function renderMessages(messages, myId, box){
     }
     box.appendChild(wrap);
   });
-  box.scrollTop=box.scrollHeight;
-  // Also scroll the parent screen-scroll
-  const scroll=box.closest('.screen-scroll');
-  if(scroll) scroll.scrollTop=scroll.scrollHeight;
+  // Scroll to bottom after render
+  setTimeout(()=>{
+    const scroll=box.closest('.screen-scroll');
+    if(scroll) scroll.scrollTop=scroll.scrollHeight+500;
+    else box.scrollTop=box.scrollHeight;
+  },50);
 }
 
 // ── CLIENT MESSAGES ──
