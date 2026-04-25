@@ -574,7 +574,7 @@ body{font-family:var(--sans);color:var(--ink)}
   <div class="screen-scroll">
     <div class="top-bar"><div class="top-bar-inner"><div class="app-wordmark">Pilates by Violette</div><div class="screen-heading">La <em>communaute</em></div><div class="screen-sub">Partage tes moments pilates</div></div></div>
     <div class="gal-tabs"><button class="gal-tab active" onclick="setGalTab(this,'feed')">Fil communaute</button><button class="gal-tab" onclick="setGalTab(this,'mine')">Mes posts</button></div>
-    <button class="post-btn" onclick="openPostModal()">+ Partager une photo</button>
+    <button class="post-btn" onclick="openPostModal()">📷 Partager une photo</button>
     <div id="gal-content"></div>
   </div>
 </div>
@@ -1148,42 +1148,28 @@ body{font-family:var(--sans);color:var(--ink)}
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title">Partager une photo</div>
-    <div class="form-field"><label class="form-label">Photo (simulee en beta)</label>
-      <div style="aspect-ratio:1;background:linear-gradient(135deg,var(--rose-light),var(--lilac-light));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:40px;cursor:pointer" id="post-img-preview" onclick="rotatePostImg(this)">🌸</div>
-    </div>
-    <div class="form-field"><label class="form-label">Legende</label><textarea class="form-textarea" id="post-caption" placeholder="Partage ton moment pilates..."></textarea></div>
-    <div class="form-field">
-      <label class="form-label">Visibilite</label>
-      <div class="type-choice">
-        <button class="type-btn active" data-vis="public" onclick="setPostVis(this)"><div class="type-btn-label">Communaute</div><div class="type-btn-sub">Visible par toutes</div></button>
-        <button class="type-btn" data-vis="private" onclick="setPostVis(this)"><div class="type-btn-label">Prive</div><div class="type-btn-sub">Juste pour toi</div></button>
+    <!-- Photo picker -->
+    <div id="post-photo-preview" style="width:100%;aspect-ratio:1;border-radius:12px;background:var(--cream);border:2px dashed rgba(244,160,188,.4);display:flex;align-items:center;justify-content:center;margin-bottom:12px;overflow:hidden;cursor:pointer" onclick="document.getElementById('post-file-input').click()">
+      <div id="post-photo-placeholder" style="text-align:center">
+        <div style="font-size:36px">📷</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:6px">Appuie pour choisir une photo</div>
       </div>
+      <img id="post-photo-img" style="display:none;width:100%;height:100%;object-fit:cover">
     </div>
-    <button class="submit-btn" onclick="submitPost()">Publier</button>
-  </div>
-</div>
-
-<!-- modal-adm-client replaced by full screen-adm-client -->
-
-<div class="modal-backdrop" id="modal-client-session-edit" onclick="if(event.target===this)closeModal('modal-client-session-edit')">
-  <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <div class="modal-title" id="cse-title">Seance solo</div>
+    <input type="file" id="post-file-input" accept="image/*" style="display:none" onchange="handlePostPhotoSelect(this)">
     <div class="form-field">
-      <label class="form-label">Duree (minutes)</label>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="cse-dur-btn active" data-dur="30" onclick="setCseDur(this,30)">30 min</button>
-        <button class="cse-dur-btn" data-dur="45" onclick="setCseDur(this,45)">45 min</button>
-        <button class="cse-dur-btn" data-dur="60" onclick="setCseDur(this,60)">60 min</button>
-        <button class="cse-dur-btn" data-dur="90" onclick="setCseDur(this,90)">90 min</button>
-      </div>
+      <label class="form-label">Legende</label>
+      <textarea class="form-textarea" id="post-caption" placeholder="Partage ton moment pilates..."></textarea>
     </div>
-    <div class="form-field">
-      <label class="form-label">Ce que j'ai travaille</label>
-      <textarea class="form-textarea" id="cse-note" placeholder="Gainage, equilibre, etirements..." style="height:90px"></textarea>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="type-btn active" data-vis="public" onclick="setPostVis(this)" style="flex:1;padding:10px;border-radius:10px;border:1px solid rgba(244,160,188,.3);background:var(--rose-deep);color:white;font-size:12px;font-family:var(--sans);cursor:pointer">🌸 Public</button>
+      <button class="type-btn" data-vis="private" onclick="setPostVis(this)" style="flex:1;padding:10px;border-radius:10px;border:1px solid rgba(244,160,188,.3);background:transparent;color:var(--mid);font-size:12px;font-family:var(--sans);cursor:pointer">🔒 Prive</button>
     </div>
-    <button class="submit-btn" onclick="submitClientSessionEdit()">Sauvegarder</button>
-    <button onclick="deleteClientSession()" style="width:100%;padding:12px;margin-top:8px;background:none;border:1px solid rgba(220,100,120,.3);border-radius:12px;color:var(--rose-deep);font-size:13px;font-family:var(--sans);cursor:pointer">Supprimer cette seance</button>
+    <div id="post-upload-progress" style="display:none;margin-bottom:10px">
+      <div style="height:4px;background:var(--rose-light);border-radius:2px"><div id="post-progress-bar" style="height:100%;background:var(--rose-deep);border-radius:2px;width:0%;transition:width .3s"></div></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;text-align:center" id="post-progress-label">Compression...</div>
+    </div>
+    <button class="submit-btn" id="post-submit-btn" onclick="submitPost()">Publier</button>
   </div>
 </div>
 
@@ -1765,56 +1751,157 @@ function renderBadges(){
 
 // ── GALERIE ──
 let galTab='feed', postVis='public';
-function setGalTab(btn,tab){ document.querySelectorAll('.gal-tab').forEach(t=>t.classList.remove('active')); btn.classList.add('active'); galTab=tab; loadAndRenderGallery(tab); }
-function rotatePostImg(el){ STATE.postImgIdx=(STATE.postImgIdx+1)%postImgs.length; el.textContent=postImgs[STATE.postImgIdx]; }
-function setPostVis(btn){ document.querySelectorAll('#modal-post .type-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); postVis=btn.dataset.vis; }
+// ── COMMUNAUTE / GALERIE ──
+let postSelectedFile=null;
+
+function setGalTab(btn,tab){
+  document.querySelectorAll('.gal-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active'); galTab=tab; loadAndRenderGallery(tab);
+}
+function setPostVis(btn){
+  document.querySelectorAll('#modal-post .type-btn').forEach(b=>{
+    b.classList.remove('active');
+    b.style.background='transparent'; b.style.color='var(--mid)';
+  });
+  btn.classList.add('active');
+  btn.style.background='var(--rose-deep)'; btn.style.color='white';
+  postVis=btn.dataset.vis;
+}
 function openPostModal(){
-  STATE.postImgIdx=0;
+  postSelectedFile=null;
   document.getElementById('post-caption').value='';
-  document.getElementById('post-img-preview').textContent='🌸';
-  document.querySelectorAll('#modal-post .type-btn').forEach((b,i)=>b.classList.toggle('active',i===0));
+  document.getElementById('post-photo-img').style.display='none';
+  document.getElementById('post-photo-placeholder').style.display='flex';
+  document.getElementById('post-photo-placeholder').style.flexDirection='column';
+  document.getElementById('post-photo-placeholder').style.alignItems='center';
+  document.getElementById('post-upload-progress').style.display='none';
+  document.querySelectorAll('#modal-post .type-btn').forEach((b,i)=>{
+    b.classList.toggle('active',i===0);
+    b.style.background=i===0?'var(--rose-deep)':'transparent';
+    b.style.color=i===0?'white':'var(--mid)';
+  });
   postVis='public';
   document.getElementById('modal-post').classList.add('open');
 }
+
+function handlePostPhotoSelect(input){
+  const file=input.files[0];
+  if(!file) return;
+  postSelectedFile=file;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=document.getElementById('post-photo-img');
+    img.src=e.target.result;
+    img.style.display='block';
+    document.getElementById('post-photo-placeholder').style.display='none';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function compressImage(file, maxWidth=800, quality=0.75){
+  return new Promise(resolve=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        const canvas=document.createElement('canvas');
+        let w=img.width, h=img.height;
+        if(w>maxWidth){ h=Math.round(h*maxWidth/w); w=maxWidth; }
+        canvas.width=w; canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        canvas.toBlob(blob=>resolve(blob),'image/jpeg',quality);
+      };
+      img.src=e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 async function submitPost(){
   const caption=document.getElementById('post-caption').value.trim();
-  if (!caption){ showToast('Ajoute une legende'); return; }
-  const {error}=await sb.from('posts').insert({user_id:STATE.user.id,caption,visibility:postVis,img_index:STATE.postImgIdx+1});
-  if (error){ showToast('Erreur : '+error.message); return; }
+  if(!postSelectedFile){ showToast('Choisis une photo'); return; }
+  if(!caption){ showToast('Ajoute une legende'); return; }
+  const btn=document.getElementById('post-submit-btn');
+  btn.disabled=true; btn.textContent='Publication...';
+  const progressEl=document.getElementById('post-upload-progress');
+  const barEl=document.getElementById('post-progress-bar');
+  const labelEl=document.getElementById('post-progress-label');
+  progressEl.style.display='block';
+  labelEl.textContent='Compression...'; barEl.style.width='20%';
+  // Compress
+  const compressed=await compressImage(postSelectedFile);
+  barEl.style.width='50%'; labelEl.textContent='Upload...';
+  // Upload to Supabase Storage
+  const fileName=`${STATE.user.id}_${Date.now()}.jpg`;
+  const {data:uploadData, error:uploadError}=await sb.storage.from('community').upload(fileName,compressed,{contentType:'image/jpeg'});
+  if(uploadError){ showToast('Erreur upload: '+uploadError.message); btn.disabled=false; btn.textContent='Publier'; return; }
+  barEl.style.width='80%'; labelEl.textContent='Finalisation...';
+  // Get public URL
+  const {data:urlData}=sb.storage.from('community').getPublicUrl(fileName);
+  const imageUrl=urlData.publicUrl;
+  // Save post
+  const {error}=await sb.from('posts').insert({user_id:STATE.user.id,caption,visibility:postVis,image_url:imageUrl});
+  if(error){ showToast('Erreur: '+error.message); btn.disabled=false; btn.textContent='Publier'; return; }
+  barEl.style.width='100%';
+  btn.disabled=false; btn.textContent='Publier';
   closeModal('modal-post');
   loadAndRenderGallery(galTab);
-  if (postVis==='public'){ completeStep('step-photo'); showToast('Publie dans la communaute !'); }
+  if(postVis==='public'){ completeStep('step-photo'); showToast('Publie dans la communaute ! 🌸'); }
   else showToast('Enregistre en prive');
 }
+
 async function loadAndRenderGallery(tab){
   let query=sb.from('posts').select('*, users(firstname,lastname,role)').order('created_at',{ascending:false});
-  if (tab==='feed') query=query.eq('visibility','public');
+  if(tab==='feed') query=query.eq('visibility','public');
   else query=query.eq('user_id',STATE.user.id);
   const {data:posts}=await query;
   const el=document.getElementById('gal-content');
-  if (!posts||posts.length===0){ el.innerHTML='<div style="margin:16px"><div class="empty-state"><div class="empty-emoji">🌸</div><div class="empty-title">Aucun post</div></div></div>'; return; }
+  if(!posts||posts.length===0){ el.innerHTML='<div style="margin:16px"><div class="empty-state"><div class="empty-emoji">🌸</div><div class="empty-title">Sois la premiere a partager !</div><div class="empty-sub">Partage un moment de ta pratique</div></div></div>'; return; }
   el.innerHTML=posts.map(p=>renderPost(p)).join('');
 }
+
 function renderPost(p){
-  const shape=['','','s2','s3','s4','s5'][p.img_index]||'';
   const name=p.users?(p.users.firstname||'')+' '+(p.users.lastname||''):'Anonyme';
-  const initial=name.trim()[0]||'?';
+  const initial=name.trim()[0]?.toUpperCase()||'?';
   const isViolette=p.users&&p.users.role==='admin';
   const visBadge=p.visibility==='private'?'<span class="post-badge private">Prive</span>':'';
+  const isMine=p.user_id===STATE.user?.id;
+  const imgHtml=p.image_url
+    ?`<div style="width:100%;aspect-ratio:1;overflow:hidden;border-radius:12px;margin-bottom:10px"><img src="${p.image_url}" style="width:100%;height:100%;object-fit:cover" loading="lazy"></div>`
+    :`<div class="post-img"><span style="font-size:58px">🌸</span></div>`;
   return `<div class="post-card">
     <div class="post-header">
       <div class="post-avatar ${isViolette?'v':''}">${initial}</div>
-      <div><div class="post-author">${name.trim()}${isViolette?' ✦':''}</div><div class="post-time">${new Date(p.created_at).toLocaleDateString('fr-FR')}</div></div>
+      <div style="flex:1"><div class="post-author">${name.trim()}${isViolette?' ✦':''}</div><div class="post-time">${new Date(p.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'long'})}</div></div>
       ${visBadge}
+      ${isMine?`<button onclick="deletePost('${p.id}','${p.image_url||''}')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:4px">✕</button>`:''}
     </div>
-    <div class="post-img ${shape}"><span style="font-size:58px">${postImgs[(p.img_index-1)%5]||'🌸'}</span></div>
+    ${imgHtml}
     <div class="post-caption">${p.caption}</div>
     <div class="post-actions">
-      <button class="post-action" onclick="showToast('J aime !')">J aime</button>
-      <button class="post-action" onclick="showToast('Commentaires bientot')">Commenter</button>
-      <span class="post-like-count">${p.likes} j aimes</span>
+      <button class="post-action" onclick="toggleLike('${p.id}',this)">🤍 J'aime</button>
+      <span class="post-like-count" id="likes-${p.id}">${p.likes||0} j'aimes</span>
     </div>
   </div>`;
+}
+
+async function toggleLike(postId, btn){
+  const {data:post}=await sb.from('posts').select('likes').eq('id',postId).single();
+  const newLikes=(post?.likes||0)+1;
+  await sb.from('posts').update({likes:newLikes}).eq('id',postId);
+  document.getElementById('likes-'+postId).textContent=newLikes+" j'aimes";
+  btn.textContent="❤️ Jaime";
+}
+
+async function deletePost(postId, imageUrl){
+  if(!confirm('Supprimer ce post ?')) return;
+  if(imageUrl){
+    const fileName=imageUrl.split('/').pop();
+    await sb.storage.from('community').remove([fileName]);
+  }
+  await sb.from('posts').delete().eq('id',postId);
+  loadAndRenderGallery(galTab);
+  showToast('Post supprime');
 }
 
 // ── ADMIN ──
