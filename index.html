@@ -470,38 +470,68 @@ body{font-family:var(--sans);color:var(--ink)}
 <!-- CLIENT SCREENS -->
 <div class="screen" id="screen-home">
   <div class="screen-scroll">
+
+    <!-- HERO -->
     <div class="home-hero">
       <div class="home-blob"></div>
       <div class="home-hero-inner">
-        <div class="hello-text">Bonjour 🌸</div>
+        <div class="hello-text" id="hero-greeting">Bonjour 🌸</div>
         <div class="hero-name" id="hero-name-el">—</div>
-        <div class="hero-quote" id="home-quote">—</div>
+        <div style="font-family:var(--serif);font-size:13px;font-style:italic;color:rgba(255,255,255,.8);margin-top:4px;line-height:1.5" id="vword-text">—</div>
       </div>
     </div>
-    <div class="welcome-card" id="welcome-block">
-      <div class="welcome-title">Bienvenue ! 🌺</div>
-      <div class="welcome-text">Ajoute ta premiere seance pour demarrer ton suivi.</div>
-      <button class="welcome-btn" onclick="goTo('seances',document.getElementById('nav-seances'))">Ajouter une seance</button>
-    </div>
-    <div class="steps-card">
-      <div class="steps-title">Tes premieres etapes</div>
-      <div class="step-item"><div class="step-check done">✓</div><div class="step-text done">Creer mon compte</div></div>
-      <div class="step-item" id="step-seance"><div class="step-check" id="step-seance-check"></div><div class="step-text">Ajouter une seance</div></div>
-      <div class="step-item" id="step-booking"><div class="step-check" id="step-booking-check"></div><div class="step-text">Reserver un creneau avec Violette</div></div>
-      <div class="step-item" id="step-photo"><div class="step-check" id="step-photo-check"></div><div class="step-text">Partager une photo</div></div>
-    </div>
-    <div class="vword-card">
-      <div class="vword-author">✦ Le mot de Violette</div>
-      <div class="vword-text" id="vword-text">—</div>
-    </div>
-    <div id="home-stats" style="display:none">
-      <div class="quick-stats">
-        <div class="stat-card rose-bg"><div class="stat-val" id="h-planche">—</div><div class="stat-lbl">Planche</div></div>
-        <div class="stat-card sage-bg"><div class="stat-val" id="h-energie">—</div><div class="stat-lbl">Energie</div></div>
-        <div class="stat-card lilac-bg"><div class="stat-val" id="h-equi">—</div><div class="stat-lbl">Equilibre</div></div>
-        <div class="stat-card peach-bg"><div class="stat-val" id="h-mains">—</div><div class="stat-lbl">Mains-sol</div></div>
+
+    <div style="padding:12px 16px 0;display:flex;flex-direction:column;gap:10px">
+
+      <!-- PROCHAINE SÉANCE -->
+      <div id="home-next-booking" style="background:var(--white);border-radius:var(--radius-sm);padding:14px;box-shadow:0 1px 6px rgba(200,100,140,.06)">
+        <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Prochaine séance</div>
+        <div id="home-next-content"><div style="font-size:13px;color:var(--muted);font-style:italic">Aucune séance prévue</div></div>
+        <button id="home-book-btn" onclick="goTo('agenda',document.querySelector('#nav-client .nav-btn[onclick*=agenda]'))" style="margin-top:10px;width:100%;padding:10px;background:var(--rose-deep);color:white;border:none;border-radius:10px;font-size:13px;font-family:var(--sans);cursor:pointer;display:none">Réserver un créneau →</button>
       </div>
+
+      <!-- PROGRESSION SEMAINE -->
+      <div style="background:var(--white);border-radius:var(--radius-sm);padding:14px;box-shadow:0 1px 6px rgba(200,100,140,.06)">
+        <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Ma semaine</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:13px;color:var(--mid)">Séances cette semaine</span>
+          <span style="font-family:var(--serif);font-size:18px;color:var(--ink)" id="home-week-count">0</span>
+        </div>
+        <div id="home-week-dots" style="display:flex;gap:6px;margin-bottom:10px"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:13px;color:var(--mid)">Streak actuel</span>
+          <span style="font-family:var(--serif);font-size:18px;color:var(--rose-deep)" id="home-streak">0 🔥</span>
+        </div>
+      </div>
+
+      <!-- PROCHAIN BADGE -->
+      <div id="home-next-badge" style="background:var(--white);border-radius:var(--radius-sm);padding:14px;box-shadow:0 1px 6px rgba(200,100,140,.06);display:none">
+        <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Prochain badge</div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="font-size:32px" id="home-badge-emoji">🏅</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:500;color:var(--ink)" id="home-badge-name">—</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px" id="home-badge-sub">—</div>
+            <div style="height:6px;background:var(--rose-light);border-radius:3px;margin-top:6px"><div id="home-badge-bar" style="height:100%;background:var(--rose-deep);border-radius:3px;width:0%;transition:width .6s"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DERNIÈRE SÉANCE -->
+      <div id="home-last-session" style="background:var(--white);border-radius:var(--radius-sm);padding:14px;box-shadow:0 1px 6px rgba(200,100,140,.06);display:none">
+        <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Dernière séance</div>
+        <div id="home-last-content"></div>
+      </div>
+
+      <!-- RAPPEL INACTIVITÉ -->
+      <div id="home-inactive-nudge" style="display:none;background:var(--lilac-light);border-radius:var(--radius-sm);padding:14px;border-left:3px solid var(--lilac)">
+        <div style="font-size:13px;color:#6b3fa0">💜 Ca fait un moment ! Prête à reprendre ?</div>
+        <button onclick="goTo('agenda',document.querySelector('#nav-client .nav-btn[onclick*=agenda]'))" style="margin-top:8px;font-size:12px;color:#6b3fa0;background:none;border:1px solid rgba(107,63,160,.3);border-radius:20px;padding:6px 14px;cursor:pointer;font-family:var(--sans)">Voir les créneaux →</button>
+      </div>
+
+      <div style="height:8px"></div>
     </div>
+
   </div>
 </div>
 
@@ -1492,6 +1522,10 @@ async function loadClientData(){
   applyStoredTheme();
   showLoader();
   const p = STATE.profile;
+  // Dynamic greeting
+  const h=new Date().getHours();
+  const greeting=h<12?'Bonjour 🌸':h<18?'Bon après-midi 🌿':'Bonsoir 🌙';
+  document.getElementById('hero-greeting').textContent=greeting;
   document.getElementById('hero-name-el').innerHTML = p.firstname + ',<br><em>contente de te voir !</em>';
   document.getElementById('prof-name').textContent = (p.firstname||'')+' '+(p.lastname||'');
   const avatarEl=document.getElementById('prof-avatar');
@@ -1522,7 +1556,117 @@ async function loadClientData(){
   await loadSessions();
   await loadMeasures();
   await loadBookings();
+  await loadHomeScreen();
   hideLoader();
+  updateClientMsgBadge();
+}
+
+async function loadHomeScreen(){
+  const p=STATE.profile;
+  const today=dateKey(new Date());
+
+  // ── PROCHAINE SÉANCE ──
+  const {data:nextBookings}=await sb.from('bookings')
+    .select('*,slots(date,time,type,duration)')
+    .eq('user_id',STATE.user.id)
+    .neq('status','cancelled')
+    .gte('slots.date',today)
+    .order('slots(date)',{ascending:true})
+    .limit(3);
+  const upcoming=(nextBookings||[]).filter(b=>b.slots&&b.slots.date>=today);
+  const nextEl=document.getElementById('home-next-content');
+  const bookBtn=document.getElementById('home-book-btn');
+  if(upcoming.length>0){
+    const b=upcoming[0];
+    const isConfirmed=b.status==='confirmed';
+    nextEl.innerHTML=`
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:44px;height:44px;border-radius:12px;background:${isConfirmed?'var(--sage-light)':'var(--rose-light)'};display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">${isConfirmed?'✅':'⏳'}</div>
+        <div>
+          <div style="font-size:14px;font-weight:500;color:var(--ink)">${formatDateFR(b.slots.date)} à ${b.slots.time}</div>
+          <div style="font-size:12px;color:var(--mid);margin-top:2px">${b.slots.type} · ${b.slots.duration} min · <span style="color:${isConfirmed?'var(--sage)':'var(--rose-deep)'}">${isConfirmed?'Confirmée':'En attente'}</span></div>
+        </div>
+      </div>`;
+    bookBtn.style.display='none';
+  } else {
+    nextEl.innerHTML='<div style="font-size:13px;color:var(--muted);font-style:italic">Aucune séance prévue avec Violette</div>';
+    bookBtn.style.display='block';
+  }
+
+  // ── SEMAINE + STREAK ──
+  const monday=new Date(); monday.setDate(monday.getDate()-((monday.getDay()+6)%7));
+  const mondayKey=dateKey(monday);
+  const sunday=new Date(monday); sunday.setDate(monday.getDate()+6);
+  const sundayKey=dateKey(sunday);
+  const {data:weekSessions}=await sb.from('sessions').select('date,type').eq('user_id',STATE.user.id).gte('date',mondayKey).lte('date',sundayKey);
+  const weekCount=(weekSessions||[]).filter(s=>s.type!=='solo').length + (weekSessions||[]).filter(s=>s.type==='solo').length;
+  const goal=p.weekly_goal||2;
+  document.getElementById('home-week-count').textContent=weekCount+'/'+goal;
+  // Dots
+  const dotsEl=document.getElementById('home-week-dots');
+  dotsEl.innerHTML='';
+  const dayNames=['L','M','M','J','V','S','D'];
+  for(let i=0;i<7;i++){
+    const d=new Date(monday); d.setDate(monday.getDate()+i);
+    const dk=dateKey(d);
+    const hasSess=(weekSessions||[]).some(s=>s.date===dk);
+    const isToday=dk===today;
+    const dot=document.createElement('div');
+    dot.style.cssText=`width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;background:${hasSess?'var(--rose-deep)':isToday?'var(--rose-light)':'var(--cream)'};color:${hasSess?'white':isToday?'var(--rose-deep)':'var(--muted)'};border:${isToday&&!hasSess?'1.5px solid var(--rose-deep)':'none'}`;
+    dot.textContent=dayNames[i];
+    dotsEl.appendChild(dot);
+  }
+  // Streak
+  const {data:allSess}=await sb.from('sessions').select('date').eq('user_id',STATE.user.id).order('date',{ascending:false});
+  let streak=0;
+  if(allSess&&allSess.length>0){
+    const dates=new Set(allSess.map(s=>s.date));
+    let cur=new Date();
+    while(dates.has(dateKey(cur))){ streak++; cur.setDate(cur.getDate()-1); }
+  }
+  document.getElementById('home-streak').textContent=streak>0?streak+' 🔥':'0';
+
+  // ── PROCHAIN BADGE ──
+  const {data:allSessionsFull}=await sb.from('sessions').select('id').eq('user_id',STATE.user.id);
+  const n=(allSessionsFull||[]).length;
+  const BADGES_DEF=[
+    {id:'b1',emoji:'🌱',name:'Premier pas',sub:'1ère séance',target:1},
+    {id:'b2',emoji:'🌿',name:'Régulière',sub:'5 séances',target:5},
+    {id:'b3',emoji:'🌸',name:'Épanouie',sub:'10 séances',target:10},
+    {id:'b4',emoji:'💪',name:'Déterminée',sub:'20 séances',target:20},
+    {id:'b5',emoji:'⭐',name:'Étoile',sub:'30 séances',target:30},
+    {id:'b6',emoji:'🏆',name:'Championne',sub:'50 séances',target:50},
+  ];
+  const nextBadge=BADGES_DEF.find(b=>n<b.target);
+  if(nextBadge){
+    document.getElementById('home-next-badge').style.display='block';
+    document.getElementById('home-badge-emoji').textContent=nextBadge.emoji;
+    document.getElementById('home-badge-name').textContent=nextBadge.name;
+    const prev=BADGES_DEF[BADGES_DEF.indexOf(nextBadge)-1];
+    const prevTarget=prev?prev.target:0;
+    const pct=Math.round((n-prevTarget)/(nextBadge.target-prevTarget)*100);
+    document.getElementById('home-badge-sub').textContent=n+'/'+nextBadge.target+' séances';
+    document.getElementById('home-badge-bar').style.width=pct+'%';
+  }
+
+  // ── DERNIÈRE SÉANCE ──
+  const {data:lastSess}=await sb.from('sessions').select('*').eq('user_id',STATE.user.id).order('date',{ascending:false}).limit(1);
+  if(lastSess&&lastSess.length>0){
+    const s=lastSess[0];
+    const daysDiff=Math.floor((new Date()-new Date(s.date))/(1000*60*60*24));
+    document.getElementById('home-last-session').style.display='block';
+    document.getElementById('home-last-content').innerHTML=`
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-size:24px">${s.type==='solo'?'🟣':'🩷'}</div>
+        <div>
+          <div style="font-size:13px;font-weight:500;color:var(--ink)">${formatDateFR(s.date)} · ${s.duration} min</div>
+          ${s.note?`<div style="font-size:12px;color:var(--mid);margin-top:2px;font-style:italic">"${s.note}"</div>`:''}
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">Il y a ${daysDiff===0?'aujourd’hui':daysDiff===1?'hier':daysDiff+' jours'}</div>
+        </div>
+      </div>`;
+    // Inactivity nudge
+    if(daysDiff>=7) document.getElementById('home-inactive-nudge').style.display='block';
+  }
 }
 
 // ── CLIENT SESSION EDIT (solo only) ──
