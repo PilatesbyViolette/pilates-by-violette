@@ -583,7 +583,11 @@ body{font-family:var(--sans);color:var(--ink)}
   <div class="screen-scroll">
     <div class="profile-hero">
       <div class="profile-avatar-wrap">
-        <div class="profile-avatar" id="prof-avatar">?</div>
+        <div style="position:relative;cursor:pointer" onclick="document.getElementById('avatar-file-input').click()">
+          <div class="profile-avatar" id="prof-avatar" style="overflow:hidden">?</div>
+          <div style="position:absolute;bottom:0;right:0;width:22px;height:22px;border-radius:50%;background:var(--rose-deep);display:flex;align-items:center;justify-content:center;border:2px solid white;font-size:11px">📷</div>
+          <input type="file" id="avatar-file-input" accept="image/*" style="display:none" onchange="handleAvatarSelect(this)">
+        </div>
         <div>
           <div class="profile-name" id="prof-name">—</div>
           <div class="profile-since">Pilates by Violette 🌸</div>
@@ -1372,13 +1376,36 @@ function goTo(id, btn){
   if (id==='adm-chat'){ /* loaded by openAdmChat */ }
 }
 
+// ── AVATAR ──
+async function handleAvatarSelect(input){
+  const file=input.files[0];
+  if(!file) return;
+  showToast('Compression...');
+  const compressed=await compressImage(file,400,0.8);
+  const fileName=`avatar_${STATE.user.id}.jpg`;
+  const {error}=await sb.storage.from('avatars').upload(fileName,compressed,{contentType:'image/jpeg',upsert:true});
+  if(error){ showToast('Erreur: '+error.message); return; }
+  const {data:urlData}=sb.storage.from('avatars').getPublicUrl(fileName);
+  const avatar_url=urlData.publicUrl+'?t='+Date.now();
+  await sb.from('users').update({avatar_url}).eq('id',STATE.user.id);
+  STATE.profile.avatar_url=avatar_url;
+  const avatarEl=document.getElementById('prof-avatar');
+  avatarEl.innerHTML=`<img src="${avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+  showToast('Photo de profil mise a jour ! 🌸');
+}
+
 // ── CLIENT DATA ──
 async function loadClientData(){
   showLoader();
   const p = STATE.profile;
   document.getElementById('hero-name-el').innerHTML = p.firstname + ',<br><em>contente de te voir !</em>';
-  document.getElementById('prof-name').textContent = (p.firstname||'')+' '+(p.lastname||'');
-  document.getElementById('prof-avatar').textContent = (p.firstname||p.name||'?')[0];
+  document.getElementById('prof-name').textContent = p.pseudo||(p.firstname||'')+' '+(p.lastname||'');
+  const avatarEl=document.getElementById('prof-avatar');
+  if(p.avatar_url){
+    avatarEl.innerHTML=`<img src="${p.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+  } else {
+    avatarEl.textContent=(p.firstname||p.name||'?')[0].toUpperCase();
+  }
   // Forfait banner
   const forfait=p.forfait_type||'seance';
   const forfaitNames={'seance':'A la seance','forfait5':'Forfait 5 seances','forfait10':'Forfait 10 seances','abonnement':'Abonnement mensuel'};
@@ -1861,7 +1888,7 @@ async function loadAndRenderGallery(tab){
 }
 
 function renderPost(p){
-  const name=p.users?(p.users.firstname||'')+' '+(p.users.lastname||''):'Anonyme';
+  const name=p.users?(p.users.pseudo||(p.users.firstname||'')+' '+(p.users.lastname||'').trim()):'Anonyme';
   const initial=name.trim()[0]?.toUpperCase()||'?';
   const isViolette=p.users&&p.users.role==='admin';
   const visBadge=p.visibility==='private'?'<span class="post-badge private">Prive</span>':'';
