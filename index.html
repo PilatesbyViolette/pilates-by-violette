@@ -1492,6 +1492,9 @@ async function initSession(authUser){
     document.getElementById('nav-admin').style.display = 'flex';
     goTo('adm-home', document.querySelector('#nav-admin .nav-btn'));
     loadAdminData();
+    // Start admin badge polling
+    setTimeout(()=>{ updateAdmMsgBadge(); },1000);
+    setInterval(()=>{ if(STATE.mode==='admin') updateAdmMsgBadge(); }, 15000);
   } else {
     document.getElementById('nav-client').style.display = 'flex';
     document.getElementById('nav-admin').style.display = 'none';
@@ -1613,15 +1616,8 @@ async function loadClientData(){
   startGlobalMsgListener();
 }
 
-let _globalMsgChannel=null;
 async function startGlobalMsgListener(){
-  if(!STATE.user) return;
-  if(_globalMsgChannel) sb.removeChannel(_globalMsgChannel);
-  _globalMsgChannel=sb.channel('global-msg-badge-'+STATE.user.id)
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:'receiver_id=eq.'+STATE.user.id},
-      ()=>updateClientMsgBadge()
-    )
-    .subscribe();
+  // Handled by startMsgBadgeListener polling
 }
 
 async function loadHomeScreen(){
@@ -3160,11 +3156,12 @@ async function loadClientMessages(){
     updateClientMsgBadge();
   };
   await fetchAndRender();
-  // Realtime subscription
-  if(_clMsgChannel) sb.removeChannel(_clMsgChannel);
-  _clMsgChannel=sb.channel('cl-messages-'+STATE.user.id)
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},()=>fetchAndRender())
-    .subscribe();
+  // Poll for new messages every 5 seconds while on this screen
+  if(_clMsgChannel) clearInterval(_clMsgChannel);
+  _clMsgChannel=setInterval(()=>{
+    if(document.getElementById('screen-cl-messages').classList.contains('active')) fetchAndRender();
+    else { clearInterval(_clMsgChannel); _clMsgChannel=null; }
+  }, 5000);
 }
 
 async function sendClientMessage(){
@@ -3179,28 +3176,29 @@ async function sendClientMessage(){
   updateAdmMsgBadge();
 }
 
+let _badgePollInterval=null;
 async function startMsgBadgeListener(){
   if(!STATE.user) return;
-  const violetteId=await getVioletteId();
-  if(!violetteId) return;
-  // Initial badge check
   updateClientMsgBadge();
-  // Persistent realtime channel for badge - always active
-  const bgChannel=sb.channel('badge-listener-'+STATE.user.id)
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:'receiver_id=eq.'+STATE.user.id},()=>{
-      updateClientMsgBadge();
-    })
-    .subscribe();
+  // Poll every 15 seconds for new messages
+  if(_badgePollInterval) clearInterval(_badgePollInterval);
+  _badgePollInterval=setInterval(()=>{
+    if(STATE.user) updateClientMsgBadge();
+    else clearInterval(_badgePollInterval);
+  }, 15000);
 }
 
 async function updateClientMsgBadge(){
   if(!STATE.user) return;
-  const violetteId=await getVioletteId();
-  if(!violetteId) return;
-  const {count}=await sb.from('messages').select('id',{count:'exact',head:true}).eq('receiver_id',STATE.user.id).eq('read',false);
+  const {count}=await sb.from('messages')
+    .select('id',{count:'exact',head:true})
+    .eq('receiver_id',STATE.user.id)
+    .eq('read',false);
   const badge=document.getElementById('cl-msg-badge');
-  const onMessages=document.getElementById('screen-cl-messages').classList.contains('active');
-  if(badge) badge.style.display=count>0?'block':'none';
+  if(badge){
+    badge.style.display=(count&&count>0)?'block':'none';
+    badge.style.setProperty('display',(count&&count>0)?'block':'none','important');
+  }
 }
 
 // ── ADMIN MESSAGES ──
@@ -3268,10 +3266,11 @@ async function loadAdmChatMessages(){
     renderMessages(data||[], violetteId, document.getElementById('adm-chat-box'));
   };
   await fetchAndRender();
-  if(_admMsgChannel) sb.removeChannel(_admMsgChannel);
-  _admMsgChannel=sb.channel('adm-messages-'+admChatClientId)
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},()=>fetchAndRender())
-    .subscribe();
+  if(_admMsgChannel) clearInterval(_admMsgChannel);
+  _admMsgChannel=setInterval(()=>{
+    if(document.getElementById('screen-adm-chat').classList.contains('active')) fetchAndRender();
+    else { clearInterval(_admMsgChannel); _admMsgChannel=null; }
+  }, 5000);
 }
 
 async function sendAdminMessage(){
@@ -3287,14 +3286,17 @@ async function sendAdminMessage(){
 function updateAdmMsgBadge(count){
   const badge=document.getElementById('adm-msg-badge');
   if(!badge) return;
+  const show=(v)=>{
+    badge.style.setProperty('display',v>0?'inline-block':'none','important');
+  };
   if(count===undefined){
     getVioletteId().then(vid=>{
       sb.from('messages').select('id',{count:'exact',head:true}).eq('receiver_id',vid).eq('read',false).then(({count:c})=>{
-        badge.style.display=c>0?'inline-block':'none';
+        show(c||0);
       });
     });
   } else {
-    badge.style.display=count>0?'inline-block':'none';
+    show(count);
   }
 }
 
