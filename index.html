@@ -11,7 +11,65 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj48cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQ4IiBmaWxsPSIjZjRhMGJjIi8+PHRleHQgeD0iOTYiIHk9IjExMCIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc2l6ZT0iNzIiIGZvbnQtc3R5bGU9Iml0YWxpYyIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPlBiVjwvdGV4dD48L3N2Zz4=">
 <title>Pilates by Violette</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+// -- ADMIN SETTINGS --
+async function loadAdmSettings(){
+  const p=STATE.profile;
+  if(!p) return;
+  document.getElementById('adm-set-firstname').value=p.firstname||'';
+  document.getElementById('adm-set-lastname').value=p.lastname||'';
+  document.getElementById('adm-set-email').value=p.email||STATE.user?.email||'';
+  document.getElementById('adm-set-phone').value=p.phone||'';
+  document.getElementById('adm-set-pseudo').value=p.pseudo||'';
+  // Notif prefs
+  const prefs=JSON.parse(localStorage.getItem('pbv_adm_prefs')||'{}');
+  document.getElementById('adm-notif-booking').checked=prefs.notifBooking!==false;
+  document.getElementById('adm-notif-message').checked=prefs.notifMessage!==false;
+  // Theme
+  applyStoredTheme();
+  const theme=localStorage.getItem('pbv_theme')||'rose';
+  document.querySelectorAll('#screen-adm-settings .theme-btn').forEach(b=>{
+    const active=b.dataset.theme===theme;
+    b.style.border=active?'2px solid var(--rose-deep)':'2px solid transparent';
+  });
+}
+
+async function saveAdmAccountSettings(){
+  const firstname=document.getElementById('adm-set-firstname').value.trim();
+  const lastname=document.getElementById('adm-set-lastname').value.trim();
+  const phone=document.getElementById('adm-set-phone').value.trim();
+  const pseudo=document.getElementById('adm-set-pseudo').value.trim();
+  const newEmail=document.getElementById('adm-set-email').value.trim();
+  const {error}=await sb.from('users').update({firstname,lastname,phone,pseudo}).eq('id',STATE.user.id);
+  if(error){ showToast('Erreur: '+error.message); return; }
+  if(newEmail && newEmail!==STATE.user.email){
+    const {error:emailErr}=await sb.auth.updateUser({email:newEmail});
+    if(emailErr) showToast('Email: '+emailErr.message);
+    else showToast('Email de confirmation envoy\u00E9');
+  }
+  STATE.profile={...STATE.profile,firstname,lastname,phone,pseudo};
+  showToast('Informations sauvegard\u00E9es \u2713');
+}
+
+function saveAdmNotifSettings(){
+  const prefs={
+    notifBooking: document.getElementById('adm-notif-booking').checked,
+    notifMessage: document.getElementById('adm-notif-message').checked
+  };
+  localStorage.setItem('pbv_adm_prefs', JSON.stringify(prefs));
+  showToast('Pr\u00E9f\u00E9rences sauvegard\u00E9es');
+}
+
+async function saveAdmPassword(){
+  const pw=document.getElementById('adm-set-password').value;
+  if(!pw||pw.length<8){ showToast('8 caract\u00E8res minimum'); return; }
+  const {error}=await sb.auth.updateUser({password:pw});
+  if(error){ showToast('Erreur: '+error.message); return; }
+  document.getElementById('adm-set-password').value='';
+  showToast('Mot de passe modifi\u00E9 \u2713');
+}
+
+</script>
 <style>
 :root{--rose:#f4a0bc;--rose-light:#fce8f0;--rose-mid:#e8789a;--rose-deep:#c45878;--cream:#fdf8f3;--sage:#8aab8e;--sage-light:#d4e8d4;--gold:#c8a870;--gold-light:#f0e4c8;--lilac:#c8a8d8;--lilac-light:#f0e8f8;--peach:#f8c8a0;--peach-light:#fef0e4;--ink:#2a2420;--mid:#6b5e58;--muted:#a89890;--white:#ffffff;--danger:#d85050;--serif:'Cormorant Garamond',Georgia,serif;--sans:'DM Sans',sans-serif;--radius:20px;--radius-sm:12px}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -824,7 +882,7 @@ body{font-family:var(--sans);color:var(--ink)}
 
 <div class="screen" id="screen-adm-profile">
   <div class="screen-scroll">
-    <div class="admin-top"><div class="admin-top-inner"><div class="admin-word">Admin</div><div class="admin-title" style="font-style:italic;color:var(--rose-deep)">Violette</div><div class="admin-sub">Pilates by Violette</div></div></div>
+    <div class="admin-top"><div class="admin-top-inner"><div class="admin-word">Admin</div><div class="admin-title" style="font-style:italic;color:var(--rose-deep)">Violette</div><div class="admin-sub">Pilates by Violette</div></div><button onclick="goTo('adm-settings',null)" style="background:none;border:none;cursor:pointer;font-size:22px;padding:4px;color:var(--mid);position:absolute;top:16px;right:16px">&#9881;&#65039;</button></div>
     <div class="menu-section" style="margin-top:16px">
       <div class="menu-item" onclick="goTo('adm-quotes',document.querySelector('#nav-admin .nav-btn'))"><div class="menu-item-icon">✨</div><div class="menu-item-text"><div class="menu-item-title">Citations & mot du jour</div><div class="menu-item-sub">Inspire tes clientes</div></div><div class="menu-item-arrow">›</div></div>
       <div class="menu-item" onclick="openStats()"><div class="menu-item-icon">📊</div><div class="menu-item-text"><div class="menu-item-title">Statistiques business</div><div class="menu-item-sub">Revenus, retention, croissance</div></div><div class="menu-item-arrow">›</div></div>
@@ -835,6 +893,58 @@ body{font-family:var(--sans);color:var(--ink)}
 </div>
 
 
+
+
+<!-- PARAMETRES ADMIN -->
+<div class="screen" id="screen-adm-settings">
+  <div class="screen-scroll">
+    <div class="admin-top">
+      <div class="admin-top-inner">
+        <button onclick="goTo('adm-profile',document.querySelectorAll('#nav-admin .nav-btn')[2])" style="background:none;border:none;color:var(--rose-deep);font-size:13px;cursor:pointer;padding:0;font-family:var(--sans);margin-bottom:6px">&#8249; Retour</button>
+        <div style="font-family:var(--serif);font-size:22px;color:var(--ink)">Mes <em>param&egrave;tres</em></div>
+      </div>
+    </div>
+    <div style="padding:12px 16px 0">
+      <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;padding:0 2px">Infos du compte</div>
+      <div style="background:var(--white);border-radius:var(--radius-sm);padding:14px;box-shadow:0 1px 6px rgba(200,100,140,.06);margin-bottom:14px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div class="form-field" style="margin:0"><label class="form-label">Pr&eacute;nom</label><input type="text" class="form-input" id="adm-set-firstname"></div>
+          <div class="form-field" style="margin:0"><label class="form-label">Nom</label><input type="text" class="form-input" id="adm-set-lastname"></div>
+        </div>
+        <div class="form-field"><label class="form-label">Email</label><input type="email" class="form-input" id="adm-set-email"></div>
+        <div class="form-field"><label class="form-label">T&eacute;l&eacute;phone</label><input type="tel" class="form-input" id="adm-set-phone"></div>
+        <div class="form-field" style="margin-bottom:0"><label class="form-label">Pseudo <span style="font-weight:400;font-size:10px;color:var(--muted)">(affich&eacute; dans la communaut&eacute;)</span></label><input type="text" class="form-input" id="adm-set-pseudo" placeholder="Laisser vide = nom complet"></div>
+        <button onclick="saveAdmAccountSettings()" class="submit-btn" style="margin-top:12px">Sauvegarder</button>
+      </div>
+      <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;padding:0 2px">Th&egrave;me</div>
+      <div style="background:var(--white);border-radius:var(--radius-sm);padding:14px;box-shadow:0 1px 6px rgba(200,100,140,.06);margin-bottom:14px">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+          <button class="theme-btn active" data-theme="rose" onclick="setTheme(this,'rose')" style="padding:10px 4px;border-radius:10px;border:2px solid var(--rose-deep);background:var(--rose-light);cursor:pointer;font-size:11px;color:var(--rose-deep);font-family:var(--sans)">&#127800; Rose</button>
+          <button class="theme-btn" data-theme="sage" onclick="setTheme(this,'sage')" style="padding:10px 4px;border-radius:10px;border:2px solid transparent;background:var(--sage-light);cursor:pointer;font-size:11px;color:#3a6e40;font-family:var(--sans)">&#127807; Sauge</button>
+          <button class="theme-btn" data-theme="gold" onclick="setTheme(this,'gold')" style="padding:10px 4px;border-radius:10px;border:2px solid transparent;background:var(--gold-light);cursor:pointer;font-size:11px;color:#8a6a00;font-family:var(--sans)">&#10024; Dor&eacute;</button>
+          <button class="theme-btn" data-theme="lilac" onclick="setTheme(this,'lilac')" style="padding:10px 4px;border-radius:10px;border:2px solid transparent;background:var(--lilac-light);cursor:pointer;font-size:11px;color:#6b3fa0;font-family:var(--sans)">&#128156; Lavande</button>
+        </div>
+      </div>
+      <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;padding:0 2px">Notifications</div>
+      <div style="background:var(--white);border-radius:var(--radius-sm);padding:14px;box-shadow:0 1px 6px rgba(200,100,140,.06);margin-bottom:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:12px;border-bottom:.5px solid rgba(244,160,188,.15)">
+          <div><div style="font-size:13px;color:var(--ink)">Nouvelle r&eacute;servation</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Alerte quand une cliente r&eacute;serve</div></div>
+          <label class="toggle-switch"><input type="checkbox" id="adm-notif-booking" checked onchange="saveAdmNotifSettings()"><span class="toggle-slider"></span></label>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding-top:12px">
+          <div><div style="font-size:13px;color:var(--ink)">Nouveau message</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Alerte quand une cliente &eacute;crit</div></div>
+          <label class="toggle-switch"><input type="checkbox" id="adm-notif-message" checked onchange="saveAdmNotifSettings()"><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+      <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;padding:0 2px">S&eacute;curit&eacute;</div>
+      <div style="background:var(--white);border-radius:var(--radius-sm);padding:14px;box-shadow:0 1px 6px rgba(200,100,140,.06);margin-bottom:14px">
+        <div class="form-field"><label class="form-label">Nouveau mot de passe</label><input type="password" class="form-input" id="adm-set-password" placeholder="Laisser vide pour ne pas changer"></div>
+        <button onclick="saveAdmPassword()" class="submit-btn" style="margin-top:4px">Modifier le mot de passe</button>
+      </div>
+      <div style="height:24px"></div>
+    </div>
+  </div>
+</div>
 
 <!-- STATS BUSINESS -->
 <div class="screen" id="screen-adm-stats">
@@ -1538,6 +1648,7 @@ function goTo(id, btn){
   if (id==='adm-offre') loadOffre();
   if (id==='adm-stats') { /* loaded by openStats */ }
   if (id==='adm-profile'){ checkStorageUsage(); loadQuotes(); }
+  if (id==='adm-settings'){ loadAdmSettings(); }
   if (id==='galerie'){
     loadAndRenderGallery(galTab);
     if(typeof _galChannel!=='undefined'&&_galChannel) sb.removeChannel(_galChannel);
