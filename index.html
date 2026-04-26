@@ -1493,6 +1493,7 @@ async function initSession(authUser){
     document.getElementById('nav-client').style.display = 'none';
     document.getElementById('nav-admin').style.display = 'flex';
     goTo('adm-home', document.querySelector('#nav-admin .nav-btn'));
+    startAdmMsgBadgeListener();
     loadAdminData();
     // Start admin badge polling
     setTimeout(()=>{ updateAdmMsgBadge(); },1000);
@@ -1508,6 +1509,10 @@ async function initSession(authUser){
 }
 
 async function logout(){
+  // Clean up realtime channels
+  if(_clMsgChannel){ sb.removeChannel(_clMsgChannel); _clMsgChannel=null; }
+  if(_admMsgChannel){ sb.removeChannel(_admMsgChannel); _admMsgChannel=null; }
+  _violetteIdCache=null;
   await sb.auth.signOut();
   STATE.mode = null; STATE.user = null; STATE.profile = null;
   STATE.earnedBadges = []; STATE.bookings = [];
@@ -1533,6 +1538,17 @@ function goTo(id, btn){
   if (id==='adm-offre') loadOffre();
   if (id==='adm-stats') { /* loaded by openStats */ }
   if (id==='adm-profile'){ checkStorageUsage(); loadQuotes(); }
+  if (id==='galerie'){
+    loadAndRenderGallery(galTab);
+    if(typeof _galChannel!=='undefined'&&_galChannel) sb.removeChannel(_galChannel);
+    window._galChannel=sb.channel('gallery-live')
+      .on('postgres_changes',{event:'*',schema:'public',table:'posts'},()=>loadAndRenderGallery(galTab))
+      .on('postgres_changes',{event:'*',schema:'public',table:'post_likes'},()=>loadAndRenderGallery(galTab))
+      .subscribe();
+  }
+  if(id!=='galerie'&&typeof window._galChannel!=='undefined'&&window._galChannel){
+    sb.removeChannel(window._galChannel); window._galChannel=null;
+  }
   if (id==='cl-messages'){
     loadClientMessages();
     const bar=document.getElementById('cl-input-bar');
@@ -1543,6 +1559,7 @@ function goTo(id, btn){
     if(bar) bar.style.display='none';
   }
   if (id==='adm-messages'){ loadAdmConversations(); }
+  if (id!=='adm-messages'&&_admConvChannel){ sb.removeChannel(_admConvChannel); _admConvChannel=null; }
   if (id==='adm-chat'){
     const bar=document.getElementById('adm-input-bar');
     if(bar) bar.style.display='flex';
@@ -1574,6 +1591,7 @@ async function handleAvatarSelect(input){
 
 // ── CLIENT DATA ──
 async function loadClientData(){
+  try {
   applyStoredTheme();
   showLoader();
   const p = STATE.profile;
@@ -1612,10 +1630,8 @@ async function loadClientData(){
   await loadMeasures();
   await loadBookings();
   await loadHomeScreen();
-  hideLoader();
-  updateClientMsgBadge();
-  // Subscribe to new messages globally for badge updates
-  startGlobalMsgListener();
+  } catch(e){ console.error('loadClientData error:',e); }
+  finally { hideLoader(); updateClientMsgBadge(); startMsgBadgeListener(); }
 }
 
 async function startGlobalMsgListener(){
@@ -1763,11 +1779,10 @@ async function loadHomeScreen(){
 let cseSessionId=null, cseDuration=60;
 
 function openAddSoloSession(){
-  // Open the session modal in "create" mode for today
   cseSessionId=null;
   cseDuration=60;
-  const today=dateKey(new Date());
-  document.getElementById('cse-title').textContent='Nouvelle seance solo';
+  const targetDate=selectedDate||dateKey(new Date());
+  document.getElementById('cse-title').textContent='Nouvelle séance solo';
   document.getElementById('cse-note').value='';
   document.querySelectorAll('.cse-dur-btn').forEach(b=>b.classList.toggle('active',parseInt(b.dataset.dur)===60));
   // Add date field if not already present
@@ -1777,10 +1792,10 @@ function openAddSoloSession(){
     dateRow=document.createElement('div');
     dateRow.id='cse-date-row';
     dateRow.className='form-field';
-    dateRow.innerHTML=`<label class="form-label">Date</label><input type="date" class="form-input" id="cse-date" value="${today}">`;
+    dateRow.innerHTML=`<label class="form-label">Date</label><input type="date" class="form-input" id="cse-date" value="${targetDate}">`;
     modal.insertBefore(dateRow, modal.querySelector('.form-field'));
   } else {
-    document.getElementById('cse-date').value=today;
+    document.getElementById('cse-date').value=targetDate;
     dateRow.style.display='block';
   }
   document.getElementById('modal-client-session-edit').classList.add('open');
@@ -2261,13 +2276,16 @@ function renderPost(p, isLiked=false){
     <div class="post-caption">${p.caption}</div>
     <div class="post-actions">
       <button class="post-action" onclick="toggleLike('${p.id}',this)">${isLiked?'❤️':'🤍'} J’aime</button>
-      <span class="post-like-count" id="likes-${p.id}">${p.likes||0} j’aimes</span>
+      <span class="post-like-count" id="likes-${p.id}">${p.likes||0} j’aime${(p.likes||0)===1?'':'s'}</span>
     </div>
   </div>`;
 }
 
 async function toggleLike(postId, btn){
   if(!STATE.user) return;
+  if(btn.disabled) return;
+  btn.disabled=true;
+  try {
   const liked=btn.dataset.liked==='1';
   if(liked){
     await sb.from('post_likes').delete().eq('post_id',postId).eq('user_id',STATE.user.id);
@@ -2280,6 +2298,7 @@ async function toggleLike(postId, btn){
   document.getElementById('likes-'+postId).textContent=cnt+(cnt===1?' j’aime':' j’aimes');
   btn.dataset.liked=liked?'0':'1';
   btn.textContent=liked?'🤍 J’aime':'❤️ J’aime';
+  } finally { btn.disabled=false; }
 }
 
 async function deletePost(postId, imageUrl){
@@ -2500,19 +2519,27 @@ async function admConfirmBooking(){
   showToast('Reservation confirmee !');
 }
 async function admCancelBooking(){
+  // Get booking with slot info BEFORE deleting (to find matching auto-session)
+  const {data:bk}=await sb.from('bookings').select('user_id,status,slots(date,duration,type)').eq('id',admCurrentBookingId).single();
+  // If confirmed, delete the auto-created session
+  if(bk&&bk.status==='confirmed'&&bk.slots){
+    await sb.from('sessions').delete().eq('user_id',bk.user_id).eq('date',bk.slots.date).eq('type',bk.slots.type).eq('duration',bk.slots.duration);
+    // Decrement forfait_used if applicable
+    const {data:u}=await sb.from('users').select('forfait_type,forfait_used').eq('id',bk.user_id).single();
+    if(u&&['forfait5','forfait10'].includes(u.forfait_type)&&(u.forfait_used||0)>0){
+      await sb.from('users').update({forfait_used:Math.max(0,u.forfait_used-1)}).eq('id',bk.user_id);
+    }
+  }
   await sb.from('bookings').delete().eq('id',admCurrentBookingId);
   closeModal('modal-adm-booking');
   renderAdmSlotsFor(admSelectedDate);
   loadAdminData();
   // System message to client
-  if(admCurrentBookingId){
-    const {data:bk2}=await sb.from('bookings').select('user_id,slots(date,time)').eq('id',admCurrentBookingId).single();
-    if(bk2&&bk2.user_id){
-      const dateStr=bk2.slots?formatDateFR(bk2.slots.date)+' à '+bk2.slots.time:'';
-      await sendSystemMessage(bk2.user_id, `❌ Ta réservation${dateStr?' du '+dateStr:''} a été annulée. N'hésite pas à réserver un autre créneau !`);
-    }
+  if(bk&&bk.user_id){
+    const dateStr=bk.slots?formatDateFR(bk.slots.date):'';
+    await sendSystemMessage(bk.user_id, '❌ Ta réservation'+(dateStr?' du '+dateStr:'')+' a été annulée. N\'hésite pas à réserver un autre créneau !');
   }
-  showToast('Reservation annulee');
+  showToast('Réservation annulée');
 }
 function openAdmSlotModal(){
   if (!admSelectedDate) return;
@@ -2848,6 +2875,12 @@ async function openClientBookingDetail(bookingId){
   document.getElementById('modal-client-booking').classList.add('open');
 }
 async function clientCancelBooking(){
+  // Get booking before deleting
+  const {data:bk}=await sb.from('bookings').select('status,slots(date,duration,type)').eq('id',clientCurrentBookingId).single();
+  // If confirmed, also delete auto-created session
+  if(bk&&bk.status==='confirmed'&&bk.slots){
+    await sb.from('sessions').delete().eq('user_id',STATE.user.id).eq('date',bk.slots.date).eq('type',bk.slots.type).eq('duration',bk.slots.duration);
+  }
   await sb.from('bookings').delete().eq('id',clientCurrentBookingId);
   closeModal('modal-client-booking');
   await loadBookings();
@@ -3168,27 +3201,66 @@ async function loadClientMessages(){
     updateClientMsgBadge();
   };
   await fetchAndRender();
-  // Poll for new messages every 5 seconds while on this screen
-  if(_clMsgChannel) clearInterval(_clMsgChannel);
-  _clMsgChannel=setInterval(()=>{
-    if(document.getElementById('screen-cl-messages').classList.contains('active')) fetchAndRender();
-    else { clearInterval(_clMsgChannel); _clMsgChannel=null; }
-  }, 5000);
+  // Realtime subscription
+  if(_clMsgChannel) sb.removeChannel(_clMsgChannel);
+  _clMsgChannel=sb.channel('cl-msg-'+STATE.user.id+'-'+violetteId)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},(payload)=>{
+      const m=payload.new;
+      // Only refresh if message is part of this conversation
+      if((m.sender_id===STATE.user.id&&m.receiver_id===violetteId) ||
+         (m.sender_id===violetteId&&m.receiver_id===STATE.user.id) ||
+         m.sender_id===null){
+        fetchAndRender();
+      }
+    })
+    .subscribe();
+  // Subscribe to typing
+  const typingCh=sb.channel('typing-'+violetteId+'-'+STATE.user.id)
+    .on('broadcast',{event:'typing'},()=>showTypingIndicator(box))
+    .subscribe();
+}
+
+function showTypingIndicator(box){
+  let dots=box.querySelector('.typing-indicator');
+  if(!dots){
+    dots=document.createElement('div');
+    dots.className='typing-indicator';
+    dots.innerHTML='<div class="typing-dots"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
+    box.appendChild(dots);
+    const scroll=box.closest('.screen-scroll');
+    if(scroll) scroll.scrollTop=scroll.scrollHeight+500;
+  }
+  clearTimeout(window._typingTimer);
+  window._typingTimer=setTimeout(()=>{ dots.remove(); }, 2500);
 }
 
 async function sendClientMessage(){
   const input=document.getElementById('cl-msg-input');
   const content=input.value.trim();
-  if(!content) return;
+  if(!content||input.disabled) return;
+  input.disabled=true;
   const violetteId=await getVioletteId();
-  if(!violetteId) return;
+  if(!violetteId){ input.disabled=false; return; }
   input.value=''; input.style.height='auto';
-  await sb.from('messages').insert({sender_id:STATE.user.id,receiver_id:violetteId,content});
-  loadClientMessages();
-  updateAdmMsgBadge();
+  const {error}=await sb.from('messages').insert({sender_id:STATE.user.id,receiver_id:violetteId,content});
+  input.disabled=false;
+  input.focus();
+  // Realtime listener will refresh - no need to manually reload
+  if(error){ showToast('Erreur: '+error.message); input.value=content; }
 }
 
 let _badgePollInterval=null;
+async function startAdmMsgBadgeListener(){
+  if(STATE.mode !== 'admin') return;
+  updateAdmMsgBadge();
+  const violetteId = STATE.user.id;
+  sb.channel('adm-badge-listener-'+violetteId)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:'receiver_id=eq.'+violetteId},()=>{
+      updateAdmMsgBadge();
+    })
+    .subscribe();
+}
+
 async function startMsgBadgeListener(){
   if(!STATE.user) return;
   updateClientMsgBadge();
@@ -3214,10 +3286,20 @@ async function updateClientMsgBadge(){
 }
 
 // ── ADMIN MESSAGES ──
+let _admConvChannel=null;
 async function loadAdmConversations(){
   const {data:users}=await sb.from('users').select('id,firstname,lastname').neq('role','admin');
   if(!users||users.length===0){ document.getElementById('adm-conv-list').innerHTML='<div style="font-size:13px;color:var(--muted);text-align:center;padding:2rem">Aucune cliente</div>'; return; }
   const violetteId=await getVioletteId();
+  // Subscribe to message changes for live update
+  if(_admConvChannel) sb.removeChannel(_admConvChannel);
+  _admConvChannel=sb.channel('adm-conv-list')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},()=>{
+      // Reload only if still on the screen
+      if(document.getElementById('screen-adm-messages')?.classList.contains('active')) loadAdmConversations();
+      updateAdmMsgBadge();
+    })
+    .subscribe();
   // Get last message + unread count per user
   const list=document.getElementById('adm-conv-list');
   const rows=await Promise.all(users.map(async u=>{
@@ -3278,21 +3360,35 @@ async function loadAdmChatMessages(){
     renderMessages(data||[], violetteId, document.getElementById('adm-chat-box'));
   };
   await fetchAndRender();
-  if(_admMsgChannel) clearInterval(_admMsgChannel);
-  _admMsgChannel=setInterval(()=>{
-    if(document.getElementById('screen-adm-chat').classList.contains('active')) fetchAndRender();
-    else { clearInterval(_admMsgChannel); _admMsgChannel=null; }
-  }, 5000);
+  // Realtime
+  if(_admMsgChannel) sb.removeChannel(_admMsgChannel);
+  _admMsgChannel=sb.channel('adm-msg-'+admChatClientId+'-'+violetteId)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},(payload)=>{
+      const m=payload.new;
+      if((m.sender_id===admChatClientId&&m.receiver_id===violetteId) ||
+         (m.sender_id===violetteId&&m.receiver_id===admChatClientId) ||
+         m.sender_id===null){
+        fetchAndRender();
+      }
+    })
+    .subscribe();
+  // Typing indicator
+  sb.channel('typing-'+admChatClientId+'-'+violetteId)
+    .on('broadcast',{event:'typing'},()=>showTypingIndicator(document.getElementById('adm-chat-box')))
+    .subscribe();
 }
 
 async function sendAdminMessage(){
   const input=document.getElementById('adm-msg-input');
   const content=input.value.trim();
-  if(!content||!admChatClientId) return;
+  if(!content||!admChatClientId||input.disabled) return;
+  input.disabled=true;
   const violetteId=await getVioletteId();
   input.value=''; input.style.height='auto';
-  await sb.from('messages').insert({sender_id:violetteId,receiver_id:admChatClientId,content});
-  loadAdmChatMessages();
+  const {error}=await sb.from('messages').insert({sender_id:violetteId,receiver_id:admChatClientId,content});
+  input.disabled=false;
+  input.focus();
+  if(error){ showToast('Erreur: '+error.message); input.value=content; }
 }
 
 function updateAdmMsgBadge(count){
@@ -3489,6 +3585,8 @@ async function deleteAccount(){
   if(!confirmed) return;
   const doubleConfirm=confirm('Dernière confirmation — toutes tes données seront supprimées. Continuer ?');
   if(!doubleConfirm) return;
+  // Delete avatar from storage
+  try{ await sb.storage.from('avatars').remove([`avatar_${STATE.user.id}.jpg`]); }catch(e){}
   // Delete user data
   await Promise.all([
     sb.from('sessions').delete().eq('user_id',STATE.user.id),
