@@ -1489,6 +1489,7 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const STATE = { mode: null, user: null, profile: null, earnedBadges: [], bookings: [], postImgIdx: 0 };
+let _admBadgeInterval = null;
 const ALL_BADGES = [
   { id:'first',   emoji:'🌸', name:'Premiere flamme', desc:'1ere seance' },
   { id:'trio',    emoji:'🔥', name:'Trio gagnant',    desc:'3 seances' },
@@ -1502,6 +1503,7 @@ const ALL_BADGES = [
   { id:'cent',    emoji:'🏆', name:'Centenaire',      desc:'100 seances' },
 ];
 const postImgs = ['🌸','🌿','🌺','✨','🌻'];
+function escapeHtml(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
 function dateKey(d){ const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0'); return y+'-'+m+'-'+day; }
 function formatDateFR(d){ return new Date(d+'T00:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}); }
 
@@ -1558,7 +1560,9 @@ async function doRegister(){
   const errEl     = document.getElementById('register-error');
   errEl.classList.remove('show');
   if (!firstname||!lastname||!email||!phone){ errEl.textContent='Remplis tous les champs obligatoires (*)'; errEl.classList.add('show'); return; }
-  if (!validatePassword(pw)){ errEl.textContent='Le mot de passe ne respecte pas les regles de securite.'; errEl.classList.add('show'); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ errEl.textContent='Email invalide.'; errEl.classList.add('show'); return; }
+  if (!/^[0-9+\s\-().]{6,20}$/.test(phone)){ errEl.textContent='Numéro de téléphone invalide.'; errEl.classList.add('show'); return; }
+  if (!validatePassword(pw)){ errEl.textContent='Le mot de passe ne respecte pas les règles de sécurité.'; errEl.classList.add('show'); return; }
   if (pw !== pw2){ errEl.textContent='Les mots de passe ne correspondent pas.'; errEl.classList.add('show'); return; }
   const btn = document.getElementById('register-btn');
   btn.disabled = true; btn.textContent = 'Creation...';
@@ -1569,7 +1573,7 @@ async function doRegister(){
   btn.disabled = false; btn.textContent = 'Creer mon compte';
   if (error){ errEl.textContent = error.message; errEl.classList.add('show'); return; }
   // Insert into users table
-  const code = (firstname.toUpperCase() + Math.floor(1000+Math.random()*9000));
+  const code = Math.floor(10000+Math.random()*90000).toString();
   const { error: insertError } = await sb.from('users').insert({
     id: data.user.id,
     name: firstname + ' ' + lastname,
@@ -1580,16 +1584,23 @@ async function doRegister(){
     email,
     role: 'client'
   });
-  if (insertError) { errEl.textContent = 'Erreur creation profil : ' + insertError.message; errEl.classList.add('show'); return; }
-  document.getElementById('verify-sub').textContent = 'Un lien de confirmation a ete envoye a ' + email + '. Clique dessus pour activer ton compte.';
+  if (insertError) {
+    // Clean up orphaned auth user to prevent login deadlock
+    await sb.auth.signOut();
+    errEl.textContent = 'Erreur création profil : ' + insertError.message + '. Réessaie ou contacte Violette.';
+    errEl.classList.add('show');
+    return;
+  }
+  document.getElementById('verify-sub').textContent = 'Un lien de confirmation a été envoyé à ' + email + '. Clique dessus pour activer ton compte.';
   goToScreen('verify');
 }
 
 async function resendVerification(){
   const email = document.getElementById('reg-email').value.trim();
-  if (!email){ showToast('Saisis ton email'); return; }
-  await sb.auth.resend({ type:'signup', email });
-  showToast('Email renvoye !');
+  if (!email){ showToast('Retourne à l\'inscription pour saisir ton email'); return; }
+  const {error} = await sb.auth.resend({ type:'signup', email });
+  if(error) showToast('Erreur : '+error.message);
+  else showToast('Email renvoyé !');
 }
 
 async function initSession(authUser){
@@ -1607,7 +1618,8 @@ async function initSession(authUser){
     loadAdminData();
     // Start admin badge polling
     setTimeout(()=>{ updateAdmMsgBadge(); },1000);
-    setInterval(()=>{ if(STATE.mode==='admin') updateAdmMsgBadge(); }, 15000);
+    if(_admBadgeInterval) clearInterval(_admBadgeInterval);
+    _admBadgeInterval=setInterval(()=>{ if(STATE.mode==='admin') updateAdmMsgBadge(); }, 15000);
   } else {
     document.getElementById('nav-client').style.display = 'flex';
     document.getElementById('nav-admin').style.display = 'none';
@@ -1622,6 +1634,9 @@ async function logout(){
   // Clean up realtime channels
   if(_clMsgChannel){ sb.removeChannel(_clMsgChannel); _clMsgChannel=null; }
   if(_admMsgChannel){ sb.removeChannel(_admMsgChannel); _admMsgChannel=null; }
+  // Clean up polling intervals
+  if(_admBadgeInterval){ clearInterval(_admBadgeInterval); _admBadgeInterval=null; }
+  if(_badgePollInterval){ clearInterval(_badgePollInterval); _badgePollInterval=null; }
   _violetteIdCache=null;
   await sb.auth.signOut();
   STATE.mode = null; STATE.user = null; STATE.profile = null;
@@ -1682,10 +1697,15 @@ function goTo(id, btn){
   if (id==='settings'){ loadSettings(); }
 }
 
+const ALLOWED_IMG_TYPES=['image/jpeg','image/jpg','image/png','image/webp','image/gif'];
+const MAX_IMG_SIZE=10*1024*1024;
+
 // ── AVATAR ──
 async function handleAvatarSelect(input){
   const file=input.files[0];
   if(!file) return;
+  if(!ALLOWED_IMG_TYPES.includes(file.type)){ showToast('Format non supporté. Utilise JPG, PNG ou WebP.'); input.value=''; return; }
+  if(file.size>MAX_IMG_SIZE){ showToast('Image trop lourde (max 10 Mo)'); input.value=''; return; }
   showToast('Compression...');
   const compressed=await compressImage(file,400,0.8);
   const fileName=`avatar_${STATE.user.id}.jpg`;
@@ -1969,14 +1989,14 @@ async function loadSessions(){
     empty.style.display='none'; list.style.display='flex';
     list.innerHTML = sessions.map(s=>{
       const isSolo=s.type==='solo';
-      return `<div class="session-item" data-sid="${s.id}" data-date="${s.date}" data-dur="${s.duration}" data-solo="${isSolo}" style="${isSolo?'cursor:pointer':''}">
-        <div class="session-dot ${s.type}"></div>
+      return `<div class="session-item" data-sid="${escapeHtml(s.id)}" data-date="${escapeHtml(s.date)}" data-dur="${s.duration}" data-solo="${isSolo}" style="${isSolo?'cursor:pointer':''}">
+        <div class="session-dot ${escapeHtml(s.type)}"></div>
         <div class="session-info">
           <div class="session-date">${formatDateFR(s.date)}${isSolo?'':' <span style="font-size:10px;color:var(--rose-deep)">✦ avec Violette</span>'}</div>
-          <div class="session-meta">${s.duration} min${s.note?' · '+s.note:''}</div>
+          <div class="session-meta">${s.duration} min${s.note?' · '+escapeHtml(s.note):''}</div>
         </div>
         <div style="display:flex;align-items:center;gap:6px">
-          <span class="session-tag tag-${s.type}">${s.type}</span>
+          <span class="session-tag tag-${escapeHtml(s.type)}">${escapeHtml(s.type)}</span>
           ${isSolo?'<span style="font-size:14px;color:var(--muted)">›</span>':''}
         </div>
       </div>`;
@@ -2001,8 +2021,6 @@ async function loadMeasures(){
   const { data } = await sb.from('measures').select('*').eq('user_id',STATE.user.id).order('created_at',{ascending:false}).limit(1);
   if (!data||data.length===0) return;
   const m = data[0];
-  document.getElementById('metrics-empty').style.display='none';
-  document.getElementById('metrics-filled').style.display='block';
   const metricsEmpty=document.getElementById('metrics-empty');
   const metricsFilled=document.getElementById('metrics-filled');
   if(metricsEmpty) metricsEmpty.style.display='none';
@@ -2144,18 +2162,24 @@ async function renderSlotsAndSessions(key){
     sessions.forEach(s=>{
       const isSolo=s.type==='solo';
       const dotColor=isSolo?'#9b59b6':'var(--rose-deep)';
-      html+='<div class="slot-card agenda-sess-card" data-sid="'+s.id+'" style="border-left:3px solid '+dotColor+';cursor:'+(isSolo?'pointer':'default')+'">'
+      html+='<div class="slot-card agenda-sess-card" data-sid="'+escapeHtml(s.id)+'" style="border-left:3px solid '+dotColor+';cursor:'+(isSolo?'pointer':'default')+'">'
         +'<div class="slot-time" style="color:'+dotColor+'">'+s.duration+'min</div>'
         +'<div class="slot-info">'
           +'<div class="slot-title">'+(isSolo?'Séance solo':'Avec Violette')+'</div>'
-          +'<div class="slot-sub">'+(s.note||'Pas de note')+'</div>'
+          +'<div class="slot-sub">'+escapeHtml(s.note||'Pas de note')+'</div>'
         +'</div>'
         +(isSolo?'<span style="color:var(--rose-deep);font-size:18px">✏️</span>':'')
       +'</div>';
     });
     html+='</div>';
   }
-  // Slots section
+  // Slots section — batch fetch all bookings for these slots in one query (avoid N+1)
+  let takenSlotIdSet=new Set();
+  if(slots&&slots.length>0){
+    const slotIds=slots.map(s=>s.id);
+    const {data:existingBks}=await sb.from('bookings').select('slot_id').in('slot_id',slotIds).neq('status','cancelled');
+    takenSlotIdSet=new Set((existingBks||[]).map(b=>b.slot_id));
+  }
   if (!slots||slots.length===0){
     if(!sessions||sessions.length===0) html+='<div style="margin:4px 16px 0"><div class="empty-state"><div class="empty-emoji">🌙</div><div class="empty-title">Aucun creneau ce jour</div></div></div>';
   } else {
@@ -2163,14 +2187,11 @@ async function renderSlotsAndSessions(key){
     for (const s of slots){
       const myBooking=STATE.bookings.find(b=>b.slot_id===s.id);
       let btnHtml;
-      if (myBooking&&myBooking.status==='confirmed') btnHtml=`<button class="slot-btn slot-btn-confirmed" onclick="openClientBookingDetail('${myBooking.id}')">Confirme ›</button>`;
-      else if (myBooking) btnHtml=`<button class="slot-btn slot-btn-pending" onclick="openClientBookingDetail('${myBooking.id}')">En attente ›</button>`;
-      else {
-        const {data:existing}=await sb.from('bookings').select('id').eq('slot_id',s.id).limit(1);
-        if (existing&&existing.length>0) btnHtml='<button class="slot-btn slot-btn-disabled" style="background:#e74c3c20;color:#e74c3c">Reserve</button>';
-        else btnHtml=`<button class="slot-btn slot-btn-book" onclick="openBookModal('${s.id}','${s.date}','${s.time}','${s.duration}','${s.type}','${s.note||''}')">Reserver</button>`;
-      }
-      html+=`<div class="slot-card"><div class="slot-time">${s.time}</div><div class="slot-info"><div class="slot-title">${s.type} - ${s.duration} min</div><div class="slot-sub">${s.note||'Avec Violette'}</div></div>${btnHtml}</div>`;
+      if (myBooking&&myBooking.status==='confirmed') btnHtml=`<button class="slot-btn slot-btn-confirmed" onclick="openClientBookingDetail('${escapeHtml(myBooking.id)}')">Confirme ›</button>`;
+      else if (myBooking) btnHtml=`<button class="slot-btn slot-btn-pending" onclick="openClientBookingDetail('${escapeHtml(myBooking.id)}')">En attente ›</button>`;
+      else if(takenSlotIdSet.has(s.id)) btnHtml='<button class="slot-btn slot-btn-disabled" style="background:#e74c3c20;color:#e74c3c">Reserve</button>';
+      else btnHtml=`<button class="slot-btn slot-btn-book" onclick="openBookModal('${escapeHtml(s.id)}','${escapeHtml(s.date)}','${escapeHtml(s.time)}','${s.duration}','${escapeHtml(s.type)}','${escapeHtml(s.note||'')}')">Reserver</button>`;
+      html+=`<div class="slot-card"><div class="slot-time">${escapeHtml(s.time)}</div><div class="slot-info"><div class="slot-title">${escapeHtml(s.type)} - ${s.duration} min</div><div class="slot-sub">${escapeHtml(s.note||'Avec Violette')}</div></div>${btnHtml}</div>`;
     }
     html+='</div></div>';
   }
@@ -2290,6 +2311,8 @@ function openPostModal(){
 function handlePostPhotoSelect(input){
   const file=input.files[0];
   if(!file) return;
+  if(!ALLOWED_IMG_TYPES.includes(file.type)){ showToast('Format non supporté. Utilise JPG, PNG ou WebP.'); input.value=''; return; }
+  if(file.size>MAX_IMG_SIZE){ showToast('Image trop lourde (max 10 Mo)'); input.value=''; return; }
   postSelectedFile=file;
   const reader=new FileReader();
   reader.onload=e=>{
@@ -2368,26 +2391,28 @@ async function loadAndRenderGallery(tab){
 }
 
 function renderPost(p, isLiked=false){
-  const name=p.users?(p.users.pseudo||(p.users.firstname||'')+' '+(p.users.lastname||'').trim()):'Anonyme';
-  const initial=name.trim()[0]?.toUpperCase()||'?';
-  const isViolette=p.users&&p.users.role==='admin';
-  const visBadge=p.visibility==='private'?'<span class="post-badge private">Prive</span>':'';
+  const name=p.users?(p.users.pseudo||(p.users.firstname||’’)+’ ‘+(p.users.lastname||’’).trim()):’Anonyme’;
+  const safeName=escapeHtml(name.trim());
+  const initial=name.trim()[0]?.toUpperCase()||’?’;
+  const isViolette=p.users&&p.users.role===’admin’;
+  const visBadge=p.visibility===’private’?’<span class="post-badge private">Prive</span>’:’’;
   const isMine=p.user_id===STATE.user?.id;
+  const safeImageUrl=escapeHtml(p.image_url||’’);
   const imgHtml=p.image_url
-    ?`<div style="width:100%;aspect-ratio:1;overflow:hidden;border-radius:12px;margin-bottom:10px"><img src="${p.image_url}" style="width:100%;height:100%;object-fit:cover" loading="lazy"></div>`
+    ?`<div style="width:100%;aspect-ratio:1;overflow:hidden;border-radius:12px;margin-bottom:10px"><img src="${safeImageUrl}" style="width:100%;height:100%;object-fit:cover" loading="lazy"></div>`
     :`<div class="post-img"><span style="font-size:58px">🌸</span></div>`;
   return `<div class="post-card">
     <div class="post-header">
-      <div class="post-avatar ${isViolette?'v':''}">${initial}</div>
-      <div style="flex:1"><div class="post-author">${name.trim()}${isViolette?' ✦':''}</div><div class="post-time">${new Date(p.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'long'})}</div></div>
+      <div class="post-avatar ${isViolette?’v’:’’}">${escapeHtml(initial)}</div>
+      <div style="flex:1"><div class="post-author">${safeName}${isViolette?’ ✦’:’’}</div><div class="post-time">${new Date(p.created_at).toLocaleDateString(‘fr-FR’,{day:’numeric’,month:’long’})}</div></div>
       ${visBadge}
-      ${isMine?`<button onclick="deletePost('${p.id}','${p.image_url||''}')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:4px">✕</button>`:''}
+      ${isMine?`<button onclick="deletePost(‘${escapeHtml(p.id)}’,’${safeImageUrl}’)" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:4px">✕</button>`:’’}
     </div>
     ${imgHtml}
-    <div class="post-caption">${p.caption}</div>
+    <div class="post-caption">${escapeHtml(p.caption)}</div>
     <div class="post-actions">
-      <button class="post-action" onclick="toggleLike('${p.id}',this)">${isLiked?'❤️':'🤍'} J’aime</button>
-      <span class="post-like-count" id="likes-${p.id}">${p.likes||0} j’aime${(p.likes||0)===1?'':'s'}</span>
+      <button class="post-action" onclick="toggleLike(‘${escapeHtml(p.id)}’,this)">${isLiked?’❤️’:’🤍’} J’aime</button>
+      <span class="post-like-count" id="likes-${escapeHtml(p.id)}">${p.likes||0} j’aime${(p.likes||0)===1?’’:’s’}</span>
     </div>
   </div>`;
 }
@@ -2444,16 +2469,16 @@ async function loadAdminData(){
     pend.innerHTML=bookings.map(b=>`
       <div class="booking-request">
         <div class="br-header">
-          <div class="client-avatar">${b.users.firstname[0]}</div>
+          <div class="client-avatar">${escapeHtml(b.users.firstname[0])}</div>
           <div class="br-title">
-            <div class="br-who">${b.users.firstname} ${b.users.lastname} veut reserver</div>
-            <div class="br-when">${b.slots?formatDateFR(b.slots.date)+' - '+b.slots.time+' - '+b.slots.type:''}</div>
+            <div class="br-who">${escapeHtml(b.users.firstname)} ${escapeHtml(b.users.lastname)} veut reserver</div>
+            <div class="br-when">${b.slots?formatDateFR(b.slots.date)+' - '+escapeHtml(b.slots.time)+' - '+escapeHtml(b.slots.type):''}</div>
           </div>
         </div>
-        <div class="br-msg">"${b.message||'Pas de message'}"</div>
+        <div class="br-msg">"${escapeHtml(b.message||'Pas de message')}"</div>
         <div class="br-actions">
-          <button class="br-btn br-refuse" onclick="refuseBooking('${b.id}')">Refuser</button>
-          <button class="br-btn br-accept" onclick="acceptBooking('${b.id}','${b.users.firstname}')">Accepter</button>
+          <button class="br-btn br-refuse" onclick="refuseBooking('${escapeHtml(b.id)}')">Refuser</button>
+          <button class="br-btn br-accept" onclick="acceptBooking('${escapeHtml(b.id)}','${escapeHtml(b.users.firstname)}')">Accepter</button>
         </div>
       </div>`).join('');
   }
@@ -2476,10 +2501,10 @@ async function loadAdminData(){
     const badge=total?`<span style="font-size:10px;padding:3px 8px;border-radius:20px;background:var(--lilac-light);color:#6b3fa0;font-weight:500">${forfaitLabel} · ${forfaitInfo}</span>`
       :(forfait==='abonnement'?`<span style="font-size:10px;padding:3px 8px;border-radius:20px;background:var(--sage-light);color:#3a6e40;font-weight:500">Abonnement</span>`
       :`<span style="font-size:10px;padding:3px 8px;border-radius:20px;background:var(--cream);color:var(--muted);font-weight:500">A la seance</span>`);
-    return `<div class="client-card" onclick="openAdmClientDetail('${u.id}')" style="cursor:pointer">
-      <div class="client-avatar">${u.firstname?u.firstname[0]:u.name[0]}</div>
+    return `<div class="client-card" onclick="openAdmClientDetail('${escapeHtml(u.id)}')" style="cursor:pointer">
+      <div class="client-avatar">${escapeHtml(u.firstname?u.firstname[0]:u.name[0])}</div>
       <div class="client-info">
-        <div class="client-name">${u.firstname||''} ${u.lastname||''}</div>
+        <div class="client-name">${escapeHtml(u.firstname||'')} ${escapeHtml(u.lastname||'')}</div>
         <div style="margin-top:4px">${badge}</div>
       </div>
       <span style="color:var(--muted);font-size:16px">›</span>
@@ -2488,13 +2513,15 @@ async function loadAdminData(){
 }
 
 async function acceptBooking(id, name){
-  await sb.from('bookings').update({status:'confirmed'}).eq('id',id);
-  showToast(name+' confirmee !');
+  const {error}=await sb.from('bookings').update({status:'confirmed'}).eq('id',id);
+  if(error){ showToast('Erreur : '+error.message); return; }
+  showToast(name+' confirmée !');
   loadAdminData();
 }
 async function refuseBooking(id){
-  await sb.from('bookings').delete().eq('id',id);
-  showToast('Demande refusee');
+  const {error}=await sb.from('bookings').delete().eq('id',id);
+  if(error){ showToast('Erreur : '+error.message); return; }
+  showToast('Demande refusée');
   loadAdminData();
 }
 
@@ -2671,9 +2698,11 @@ async function submitAdmSlot(){
   showToast('Creneau ouvert !');
 }
 async function delAdmSlot(id){
-  await sb.from('slots').delete().eq('id',id);
+  if(!confirm('Supprimer ce créneau ?')) return;
+  const {error}=await sb.from('slots').delete().eq('id',id);
+  if(error){ showToast('Erreur : '+error.message); return; }
   renderAdmSlotsFor(admSelectedDate);
-  showToast('Creneau supprime');
+  showToast('Créneau supprimé');
 }
 
 // ── QUOTES ──
@@ -2681,7 +2710,7 @@ async function loadQuotes(){
   const {data}=await sb.from('quotes').select('*').order('created_at');
   const list=document.getElementById('quotes-list');
   if(!list) return;
-  list.innerHTML=(data||[]).filter(q=>!q.is_word_of_day).map(q=>`<div class="quote-item"><div class="quote-text">${q.text}</div><button class="quote-del" onclick="delQuote('${q.id}')">✕</button></div>`).join('')
+  list.innerHTML=(data||[]).filter(q=>!q.is_word_of_day).map(q=>`<div class="quote-item"><div class="quote-text">${escapeHtml(q.text)}</div><button class="quote-del" onclick="delQuote('${escapeHtml(q.id)}')">✕</button></div>`).join('')
     || '<div style="font-size:12px;color:var(--muted);font-style:italic">Aucune citation</div>';
   const wod=(data||[]).find(q=>q.is_word_of_day);
   const el=document.getElementById('vword-edit');
@@ -2707,9 +2736,15 @@ async function delQuote(id){
 }
 async function saveVword(){
   const v=document.getElementById('vword-edit').value.trim();
+  if(!v){ showToast('Écris un mot du jour'); return; }
   await sb.from('quotes').update({is_word_of_day:false}).eq('is_word_of_day',true);
-  await sb.from('quotes').upsert({text:v,is_word_of_day:true});
-  loadQuotes(); showToast('Mot du jour sauvegarde !');
+  const {data:existing}=await sb.from('quotes').select('id').eq('text',v).limit(1);
+  if(existing&&existing.length>0){
+    await sb.from('quotes').update({is_word_of_day:true}).eq('id',existing[0].id);
+  } else {
+    await sb.from('quotes').insert({text:v,is_word_of_day:true});
+  }
+  loadQuotes(); showToast('Mot du jour sauvegardé !');
 }
 
 async function loadAndRenderAdmGallery(){
@@ -2809,8 +2844,8 @@ function renderFcAdresses(adresses){
     <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:.5px solid rgba(244,160,188,.15)">
       <span style="font-size:16px">📍</span>
       <div style="flex:1">
-        <div style="font-size:11px;font-weight:500;color:var(--mid)">${a.label}</div>
-        <div style="font-size:13px;color:var(--ink);margin-top:2px">${a.value}</div>
+        <div style="font-size:11px;font-weight:500;color:var(--mid)">${escapeHtml(a.label)}</div>
+        <div style="font-size:13px;color:var(--ink);margin-top:2px">${escapeHtml(a.value)}</div>
       </div>
       <button onclick="deleteAdresse(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:2px 6px">✕</button>
     </div>`).join('');
@@ -2858,12 +2893,12 @@ async function loadFcSeances(){
         <div style="width:8px;height:8px;border-radius:50%;background:${isSolo?'var(--lilac)':'var(--rose-deep)'};flex-shrink:0"></div>
         <div style="flex:1">
           <div style="font-size:13px;font-weight:500;color:var(--ink)">${formatDateFR(s.date)}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:1px">${s.duration} min · <span style="padding:2px 7px;border-radius:20px;background:${tagColor};${tagText};font-size:10px">${s.type}</span></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:1px">${s.duration} min · <span style="padding:2px 7px;border-radius:20px;background:${tagColor};${tagText};font-size:10px">${escapeHtml(s.type)}</span></div>
         </div>
-        ${s.tarif?`<span style="font-family:var(--serif);font-size:15px;color:var(--ink)">${s.tarif}€</span>`:''}
-        <button onclick="openSessionNote('${s.id}','${s.date}','${s.type}',${isSolo})" style="font-size:11px;padding:5px 10px;border-radius:20px;background:var(--cream);border:1px solid rgba(244,160,188,.3);color:var(--mid);cursor:pointer;font-family:var(--sans)">📝</button>
+        ${s.tarif?`<span style="font-family:var(--serif);font-size:15px;color:var(--ink)">${parseFloat(s.tarif)}€</span>`:''}
+        <button onclick="openSessionNote('${escapeHtml(s.id)}','${escapeHtml(s.date)}','${escapeHtml(s.type)}',${isSolo})" style="font-size:11px;padding:5px 10px;border-radius:20px;background:var(--cream);border:1px solid rgba(244,160,188,.3);color:var(--mid);cursor:pointer;font-family:var(--sans)">📝</button>
       </div>
-      ${s.note?`<div style="font-size:12px;color:var(--mid);font-style:italic;padding:8px 10px;background:var(--cream);border-radius:8px;border-left:2px solid var(--rose)">${s.note}</div>`:''}
+      ${s.note?`<div style="font-size:12px;color:var(--mid);font-style:italic;padding:8px 10px;background:var(--cream);border-radius:8px;border-left:2px solid var(--rose)">${escapeHtml(s.note)}</div>`:''}
     </div>`;
   }).join('');
 }
@@ -2905,11 +2940,11 @@ async function loadFcCA(){
   encList.innerHTML=encaissements.map(e=>`
     <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:.5px solid rgba(244,160,188,.15)">
       <div style="flex:1">
-        <div style="font-size:13px;color:var(--ink)">${e.label}</div>
+        <div style="font-size:13px;color:var(--ink)">${escapeHtml(e.label)}</div>
         <div style="font-size:11px;color:var(--muted)">${formatDateFR(e.date)}</div>
       </div>
-      <span style="font-family:var(--serif);font-size:16px;color:var(--ink);font-weight:500">${e.montant}€</span>
-      <button onclick="deleteEncaissement('${e.id}')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px">✕</button>
+      <span style="font-family:var(--serif);font-size:16px;color:var(--ink);font-weight:500">${parseFloat(e.montant)}€</span>
+      <button onclick="deleteEncaissement('${escapeHtml(e.id)}')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px">✕</button>
     </div>`).join('');
 }
 
@@ -2988,9 +3023,17 @@ async function openClientBookingDetail(bookingId){
 async function clientCancelBooking(){
   // Get booking before deleting
   const {data:bk}=await sb.from('bookings').select('status,slots(date,duration,type)').eq('id',clientCurrentBookingId).single();
-  // If confirmed, also delete auto-created session
+  // If confirmed, delete only the matching auto-created session (select by id first to avoid bulk delete)
   if(bk&&bk.status==='confirmed'&&bk.slots){
-    await sb.from('sessions').delete().eq('user_id',STATE.user.id).eq('date',bk.slots.date).eq('type',bk.slots.type).eq('duration',bk.slots.duration);
+    const {data:matchSess}=await sb.from('sessions')
+      .select('id')
+      .eq('user_id',STATE.user.id)
+      .eq('date',bk.slots.date)
+      .eq('type',bk.slots.type)
+      .eq('duration',bk.slots.duration)
+      .limit(1)
+      .maybeSingle();
+    if(matchSess) await sb.from('sessions').delete().eq('id',matchSess.id);
   }
   await sb.from('bookings').delete().eq('id',clientCurrentBookingId);
   closeModal('modal-client-booking');
@@ -3181,7 +3224,7 @@ async function loadStats(){
   const inactiveUsers=d.users.filter(u=>everActiveIds.has(u.id)&&!recentIds.has(u.id));
   document.getElementById('acq-inactive').textContent=inactiveUsers.length;
   document.getElementById('stats-inactive-list').innerHTML=inactiveUsers.length>0
-    ?inactiveUsers.slice(0,3).map(u=>`<div style="font-size:12px;color:var(--mid);padding:3px 0">⚠️ ${u.firstname||''} ${u.lastname||''}</div>`).join('')+(inactiveUsers.length>3?`<div style="font-size:11px;color:var(--muted);margin-top:2px">+${inactiveUsers.length-3} autres</div>`:'')
+    ?inactiveUsers.slice(0,3).map(u=>`<div style="font-size:12px;color:var(--mid);padding:3px 0">⚠️ ${escapeHtml(u.firstname||'')} ${escapeHtml(u.lastname||'')}</div>`).join('')+(inactiveUsers.length>3?`<div style="font-size:11px;color:var(--muted);margin-top:2px">+${inactiveUsers.length-3} autres</div>`:'')
     :'<div style="font-size:12px;color:var(--sage);font-style:italic">Toutes vos clientes sont actives 🎉</div>';
 
   // Répartition par type
@@ -3214,7 +3257,7 @@ async function loadStats(){
   const topCaList=Object.entries(caByClient).sort((a,b)=>b[1]-a[1]).slice(0,5);
   document.getElementById('top-ca').innerHTML=topCaList.length>0?topCaList.map(([uid,ca],i)=>{
     const u=d.users.find(x=>x.id===uid)||{};
-    return `<div class="stats-rank-item"><div class="stats-rank-num">${i+1}</div><div style="flex:1;font-size:13px;color:var(--ink)">${u.firstname||''} ${u.lastname||''}</div><div style="font-family:var(--serif);font-size:15px;color:var(--ink)">${ca}€</div></div>`;
+    return `<div class="stats-rank-item"><div class="stats-rank-num">${i+1}</div><div style="flex:1;font-size:13px;color:var(--ink)">${escapeHtml(u.firstname||'')} ${escapeHtml(u.lastname||'')}</div><div style="font-family:var(--serif);font-size:15px;color:var(--ink)">${parseFloat(ca)}€</div></div>`;
   }).join(''):'<div style="font-size:12px;color:var(--muted);font-style:italic">Aucune donnee</div>';
 
   // Top clientes par séances
@@ -3223,7 +3266,7 @@ async function loadStats(){
   const topSeancesList=Object.entries(seancesByClient).sort((a,b)=>b[1]-a[1]).slice(0,5);
   document.getElementById('top-seances').innerHTML=topSeancesList.length>0?topSeancesList.map(([uid,nb],i)=>{
     const u=d.users.find(x=>x.id===uid)||{};
-    return `<div class="stats-rank-item"><div class="stats-rank-num">${i+1}</div><div style="flex:1;font-size:13px;color:var(--ink)">${u.firstname||''} ${u.lastname||''}</div><div style="font-family:var(--serif);font-size:15px;color:var(--ink)">${nb} séances</div></div>`;
+    return `<div class="stats-rank-item"><div class="stats-rank-num">${i+1}</div><div style="flex:1;font-size:13px;color:var(--ink)">${escapeHtml(u.firstname||'')} ${escapeHtml(u.lastname||'')}</div><div style="font-family:var(--serif);font-size:15px;color:var(--ink)">${nb} séances</div></div>`;
   }).join(''):'<div style="font-size:12px;color:var(--muted);font-style:italic">Aucune donnee</div>';
 
   // Répartition revenus par type de tarif
@@ -3429,14 +3472,16 @@ async function loadAdmConversations(){
   });
   list.innerHTML=rows.map(r=>{
     const u=r.user;
-    const initial=(u.firstname||'?')[0].toUpperCase();
-    const lastText=r.last?r.last.content:'Pas encore de message';
+    const initial=escapeHtml((u.firstname||'?')[0].toUpperCase());
+    const lastText=escapeHtml(r.last?r.last.content:'Pas encore de message');
     const lastTime=r.last?formatMsgTime(r.last.created_at):'';
-    return `<div class="conv-item" onclick="openAdmChat('${u.id}','${(u.firstname||'')} ${(u.lastname||'')}')">
+    const safeId=escapeHtml(u.id);
+    const safeName=escapeHtml((u.firstname||'')+' '+(u.lastname||''));
+    return `<div class="conv-item" onclick="openAdmChat('${safeId}','${safeName}')">
       <div class="client-avatar" style="width:44px;height:44px;font-size:17px;flex-shrink:0">${initial}</div>
       <div style="flex:1;min-width:0">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:4px">
-          <div style="font-size:13px;font-weight:${r.unread?'600':'400'};color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.firstname||''} ${u.lastname||''}</div>
+          <div style="font-size:13px;font-weight:${r.unread?'600':'400'};color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(u.firstname||'')} ${escapeHtml(u.lastname||'')}</div>
           <div style="font-size:10px;color:var(--muted);flex-shrink:0">${lastTime}</div>
         </div>
         <div style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px">${lastText}</div>
@@ -3566,7 +3611,7 @@ async function checkStorageUsage(){
         +'</div>';
       if(used>=90) el.insertAdjacentHTML('beforeend','<div style="font-size:11px;color:var(--danger);margin-top:4px">⚠️ Stockage presque plein - pensez à nettoyer</div>');
     }
-  }catch(e){}
+  }catch(e){ console.warn('checkStorageUsage:', e); }
 }
 
 let _violetteIdCache=null;
@@ -3698,14 +3743,26 @@ async function deleteAccount(){
   if(!doubleConfirm) return;
   // Delete avatar from storage
   try{ await sb.storage.from('avatars').remove([`avatar_${STATE.user.id}.jpg`]); }catch(e){}
-  // Delete user data
+  // Delete post images from community storage
+  try{
+    const {data:userPosts}=await sb.from('posts').select('image_url').eq('user_id',STATE.user.id);
+    if(userPosts&&userPosts.length>0){
+      const fileNames=userPosts.filter(p=>p.image_url).map(p=>{
+        try{ return new URL(p.image_url).pathname.split('/').slice(-1)[0]; }catch(e){ return null; }
+      }).filter(Boolean);
+      if(fileNames.length>0) await sb.storage.from('community').remove(fileNames);
+    }
+  }catch(e){}
+  // Delete all user data (including measures and post_likes)
   await Promise.all([
     sb.from('sessions').delete().eq('user_id',STATE.user.id),
     sb.from('bookings').delete().eq('user_id',STATE.user.id),
     sb.from('messages').delete().eq('sender_id',STATE.user.id),
     sb.from('messages').delete().eq('receiver_id',STATE.user.id),
     sb.from('posts').delete().eq('user_id',STATE.user.id),
+    sb.from('post_likes').delete().eq('user_id',STATE.user.id),
     sb.from('encaissements').delete().eq('user_id',STATE.user.id),
+    sb.from('measures').delete().eq('user_id',STATE.user.id),
     sb.from('users').delete().eq('id',STATE.user.id),
   ]);
   await sb.auth.signOut();
