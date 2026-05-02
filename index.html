@@ -2380,17 +2380,20 @@ async function loadAndRenderGallery(tab){
   let query=sb.from('posts').select('*, users(firstname,lastname,role,pseudo)').order('created_at',{ascending:false});
   if(tab==='feed') query=query.eq('visibility','public');
   else query=query.eq('user_id',STATE.user.id);
-  const [{data:posts},{data:myLikes}]=await Promise.all([
+  const [{data:posts},{data:myLikes},{data:allLikes}]=await Promise.all([
     query,
-    STATE.user?sb.from('post_likes').select('post_id').eq('user_id',STATE.user.id):{data:[]}
+    STATE.user?sb.from('post_likes').select('post_id').eq('user_id',STATE.user.id):{data:[]},
+    sb.from('post_likes').select('post_id')
   ]);
   const likedSet=new Set((myLikes||[]).map(l=>l.post_id));
+  const likeCountMap={};
+  (allLikes||[]).forEach(l=>{ likeCountMap[l.post_id]=(likeCountMap[l.post_id]||0)+1; });
   const el=document.getElementById('gal-content');
   if(!posts||posts.length===0){ el.innerHTML='<div style="margin:16px"><div class="empty-state"><div class="empty-emoji">🌸</div><div class="empty-title">Sois la première à partager !</div></div></div>'; return; }
-  el.innerHTML=posts.map(p=>renderPost(p,likedSet.has(p.id))).join('');
+  el.innerHTML=posts.map(p=>renderPost(p,likedSet.has(p.id),likeCountMap[p.id]||0)).join('');
 }
 
-function renderPost(p, isLiked=false){
+function renderPost(p, isLiked=false, likeCount=0){
   const name=p.users?(p.users.pseudo||(p.users.firstname||'')+' '+(p.users.lastname||'').trim()):'Anonyme';
   const safeName=escapeHtml(name.trim());
   const initial=name.trim()[0]?.toUpperCase()||'?';
@@ -2411,8 +2414,8 @@ function renderPost(p, isLiked=false){
     ${imgHtml}
     <div class="post-caption">${escapeHtml(p.caption)}</div>
     <div class="post-actions">
-      <button class="post-action" onclick="toggleLike('${escapeHtml(p.id)}',this)">${isLiked?'❤️':'🤍'} J'aime</button>
-      <span class="post-like-count" id="likes-${escapeHtml(p.id)}">${p.likes||0} j'aime${(p.likes||0)===1?'':'s'}</span>
+      <button class="post-action" data-liked="${isLiked?'1':'0'}" onclick="toggleLike('${escapeHtml(p.id)}',this)">${isLiked?'❤️':'🤍'} J'aime</button>
+      <span class="post-like-count" id="likes-${escapeHtml(p.id)}">${likeCount} j'aime${likeCount===1?'':'s'}</span>
     </div>
   </div>`;
 }
