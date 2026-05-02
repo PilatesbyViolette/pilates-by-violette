@@ -2751,10 +2751,15 @@ async function saveVword(){
 }
 
 async function loadAndRenderAdmGallery(){
-  const {data:posts}=await sb.from('posts').select('*, users(firstname,lastname,role,pseudo)').eq('visibility','public').order('created_at',{ascending:false});
+  const [{data:posts},{data:allLikes}]=await Promise.all([
+    sb.from('posts').select('*, users(firstname,lastname,role,pseudo)').eq('visibility','public').order('created_at',{ascending:false}),
+    sb.from('post_likes').select('post_id')
+  ]);
   const el=document.getElementById('adm-gal-content');
   if (!posts||posts.length===0){ el.innerHTML='<div style="margin:16px"><div class="empty-state"><div class="empty-emoji">🌸</div><div class="empty-title">Aucun post</div></div></div>'; return; }
-  el.innerHTML=posts.map(p=>renderPost(p)).join('');
+  const likeCountMap={};
+  (allLikes||[]).forEach(l=>{ likeCountMap[l.post_id]=(likeCountMap[l.post_id]||0)+1; });
+  el.innerHTML=posts.map(p=>renderPost(p,false,likeCountMap[p.id]||0)).join('');
 }
 
 // ── OFFRE ──
