@@ -1177,8 +1177,12 @@ body{font-family:var(--sans);color:var(--ink)}
           <div style="font-family:var(--serif);font-size:36px;font-weight:300;color:var(--ink)" id="fc-ca-total">0 €</div>
         </div>
         <div style="background:var(--white);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(200,100,140,.06)">
+          <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Séances facturées</div>
+          <div id="fc-ca-sessions-list"><div style="font-size:12px;color:var(--muted);font-style:italic">Filtrez pour afficher</div></div>
+        </div>
+        <div style="background:var(--white);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(200,100,140,.06)">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-            <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Encaissements</div>
+            <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Encaissements manuels</div>
             <button onclick="openAddEncaissement()" style="font-size:11px;color:var(--rose-deep);background:none;border:none;cursor:pointer;font-family:var(--sans)">+ Ajouter</button>
           </div>
           <div id="fc-encaissements-list"></div>
@@ -1414,6 +1418,22 @@ body{font-family:var(--sans);color:var(--ink)}
       <div style="margin-top:10px;font-size:12px;color:var(--mid);font-style:italic" id="cl-bk-adresse"></div>
     </div>
     <button id="cl-bk-cancel-btn" style="width:100%;padding:13px;background:var(--white);color:var(--danger);border:1px solid rgba(216,80,80,.3);border-radius:12px;font-size:13px;font-weight:500;font-family:var(--sans);cursor:pointer" onclick="clientCancelBooking()">Annuler ma réservation</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-client-sess-detail" onclick="if(event.target===this)closeModal('modal-client-sess-detail')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Séance avec Violette</div>
+    <div style="background:var(--rose-light);padding:14px;border-radius:12px;margin-bottom:14px">
+      <div style="font-family:var(--serif);font-size:17px;color:var(--ink)" id="csd-datetime">—</div>
+      <div style="font-size:12px;color:var(--mid);margin-top:2px" id="csd-meta">—</div>
+    </div>
+    <div id="csd-note-block" style="background:var(--cream);border-radius:12px;padding:14px;margin-bottom:14px;display:none">
+      <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Ce qui a été travaillé</div>
+      <div id="csd-note" style="font-size:13px;color:var(--ink);line-height:1.6;font-style:italic">—</div>
+    </div>
+    <div id="csd-empty-note" style="font-size:13px;color:var(--muted);font-style:italic;text-align:center;padding:8px 0;display:none">Aucune note pour cette séance</div>
   </div>
 </div>
 
@@ -1840,7 +1860,7 @@ async function loadHomeScreen(){
   if(weekCard){ weekCard.style.cursor='pointer'; weekCard.onclick=()=>goTo('agenda',document.querySelector('#nav-client .nav-btn[onclick*=agenda]')); }
 
   // SERIE (semaines consecutives avec au moins 1 seance)
-  const {data:allSess}=await sb.from('sessions').select('date,type,duration,note').eq('user_id',STATE.user.id).lte('date',today).order('date',{ascending:false});
+  const {data:allSess}=await sb.from('sessions').select('id,date,type,duration,note').eq('user_id',STATE.user.id).lte('date',today).order('date',{ascending:false});
   let weekStreak=0;
   if(allSess&&allSess.length>0){
     const sessDates=new Set(allSess.map(s=>s.date));
@@ -1885,6 +1905,21 @@ async function loadHomeScreen(){
   }
 }
 
+function openClientSessDetail(date, type, duration, note){
+  document.getElementById('csd-datetime').textContent=formatDateFR(date);
+  document.getElementById('csd-meta').textContent=type+' · '+duration+' min';
+  const hasNote=!!(note&&note.trim());
+  document.getElementById('csd-note-block').style.display=hasNote?'block':'none';
+  document.getElementById('csd-empty-note').style.display=hasNote?'none':'block';
+  if(hasNote) document.getElementById('csd-note').textContent=note;
+  document.getElementById('modal-client-sess-detail').classList.add('open');
+}
+function openSessionFromHome(id){
+  const s=(STATE.homeSessions||[]).find(x=>x.id===id);
+  if(!s) return;
+  if(s.type==='solo') openClientSessionEdit(s.id,s.date,s.duration,s.note);
+  else openClientSessDetail(s.date,s.type,s.duration,s.note);
+}
 function changeHomeSessPage(p){ STATE.homeSessPage=p; renderHomeSessions(); }
 function renderHomeSessions(){
   const PAGE=5;
@@ -1903,7 +1938,7 @@ function renderHomeSessions(){
     const ago=diff===0?'Aujourd\'hui':diff===1?'Hier':'Il y a '+diff+' jour'+(diff>1?'s':'');
     const withV=s.type!=='solo'?' <span style="font-size:10px;color:var(--rose-deep)">\u2726 avec Violette</span>':'';
     const icon=s.type==='solo'?'\uD83D\uDFE3':'\uD83D\uDC9C';
-    return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0'+(isLastItem?'':';border-bottom:1px solid var(--cream)')+'"><div style="font-size:18px">'+icon+'</div><div style="flex:1"><div style="font-size:13px;font-weight:500;color:var(--ink)">'+formatDateFR(s.date)+' \u00B7 '+(s.duration||60)+' min'+withV+'</div><div style="font-size:11px;color:var(--muted);margin-top:1px">'+ago+(s.note?' \u00B7 '+escapeHtml(s.note):'')+'</div></div></div>';
+    return '<div onclick="openSessionFromHome(\''+escapeHtml(s.id)+'\')" style="display:flex;align-items:center;gap:10px;padding:9px 0;cursor:pointer'+(isLastItem?'':';border-bottom:1px solid var(--cream)')+'"><div style="font-size:18px">'+icon+'</div><div style="flex:1"><div style="font-size:13px;font-weight:500;color:var(--ink)">'+formatDateFR(s.date)+' \u00B7 '+(s.duration||60)+' min'+withV+'</div><div style="font-size:11px;color:var(--muted);margin-top:1px">'+ago+(s.note?' \u00B7 '+escapeHtml(s.note):'')+'</div></div><span style="font-size:14px;color:var(--muted)">\u203A</span></div>';
   }).join('');
   const totalPages=Math.ceil(sessions.length/PAGE);
   if(totalPages<=1){ pager.style.display='none'; return; }
@@ -1997,7 +2032,7 @@ async function loadSessions(){
     empty.style.display='none'; list.style.display='flex';
     list.innerHTML = sessions.map(s=>{
       const isSolo=s.type==='solo';
-      return `<div class="session-item" data-sid="${escapeHtml(s.id)}" data-date="${escapeHtml(s.date)}" data-dur="${s.duration}" data-solo="${isSolo}" style="${isSolo?'cursor:pointer':''}">
+      return `<div class="session-item" data-sid="${escapeHtml(s.id)}" data-date="${escapeHtml(s.date)}" data-dur="${s.duration}" data-type="${escapeHtml(s.type)}" data-note="${escapeHtml(s.note||'')}" data-solo="${isSolo}" style="cursor:pointer">
         <div class="session-dot ${escapeHtml(s.type)}"></div>
         <div class="session-info">
           <div class="session-date">${formatDateFR(s.date)}${isSolo?'':' <span style="font-size:10px;color:var(--rose-deep)">✦ avec Violette</span>'}</div>
@@ -2005,18 +2040,15 @@ async function loadSessions(){
         </div>
         <div style="display:flex;align-items:center;gap:6px">
           <span class="session-tag tag-${escapeHtml(s.type)}">${escapeHtml(s.type)}</span>
-          ${isSolo?'<span style="font-size:14px;color:var(--muted)">›</span>':''}
+          <span style="font-size:14px;color:var(--muted)">›</span>
         </div>
       </div>`;
     }).join('');
-    // Store notes separately and attach click handlers
-    const sessionMap={};
-    sessions.forEach(s=>{ sessionMap[s.id]={note:s.note||'',date:s.date,duration:s.duration}; });
-    list.querySelectorAll('.session-item[data-solo="true"]').forEach(el=>{
+    list.querySelectorAll('.session-item').forEach(el=>{
       el.addEventListener('click',()=>{
-        const id=el.dataset.sid;
-        const d=sessionMap[id];
-        openClientSessionEdit(id,d.date,d.duration,d.note);
+        const id=el.dataset.sid, date=el.dataset.date, dur=+el.dataset.dur, type=el.dataset.type, note=el.dataset.note;
+        if(el.dataset.solo==='true') openClientSessionEdit(id,date,dur,note);
+        else openClientSessDetail(date,type,dur,note);
       });
     });
   }
@@ -2955,14 +2987,30 @@ async function submitSessionNote(){
 async function loadFcCA(){
   const fromDate=document.getElementById('fc-ca-from').value;
   const toDate=document.getElementById('fc-ca-to').value;
-  let bkQuery=sb.from('bookings').select('tarif,created_at,slots(date,type)').eq('user_id',fcClientId).eq('status','confirmed');
+  let sessQuery=sb.from('sessions').select('id,date,type,duration,tarif,note').eq('user_id',fcClientId).not('tarif','is',null);
   let encQuery=sb.from('encaissements').select('*').eq('user_id',fcClientId);
-  if(fromDate){ bkQuery=bkQuery.gte('created_at',fromDate); encQuery=encQuery.gte('date',fromDate); }
-  if(toDate){ bkQuery=bkQuery.lte('created_at',toDate+'T23:59:59'); encQuery=encQuery.lte('date',toDate); }
-  const [{data:bookings},{data:encaissements}]=await Promise.all([bkQuery,encQuery]);
-  const caBookings=(bookings||[]).filter(b=>b.tarif).reduce((s,b)=>s+(b.tarif||0),0);
+  if(fromDate){ sessQuery=sessQuery.gte('date',fromDate); encQuery=encQuery.gte('date',fromDate); }
+  if(toDate){ sessQuery=sessQuery.lte('date',toDate); encQuery=encQuery.lte('date',toDate); }
+  const [{data:sessions},{data:encaissements}]=await Promise.all([sessQuery,encQuery]);
+  const caSess=(sessions||[]).reduce((s,x)=>s+(x.tarif||0),0);
   const caEnc=(encaissements||[]).reduce((s,e)=>s+(e.montant||0),0);
-  document.getElementById('fc-ca-total').textContent=(caBookings+caEnc)+' €';
+  document.getElementById('fc-ca-total').textContent=(caSess+caEnc).toFixed(2).replace(/\.00$/,'')+' €';
+  // Liste détail des séances facturées
+  const sessListEl=document.getElementById('fc-ca-sessions-list');
+  if(sessListEl){
+    if(!sessions||sessions.length===0){ sessListEl.innerHTML='<div style="font-size:12px;color:var(--muted);font-style:italic;margin-bottom:10px">Aucune séance facturée sur cette période</div>'; }
+    else {
+      sessListEl.innerHTML=sessions.sort((a,b)=>b.date.localeCompare(a.date)).map(s=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:.5px solid rgba(244,160,188,.15)">
+          <div style="flex:1">
+            <div style="font-size:13px;color:var(--ink)">${formatDateFR(s.date)} · ${escapeHtml(s.type)} · ${s.duration} min</div>
+            ${s.note?'<div style="font-size:11px;color:var(--muted);font-style:italic">'+escapeHtml(s.note)+'</div>':''}
+          </div>
+          <span style="font-family:var(--serif);font-size:15px;color:var(--ink);font-weight:500">${parseFloat(s.tarif)}€</span>
+          <button onclick="openSessionNote('${escapeHtml(s.id)}','${escapeHtml(s.date)}','${escapeHtml(s.type)}',false)" style="font-size:11px;padding:4px 8px;border-radius:20px;background:var(--cream);border:1px solid rgba(244,160,188,.3);color:var(--mid);cursor:pointer;font-family:var(--sans)" title="Modifier le tarif">✏️</button>
+        </div>`).join('');
+    }
+  }
   const encList=document.getElementById('fc-encaissements-list');
   if(!encaissements||encaissements.length===0){ encList.innerHTML='<div style="font-size:12px;color:var(--muted);font-style:italic">Aucun encaissement</div>'; return; }
   encList.innerHTML=encaissements.map(e=>`
