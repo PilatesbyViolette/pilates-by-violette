@@ -582,10 +582,11 @@ body{font-family:var(--sans);color:var(--ink)}
         </div>
       </div>
 
-      <!-- DERNIÈRE SÉANCE -->
-      <div id="home-last-session" style="background:var(--white);border-radius:var(--radius-sm);padding:14px;box-shadow:0 1px 6px rgba(200,100,140,.06);display:none">
-        <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Dernière séance</div>
-        <div id="home-last-content"></div>
+      <!-- SÉANCES EFFECTUÉES -->
+      <div id="home-sessions-block" style="background:var(--white);border-radius:var(--radius-sm);padding:14px;box-shadow:0 1px 6px rgba(200,100,140,.06);display:none">
+        <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Mes séances</div>
+        <div id="home-sessions-list"></div>
+        <div id="home-sessions-pager" style="display:none;margin-top:10px;display:flex;justify-content:space-between;align-items:center;gap:8px"></div>
       </div>
 
       <!-- RAPPEL INACTIVITÉ -->
@@ -1400,7 +1401,7 @@ body{font-family:var(--sans);color:var(--ink)}
 <div class="modal-backdrop" id="modal-client-booking" onclick="if(event.target===this)closeModal('modal-client-booking')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title">Ma reservation</div>
+    <div class="modal-title" id="cl-bk-title">Ma réservation</div>
     <div id="cl-booking-info" style="background:var(--rose-light);padding:14px;border-radius:12px;margin-bottom:14px">
       <div style="font-family:var(--serif);font-size:17px;color:var(--ink)" id="cl-bk-datetime">—</div>
       <div style="font-size:12px;color:var(--mid);margin-top:2px" id="cl-bk-type">—</div>
@@ -1412,7 +1413,7 @@ body{font-family:var(--sans);color:var(--ink)}
       </div>
       <div style="margin-top:10px;font-size:12px;color:var(--mid);font-style:italic" id="cl-bk-adresse"></div>
     </div>
-    <button style="width:100%;padding:13px;background:var(--white);color:var(--danger);border:1px solid rgba(216,80,80,.3);border-radius:12px;font-size:13px;font-weight:500;font-family:var(--sans);cursor:pointer" onclick="clientCancelBooking()">Annuler ma reservation</button>
+    <button id="cl-bk-cancel-btn" style="width:100%;padding:13px;background:var(--white);color:var(--danger);border:1px solid rgba(216,80,80,.3);border-radius:12px;font-size:13px;font-weight:500;font-family:var(--sans);cursor:pointer" onclick="clientCancelBooking()">Annuler ma réservation</button>
   </div>
 </div>
 
@@ -1873,37 +1874,44 @@ async function loadHomeScreen(){
     document.getElementById('home-badge-bar').style.width=Math.max(0,Math.round((n-prevT)/(nb.t-prevT)*100))+'%';
   }
 
-  // DERNIERE SEANCE: past booking or session, whichever is more recent
-  const past=(allBookings||[]).filter(b=>{
-    if(!b.slots||b.status!=='confirmed') return false;
-    return b.slots.date<today||(b.slots.date===today&&b.slots.time<=nowTime);
-  }).sort((a,b2)=>b2.slots.date.localeCompare(a.slots.date)||b2.slots.time.localeCompare(a.slots.time));
-  const lastBkItem=past.length>0?past[0]:null;
-  const lastSessItem=allSess&&allSess.length>0?allSess[0]:null;
-  let lastDate=null, lastIsBk=false;
-  if(lastBkItem){ lastDate=lastBkItem.slots.date; lastIsBk=true; }
-  if(lastSessItem&&(!lastDate||lastSessItem.date>lastDate)){ lastDate=lastSessItem.date; lastIsBk=false; }
-  const lastBlock=document.getElementById('home-last-session');
-  if(lastDate){
-    const today2=new Date(); today2.setHours(0,0,0,0);
-    const sessDate=new Date(lastDate+'T00:00:00');
-    const diff=Math.max(0,Math.floor((today2-sessDate)/(1000*60*60*24)));
-    const ago=diff===0?'Aujourd\u2019hui':diff===1?'Hier':'Il y a '+diff+' jours';
-    let icon,title,sub='';
-    if(lastIsBk&&lastBkItem){
-      icon='\uD83D\uDC9C';
-      title=formatDateFR(lastDate)+' \u00B7 '+lastBkItem.slots.duration+' min \u00B7 '+lastBkItem.slots.type;
-      lastBlock.style.cursor='pointer';
-      lastBlock.onclick=()=>openClientBookingDetail(lastBkItem.id);
-    } else {
-      const sess=(allSess||[]).find(x=>x.date===lastDate)||{type:'solo',duration:60};
-      icon=sess.type==='solo'?'\uD83D\uDFE3':'\uD83D\uDC9C';
-      title=formatDateFR(lastDate)+' \u00B7 '+(sess.duration||60)+' min';
-    }
-    lastBlock.style.display='block';
-    document.getElementById('home-last-content').innerHTML='<div style="display:flex;align-items:center;gap:10px"><div style="font-size:24px">'+icon+'</div><div><div style="font-size:13px;font-weight:500;color:var(--ink)">'+title+'</div>'+sub+'<div style="font-size:11px;color:var(--muted);margin-top:2px">'+ago+'</div></div></div>';
-    if(diff>=7) document.getElementById('home-inactive-nudge').style.display='block';
+  // TOUTES LES S\u00C9ANCES (liste pagin\u00E9e)
+  STATE.homeSessions=allSess||[];
+  STATE.homeSessPage=0;
+  renderHomeSessions();
+  if((allSess||[]).length>0){
+    const d0=new Date(); d0.setHours(0,0,0,0);
+    const d1=new Date(allSess[0].date+'T00:00:00');
+    if(Math.floor((d0-d1)/(1000*60*60*24))>=7) document.getElementById('home-inactive-nudge').style.display='block';
   }
+}
+
+function changeHomeSessPage(p){ STATE.homeSessPage=p; renderHomeSessions(); }
+function renderHomeSessions(){
+  const PAGE=5;
+  const sessions=STATE.homeSessions||[];
+  const block=document.getElementById('home-sessions-block');
+  const pager=document.getElementById('home-sessions-pager');
+  if(!sessions.length){ block.style.display='none'; return; }
+  block.style.display='block';
+  const page=STATE.homeSessPage||0;
+  const start=page*PAGE;
+  const slice=sessions.slice(start,start+PAGE);
+  const now0=new Date(); now0.setHours(0,0,0,0);
+  document.getElementById('home-sessions-list').innerHTML=slice.map((s,i)=>{
+    const isLastItem=start+i===sessions.length-1;
+    const diff=Math.max(0,Math.floor((now0-new Date(s.date+'T00:00:00'))/(1000*60*60*24)));
+    const ago=diff===0?'Aujourd\'hui':diff===1?'Hier':'Il y a '+diff+' jour'+(diff>1?'s':'');
+    const withV=s.type!=='solo'?' <span style="font-size:10px;color:var(--rose-deep)">\u2726 avec Violette</span>':'';
+    const icon=s.type==='solo'?'\uD83D\uDFE3':'\uD83D\uDC9C';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0'+(isLastItem?'':';border-bottom:1px solid var(--cream)')+'"><div style="font-size:18px">'+icon+'</div><div style="flex:1"><div style="font-size:13px;font-weight:500;color:var(--ink)">'+formatDateFR(s.date)+' \u00B7 '+(s.duration||60)+' min'+withV+'</div><div style="font-size:11px;color:var(--muted);margin-top:1px">'+ago+(s.note?' \u00B7 '+escapeHtml(s.note):'')+'</div></div></div>';
+  }).join('');
+  const totalPages=Math.ceil(sessions.length/PAGE);
+  if(totalPages<=1){ pager.style.display='none'; return; }
+  pager.style.display='flex';
+  const prevDis=page===0; const nextDis=page>=totalPages-1;
+  pager.innerHTML='<button onclick="changeHomeSessPage('+(page-1)+')" '+(prevDis?'disabled':'')+' style="flex:1;padding:8px;background:none;border:1px solid var(--rose-light);border-radius:8px;font-size:12px;color:'+(prevDis?'var(--muted)':'var(--rose-deep)')+';cursor:'+(prevDis?'default':'pointer')+';font-family:var(--sans)">\u2039 Pr\u00E9c\u00E9dentes</button>'
+    +'<span style="font-size:11px;color:var(--muted);padding:0 8px;white-space:nowrap">'+(page+1)+' / '+totalPages+'</span>'
+    +'<button onclick="changeHomeSessPage('+(page+1)+')" '+(nextDis?'disabled':'')+' style="flex:1;padding:8px;background:none;border:1px solid var(--rose-light);border-radius:8px;font-size:12px;color:'+(nextDis?'var(--muted)':'var(--rose-deep)')+';cursor:'+(nextDis?'default':'pointer')+';font-family:var(--sans)">Suivantes \u203A</button>';
 }
 
 // ── CLIENT SESSION EDIT (solo only) ──
@@ -2184,13 +2192,17 @@ async function renderSlotsAndSessions(key){
     if(!sessions||sessions.length===0) html+='<div style="margin:4px 16px 0"><div class="empty-state"><div class="empty-emoji">🌙</div><div class="empty-title">Aucun creneau ce jour</div></div></div>';
   } else {
     html+='<div style="padding:0 16px"><div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Creneaux avec Violette</div><div class="slots-list">';
+    const isPastDay=key<dateKey(new Date());
     for (const s of slots){
       const myBooking=STATE.bookings.find(b=>b.slot_id===s.id);
       let btnHtml;
-      if (myBooking&&myBooking.status==='confirmed') btnHtml=`<button class="slot-btn slot-btn-confirmed" onclick="openClientBookingDetail('${escapeHtml(myBooking.id)}')">Confirme ›</button>`;
-      else if (myBooking) btnHtml=`<button class="slot-btn slot-btn-pending" onclick="openClientBookingDetail('${escapeHtml(myBooking.id)}')">En attente ›</button>`;
-      else if(takenSlotIdSet.has(s.id)) btnHtml='<button class="slot-btn slot-btn-disabled" style="background:#e74c3c20;color:#e74c3c">Reserve</button>';
-      else btnHtml=`<button class="slot-btn slot-btn-book" onclick="openBookModal('${escapeHtml(s.id)}','${escapeHtml(s.date)}','${escapeHtml(s.time)}','${s.duration}','${escapeHtml(s.type)}','${escapeHtml(s.note||'')}')">Reserver</button>`;
+      if (myBooking&&myBooking.status==='confirmed'){
+        if(isPastDay) btnHtml='<span class="slot-btn slot-btn-confirmed" style="cursor:default;pointer-events:none;opacity:.8">✓ Effectuée</span>';
+        else btnHtml=`<button class="slot-btn slot-btn-confirmed" onclick="openClientBookingDetail('${escapeHtml(myBooking.id)}')">Confirmée ›</button>`;
+      } else if (myBooking) btnHtml=`<button class="slot-btn slot-btn-pending" onclick="openClientBookingDetail('${escapeHtml(myBooking.id)}')">En attente ›</button>`;
+      else if(!isPastDay&&takenSlotIdSet.has(s.id)) btnHtml='<button class="slot-btn slot-btn-disabled" style="background:#e74c3c20;color:#e74c3c">Reservé</button>';
+      else if(!isPastDay) btnHtml=`<button class="slot-btn slot-btn-book" onclick="openBookModal('${escapeHtml(s.id)}','${escapeHtml(s.date)}','${escapeHtml(s.time)}','${s.duration}','${escapeHtml(s.type)}','${escapeHtml(s.note||'')}')">Réserver</button>`;
+      else btnHtml='';
       html+=`<div class="slot-card"><div class="slot-time">${escapeHtml(s.time)}</div><div class="slot-info"><div class="slot-title">${escapeHtml(s.type)} - ${s.duration} min</div><div class="slot-sub">${escapeHtml(s.note||'Avec Violette')}</div></div>${btnHtml}</div>`;
     }
     html+='</div></div>';
@@ -2518,6 +2530,14 @@ async function loadAdminData(){
 async function acceptBooking(id, name){
   const {error}=await sb.from('bookings').update({status:'confirmed'}).eq('id',id);
   if(error){ showToast('Erreur : '+error.message); return; }
+  const {data:bk}=await sb.from('bookings').select('*, users(id,forfait_type,forfait_used), slots(date,type,duration)').eq('id',id).single();
+  if(bk&&bk.users&&bk.slots){
+    await sb.from('sessions').insert({user_id:bk.users.id,date:bk.slots.date,type:bk.slots.type,duration:bk.slots.duration,note:''});
+    const forfait=bk.users.forfait_type||'seance';
+    if(forfait==='forfait5'||forfait==='forfait10'){
+      await sb.from('users').update({forfait_used:(bk.users.forfait_used||0)+1}).eq('id',bk.users.id);
+    }
+  }
   showToast(name+' confirmée !');
   loadAdminData();
 }
@@ -3013,11 +3033,17 @@ async function openClientBookingDetail(bookingId){
   clientCurrentBookingId=bookingId;
   const {data:bk}=await sb.from('bookings').select('*, slots(date,time,type,duration,note)').eq('id',bookingId).single();
   if (!bk) return;
+  const isPast=bk.slots.date<dateKey(new Date());
   document.getElementById('cl-bk-datetime').textContent=formatDateFR(bk.slots.date)+' - '+bk.slots.time;
   document.getElementById('cl-bk-type').textContent=bk.slots.type+' - '+bk.slots.duration+' min';
+  document.getElementById('cl-bk-title').textContent=isPast?'Séance effectuée':'Ma réservation';
   const statusEl=document.getElementById('cl-bk-status');
-  if (bk.status==='confirmed'){
-    statusEl.textContent='Confirme';
+  if(isPast){
+    statusEl.textContent='Effectuée ✓';
+    statusEl.style.background='var(--sage-light)';
+    statusEl.style.color='#3a6e40';
+  } else if(bk.status==='confirmed'){
+    statusEl.textContent='Confirmée';
     statusEl.style.background='var(--sage-light)';
     statusEl.style.color='#3a6e40';
   } else {
@@ -3026,6 +3052,7 @@ async function openClientBookingDetail(bookingId){
     statusEl.style.color='#7a5820';
   }
   document.getElementById('cl-bk-adresse').textContent=bk.adresse?'Adresse : '+bk.adresse:'';
+  document.getElementById('cl-bk-cancel-btn').style.display=isPast?'none':'block';
   document.getElementById('modal-client-booking').classList.add('open');
 }
 async function clientCancelBooking(){
