@@ -2014,6 +2014,7 @@ async function deleteClientSession(){
   if(!confirm('Supprimer cette séance ?')) return;
   await sb.from('sessions').delete().eq('id',cseSessionId);
   closeModal('modal-client-session-edit');
+  await loadSessions();
   await renderCalendar();
   if(selectedDate) await renderSlotsAndSessions(selectedDate);
   await loadHomeScreen();
@@ -2421,7 +2422,7 @@ async function submitPost(){
 }
 
 async function loadAndRenderGallery(tab){
-  let query=sb.from('posts').select('*, users(firstname,lastname,role,pseudo)').order('created_at',{ascending:false});
+  let query=sb.from('posts').select('*, users(firstname,lastname,role,pseudo,avatar_url)').order('created_at',{ascending:false});
   if(tab==='feed') query=query.eq('visibility','public');
   else query=query.eq('user_id',STATE.user.id);
   const [{data:posts},{data:myLikes},{data:allLikes}]=await Promise.all([
@@ -2445,12 +2446,15 @@ function renderPost(p, isLiked=false, likeCount=0){
   const visBadge=p.visibility==='private'?'<span class="post-badge private">Prive</span>':'';
   const isMine=p.user_id===STATE.user?.id;
   const safeImageUrl=escapeHtml(p.image_url||'');
+  const avatarHtml=p.users?.avatar_url
+    ?`<img src="${escapeHtml(p.users.avatar_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
+    :escapeHtml(initial);
   const imgHtml=p.image_url
     ?`<div style="width:100%;aspect-ratio:1;overflow:hidden;border-radius:12px;margin-bottom:10px"><img src="${safeImageUrl}" style="width:100%;height:100%;object-fit:cover" loading="lazy"></div>`
     :`<div class="post-img"><span style="font-size:58px">🌸</span></div>`;
   return `<div class="post-card">
     <div class="post-header">
-      <div class="post-avatar ${isViolette?'v':''}">${escapeHtml(initial)}</div>
+      <div class="post-avatar ${isViolette?'v':''}" style="${p.users?.avatar_url?'padding:0;overflow:hidden;':''}"> ${avatarHtml}</div>
       <div style="flex:1"><div class="post-author">${safeName}${isViolette?' ✦':''}</div><div class="post-time">${new Date(p.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'long'})}</div></div>
       ${visBadge}
       ${isMine?`<button onclick="deletePost('${escapeHtml(p.id)}','${safeImageUrl}')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:4px">✕</button>`:''}
@@ -2804,7 +2808,7 @@ async function saveVword(){
 
 async function loadAndRenderAdmGallery(){
   const [{data:posts},{data:allLikes}]=await Promise.all([
-    sb.from('posts').select('*, users(firstname,lastname,role,pseudo)').eq('visibility','public').order('created_at',{ascending:false}),
+    sb.from('posts').select('*, users(firstname,lastname,role,pseudo,avatar_url)').eq('visibility','public').order('created_at',{ascending:false}),
     sb.from('post_likes').select('post_id')
   ]);
   const el=document.getElementById('adm-gal-content');
