@@ -1744,7 +1744,7 @@ function goTo(id, btn){
   if (id==='adm-offre') loadOffre();
   if (id==='adm-stats') { /* loaded by openStats */ }
   if (id==='adm-profile'){ checkStorageUsage(); loadQuotes(); }
-  if (id==='adm-facture') initInvoiceScreen();
+  if (id==='adm-facture'){ if(STATE.mode!=='admin'){goTo('home',null);return;} initInvoiceScreen(); }
   if (id==='adm-settings'){ loadAdmSettings(); }
   if (id==='galerie'){
     loadAndRenderGallery(galTab);
@@ -3235,6 +3235,7 @@ function _loadJsPDF(cb){
 }
 
 function generateInvoicePDF(){
+  if(STATE.mode!=='admin') return;
   const invNum=document.getElementById('inv-number').value.trim();
   const invDate=document.getElementById('inv-date').value;
   const clientInfo=document.getElementById('inv-client').value.trim();
@@ -3280,7 +3281,7 @@ function _doGeneratePDF(invNum,invDate,clientInfo,lines){
   doc.setFontSize(9);
   doc.setTextColor(90,90,90);
   let yL=y+5;
-  ['199 boulevard saint germain','75007 Paris','pilatesbyviolette@gmail.com'].forEach(l=>{doc.text(l,M,yL);yL+=4.5;});
+  ['Masseur Kinésithérapeute','199 boulevard saint-germain','75007 Paris','violette.saintbris@gmail.com','FINESS : 757083209','RPPS : 810101341195'].forEach(l=>{doc.text(l,M,yL);yL+=4.5;});
   // Droite
   doc.setFont('helvetica','bold');
   doc.setFontSize(18);
@@ -3365,7 +3366,7 @@ function _doGeneratePDF(invNum,invDate,clientInfo,lines){
   doc.setFont('helvetica','normal');
   doc.setFontSize(7);
   doc.setTextColor(170,170,170);
-  doc.text('Violette Saint Bris · 199 boulevard saint germain, 75007 Paris · pilatesbyviolette@gmail.com',pageW/2,pageH-10,{align:'center'});
+  doc.text('Violette Saint Bris · Masseur Kinésithérapeute · 199 boulevard saint-germain, 75007 Paris · violette.saintbris@gmail.com',pageW/2,pageH-10,{align:'center'});
 
   doc.save('Facture-'+invNum+'.pdf');
 
