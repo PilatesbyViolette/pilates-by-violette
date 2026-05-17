@@ -887,6 +887,7 @@ body{font-family:var(--sans);color:var(--ink)}
     <div class="menu-section" style="margin-top:16px">
       <div class="menu-item" onclick="goTo('adm-quotes',document.querySelector('#nav-admin .nav-btn'))"><div class="menu-item-icon">✨</div><div class="menu-item-text"><div class="menu-item-title">Citations & mot du jour</div><div class="menu-item-sub">Inspire tes clientes</div></div><div class="menu-item-arrow">›</div></div>
       <div class="menu-item" onclick="openStats()"><div class="menu-item-icon">📊</div><div class="menu-item-text"><div class="menu-item-title">Statistiques business</div><div class="menu-item-sub">Revenus, retention, croissance</div></div><div class="menu-item-arrow">›</div></div>
+      <div class="menu-item" onclick="goTo('adm-facture',null)"><div class="menu-item-icon">🧾</div><div class="menu-item-text"><div class="menu-item-title">Créer une facture</div><div class="menu-item-sub">Génération PDF personnalisée</div></div><div class="menu-item-arrow">›</div></div>
       <div class="menu-item" onclick="logout()"><div class="menu-item-icon">🚪</div><div class="menu-item-text"><div class="menu-item-title">Se deconnecter</div></div><div class="menu-item-arrow">›</div></div>
     </div>
     <div style="margin:0 16px 16px;background:var(--white);border-radius:var(--radius-sm);padding:14px;box-shadow:0 1px 6px rgba(200,100,140,.06)" id="storage-indicator"></div>
@@ -895,6 +896,65 @@ body{font-family:var(--sans);color:var(--ink)}
 
 
 
+
+<!-- FACTURE ADMIN -->
+<div class="screen" id="screen-adm-facture">
+  <div class="screen-scroll">
+    <div class="admin-top">
+      <div class="admin-top-inner">
+        <button onclick="goTo('adm-profile',document.querySelector('#nav-admin .nav-btn[onclick*=adm-profile]'))" style="background:none;border:none;color:var(--rose-deep);font-size:13px;cursor:pointer;padding:0;font-family:var(--sans);margin-bottom:8px">‹ Retour</button>
+        <div class="admin-word">Admin</div>
+        <div class="admin-title">Mes <em>factures</em></div>
+        <div class="admin-sub">Génération PDF</div>
+      </div>
+    </div>
+    <div style="padding:0 16px 100px">
+
+      <!-- Numéro + Date -->
+      <div style="background:var(--white);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(200,100,140,.06)">
+        <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Informations facture</div>
+        <div style="display:flex;gap:10px">
+          <div style="flex:1">
+            <label class="form-label">N° de facture</label>
+            <input type="text" class="form-input" id="inv-number" placeholder="2026-001">
+          </div>
+          <div style="flex:1">
+            <label class="form-label">Date de facturation</label>
+            <input type="date" class="form-input" id="inv-date">
+          </div>
+        </div>
+      </div>
+
+      <!-- Client -->
+      <div style="background:var(--white);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(200,100,140,.06)">
+        <label class="form-label">Facturé à</label>
+        <textarea class="form-textarea" id="inv-client" placeholder="Nom complet&#10;Adresse&#10;Email" style="height:80px;margin-top:6px"></textarea>
+      </div>
+
+      <!-- Lignes de prestations -->
+      <div style="background:var(--white);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(200,100,140,.06)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Prestations</div>
+          <button onclick="addInvLine()" style="font-size:12px;color:var(--rose-deep);background:none;border:1px solid rgba(244,160,188,.5);border-radius:20px;padding:5px 12px;cursor:pointer;font-family:var(--sans)">+ Ajouter une ligne</button>
+        </div>
+        <!-- Header colonnes -->
+        <div style="display:flex;gap:8px;margin-bottom:6px;padding:0 4px">
+          <div style="flex:1.4;font-size:10px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Date séance</div>
+          <div style="flex:3;font-size:10px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Motif</div>
+          <div style="width:72px;font-size:10px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;text-align:right">TTC (€)</div>
+          <div style="width:28px"></div>
+        </div>
+        <div id="inv-lines"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:12px;border-top:1.5px solid var(--rose-light)">
+          <span style="font-size:13px;font-weight:600;color:var(--ink)">Total TTC</span>
+          <span style="font-family:var(--serif);font-size:20px;color:var(--rose-deep)" id="inv-total">0,00 €</span>
+        </div>
+      </div>
+
+      <button class="submit-btn" onclick="generateInvoicePDF()" style="margin-top:4px">📄 Télécharger la facture PDF</button>
+    </div>
+  </div>
+</div>
 
 <!-- PARAMETRES ADMIN -->
 <div class="screen" id="screen-adm-settings">
@@ -1684,6 +1744,7 @@ function goTo(id, btn){
   if (id==='adm-offre') loadOffre();
   if (id==='adm-stats') { /* loaded by openStats */ }
   if (id==='adm-profile'){ checkStorageUsage(); loadQuotes(); }
+  if (id==='adm-facture') initInvoiceScreen();
   if (id==='adm-settings'){ loadAdmSettings(); }
   if (id==='galerie'){
     loadAndRenderGallery(galTab);
@@ -3137,6 +3198,186 @@ function showLoader(){document.getElementById('loading').classList.remove('hidde
 function hideLoader(){document.getElementById('loading').classList.add('hidden');}
 let toastTimer;
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2600);}
+
+// ── FACTURES ──
+function initInvoiceScreen(){
+  document.getElementById('inv-date').value=dateKey(new Date());
+  const year=new Date().getFullYear();
+  const stored=localStorage.getItem('pbv_invoice_num');
+  document.getElementById('inv-number').value=(stored&&stored.startsWith(year+'-'))?stored:(year+'-001');
+  document.getElementById('inv-client').value='';
+  document.getElementById('inv-lines').innerHTML='';
+  addInvLine();
+  updateInvTotal();
+}
+
+function addInvLine(){
+  const div=document.createElement('div');
+  div.className='inv-line';
+  div.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:8px';
+  div.innerHTML=`<input type="date" class="form-input inv-line-date" style="flex:1.4;font-size:12px;padding:8px 10px" oninput="updateInvTotal()"><input type="text" class="form-input inv-line-desc" placeholder="Motif de la séance" style="flex:3;font-size:12px;padding:8px 10px" oninput="updateInvTotal()"><input type="number" class="form-input inv-line-amount" placeholder="0" step="0.01" min="0" style="width:72px;flex-shrink:0;text-align:right;font-size:12px;padding:8px 8px" oninput="updateInvTotal()"><button onclick="this.closest('.inv-line').remove();updateInvTotal()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;width:28px;flex-shrink:0;padding:0">✕</button>`;
+  document.getElementById('inv-lines').appendChild(div);
+}
+
+function updateInvTotal(){
+  let total=0;
+  document.querySelectorAll('.inv-line-amount').forEach(i=>{total+=parseFloat(i.value)||0;});
+  document.getElementById('inv-total').textContent=total.toFixed(2).replace('.',',')+' €';
+}
+
+function _loadJsPDF(cb){
+  if(window.jspdf){cb();return;}
+  const s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+  s.onload=cb;
+  s.onerror=()=>showToast('Erreur chargement librairie PDF');
+  document.head.appendChild(s);
+}
+
+function generateInvoicePDF(){
+  const invNum=document.getElementById('inv-number').value.trim();
+  const invDate=document.getElementById('inv-date').value;
+  const clientInfo=document.getElementById('inv-client').value.trim();
+  const lines=[];
+  document.querySelectorAll('.inv-line').forEach(row=>{
+    const date=row.querySelector('.inv-line-date').value;
+    const desc=row.querySelector('.inv-line-desc').value.trim();
+    const amount=parseFloat(row.querySelector('.inv-line-amount').value)||0;
+    if(date||desc||amount) lines.push({date,desc,amount});
+  });
+  if(!invNum){showToast('Remplis le numéro de facture');return;}
+  if(!clientInfo){showToast('Remplis les infos client');return;}
+  if(!lines.length){showToast('Ajoute au moins une prestation');return;}
+  _loadJsPDF(()=>_doGeneratePDF(invNum,invDate,clientInfo,lines));
+}
+
+function _doGeneratePDF(invNum,invDate,clientInfo,lines){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:'mm',format:'a4'});
+  const pageW=doc.internal.pageSize.getWidth();
+  const M=15; // margin
+  let y=18;
+
+  // ── EN-TÊTE MARQUE ──
+  doc.setFont('times','italic');
+  doc.setFontSize(26);
+  doc.setTextColor(180,80,110);
+  doc.text('Pilates by Violette',pageW/2,y,{align:'center'});
+  y+=3;
+  doc.setDrawColor(220,150,170);
+  doc.setLineWidth(0.4);
+  doc.line(M,y,pageW-M,y);
+  y+=8;
+
+  // ── DEUX COLONNES : infos Violette (gauche) | FACTURE (droite) ──
+  const dateStr=invDate?new Date(invDate+'T00:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}):'';
+  // Gauche
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(10);
+  doc.setTextColor(40,40,40);
+  doc.text('Violette Saint Bris',M,y);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(9);
+  doc.setTextColor(90,90,90);
+  let yL=y+5;
+  ['199 boulevard saint germain','75007 Paris','pilatesbyviolette@gmail.com'].forEach(l=>{doc.text(l,M,yL);yL+=4.5;});
+  // Droite
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(18);
+  doc.setTextColor(180,80,110);
+  doc.text('FACTURE',pageW-M,y,{align:'right'});
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(9);
+  doc.setTextColor(90,90,90);
+  doc.text('N° '+invNum,pageW-M,y+8,{align:'right'});
+  doc.text(dateStr,pageW-M,y+13.5,{align:'right'});
+  y=Math.max(yL,y+18)+8;
+
+  // ── SÉPARATEUR ──
+  doc.setDrawColor(220,150,170);
+  doc.line(M,y,pageW-M,y);
+  y+=8;
+
+  // ── FACTURÉ À ──
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(8);
+  doc.setTextColor(150,100,120);
+  doc.text('FACTURÉ À',M,y);
+  y+=5;
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(10);
+  doc.setTextColor(40,40,40);
+  clientInfo.split('\n').forEach(l=>{if(l.trim()){doc.text(l.trim(),M,y);y+=5;}});
+  y+=5;
+
+  doc.setDrawColor(220,150,170);
+  doc.line(M,y,pageW-M,y);
+  y+=8;
+
+  // ── EN-TÊTE TABLEAU ──
+  const cDate=M, cDesc=M+32, cAmt=pageW-M;
+  doc.setFillColor(255,235,242);
+  doc.rect(M,y-5,pageW-2*M,8,'F');
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(9);
+  doc.setTextColor(140,60,90);
+  doc.text('Date séance',cDate,y);
+  doc.text('Motif / Description',cDesc,y);
+  doc.text('Montant TTC',cAmt,y,{align:'right'});
+  y+=8;
+
+  // ── LIGNES ──
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(9.5);
+  lines.forEach((l,i)=>{
+    if(i%2===0){doc.setFillColor(252,247,249);doc.rect(M,y-4.5,pageW-2*M,7.5,'F');}
+    doc.setTextColor(40,40,40);
+    const df=l.date?new Date(l.date+'T00:00:00').toLocaleDateString('fr-FR'):'';
+    doc.text(df,cDate,y);
+    const maxW=cAmt-cDesc-20;
+    const descLines=doc.splitTextToSize(l.desc||'',maxW);
+    doc.text(descLines[0]||'',cDesc,y);
+    doc.text(l.amount.toFixed(2).replace('.',',')+' €',cAmt,y,{align:'right'});
+    y+=7;
+    descLines.slice(1).forEach(dl=>{doc.text(dl,cDesc,y);y+=5;});
+  });
+
+  // ── TOTAL ──
+  y+=2;
+  doc.setDrawColor(180,80,110);
+  doc.setLineWidth(0.6);
+  doc.line(M,y,pageW-M,y);
+  y+=8;
+  const total=lines.reduce((s,l)=>s+l.amount,0);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(11);
+  doc.setTextColor(40,40,40);
+  doc.text('Total TTC',cDesc,y);
+  doc.setTextColor(180,80,110);
+  doc.setFontSize(13);
+  doc.text(total.toFixed(2).replace('.',',')+' €',cAmt,y,{align:'right'});
+
+  // ── PIED DE PAGE ──
+  const pageH=doc.internal.pageSize.getHeight();
+  doc.setDrawColor(220,150,170);
+  doc.setLineWidth(0.3);
+  doc.line(M,pageH-16,pageW-M,pageH-16);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(7);
+  doc.setTextColor(170,170,170);
+  doc.text('Violette Saint Bris · 199 boulevard saint germain, 75007 Paris · pilatesbyviolette@gmail.com',pageW/2,pageH-10,{align:'center'});
+
+  doc.save('Facture-'+invNum+'.pdf');
+
+  // Incrémenter le compteur
+  const parts=invNum.split('-');
+  const next=parts.length===2
+    ?parts[0]+'-'+String(parseInt(parts[1])+1).padStart(3,'0')
+    :String((parseInt(invNum)||0)+1);
+  localStorage.setItem('pbv_invoice_num',next);
+  document.getElementById('inv-number').value=next;
+  showToast('Facture '+invNum+' générée !');
+}
 
 // ── INIT ──
 document.getElementById('f-date').value=dateKey(new Date());
