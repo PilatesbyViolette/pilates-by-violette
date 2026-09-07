@@ -221,6 +221,9 @@
     .breath{width:250px;height:250px;left:50%}
   }
   @media (max-width:560px){.patho{grid-template-columns:1fr}}
+  .nav-right{display:flex;align-items:center;gap:10px}
+  #lang-btn{background:none;border:1px solid var(--ligne);cursor:pointer;font-size:17px;line-height:1;padding:5px 9px;border-radius:6px;transition:opacity .2s;display:flex;align-items:center}
+  #lang-btn:hover{opacity:.6}
 </style>
 </head>
 <body>
@@ -236,7 +239,10 @@
       <a href="#quijesuis">Qui je suis</a>
       <a href="#tarifs">Tarifs</a>
     </div>
-    <a class="nav-cta" href="https://www.doctolib.fr/masseur-kinesitherapeute/paris/violette-saint-bris-paris" target="_blank" rel="noopener">Séance offerte</a>
+    <div class="nav-right">
+      <button id="lang-btn" onclick="toggleLang()" aria-label="Switch language" title="Switch to English">🇬🇧</button>
+      <a class="nav-cta" href="https://www.doctolib.fr/masseur-kinesitherapeute/paris/violette-saint-bris-paris" target="_blank" rel="noopener" id="nav-cta">Séance offerte</a>
+    </div>
   </div>
 </nav>
 
@@ -468,6 +474,150 @@
       btn.textContent = 'Demander ma séance offerte';
     });
   });
+})();
+</script>
+
+<script>
+var T = {
+  fr: {
+    promo: '<b>RENTRÉE 2026</b> — Cours gratuits du 1ᵉʳ au 20 septembre. <u>Réservez votre place.</u>',
+    navCta: 'Séance offerte',
+    eyebrowHero: 'Coach Pilates à Paris 7ᵉ',
+    h1: 'Le Pilates à Paris 7,<br><span class="accent">à domicile.</span>',
+    sub: 'Cours particuliers et duos de Pilates à domicile dans le 7ᵉ arrondissement et alentours. Par une <strong>kinésithérapeute diplômée d\'État</strong>, pour un corps tonique, solide et sans douleur.',
+    heroBtn: 'Ma séance d\'essai offerte',
+    step1h: 'Le bilan postural',
+    step1p: 'Première séance offerte : analyse de votre posture, de vos antécédents et de vos objectifs. C\'est la fondation de tout le programme.',
+    step2h: 'Des séances individualisées',
+    step2p: 'Un programme construit pour corriger votre posture et soigner vos blessures. Pilates ring, élastiques, travail au sol : chaque exercice a une raison d\'être.',
+    step3h: 'Le rendez-vous hebdomadaire',
+    step3p: 'Une heure par semaine, chez vous, non négociable dans l\'agenda. La régularité fait le résultat — et l\'accompagnement fait la régularité.',
+    eyebrowPQ: 'Pour qui',
+    h2PQ: 'Vos antécédents ne sont pas un frein. Ils sont le point de départ.',
+    introPQ: 'Chaque séance est construite à partir de votre histoire : blessures anciennes ou actuelles, pathologies chroniques, reprise après des années d\'arrêt, ou simplement l\'envie d\'être accompagnée pour renforcer votre corps (cuisses, fessiers, dos, abdos, bras…).',
+    eyebrowRes: 'Résultats',
+    h2Res: 'Ce que constatent les élèves, séance après séance.',
+    res1: 'Des douleurs qui disparaissent',
+    res2: 'Un corps tonifié, une confiance retrouvée',
+    res3: 'Une posture qui se redresse',
+    res4: 'Plus de souplesse dans les gestes du quotidien',
+    res5: 'L\'autonomie préservée pour les années qui viennent',
+    eyebrowTem: 'Témoignages',
+    h2Tem: 'Jean, Evelyne, Stéphanie.',
+    eyebrowQJS: 'Qui je suis',
+    h2QJS: 'Je m\'appelle Violette Saint Bris. Je mets les gens en mouvement.',
+    eyebrowTar: 'Tarifs',
+    eyebrowCon: 'Contact',
+    h2Con: 'On commence <span class="accent">cette semaine</span> ?',
+    formNom: 'Nom',
+    formContact: 'Email ou téléphone',
+    formMsg: 'Votre situation (antécédents, objectifs…)',
+    formBtn: 'Demander ma séance offerte',
+    footer1: 'Pilates by Violette — cours à domicile, Paris 7ᵉ',
+    footer2: 'Rue du Bac · Grenelle · Varenne · Saint-Germain · Université · Lille · Saints-Pères'
+  },
+  en: {
+    promo: '<b>AUTUMN 2026</b> — Free classes from September 1st to 20th. <u>Book your spot.</u>',
+    navCta: 'Free session',
+    eyebrowHero: 'Pilates Coach in Paris 7th',
+    h1: 'Pilates in Paris 7,<br><span class="accent">at home.</span>',
+    sub: 'Private and duo Pilates classes at home in the 7th arrondissement and surroundings. With a <strong>state-certified physiotherapist</strong>, for a toned, strong and pain-free body.',
+    heroBtn: 'Book my free trial session',
+    step1h: 'Postural assessment',
+    step1p: 'First session free: analysis of your posture, history and goals. This is the foundation of the whole programme.',
+    step2h: 'Tailored sessions',
+    step2p: 'A programme built to correct your posture and heal your injuries. Pilates ring, resistance bands, mat work: every exercise has a purpose.',
+    step3h: 'The weekly appointment',
+    step3p: 'One hour a week, at your home, non-negotiable in the diary. Consistency brings results — and coaching brings consistency.',
+    eyebrowPQ: 'Who it\'s for',
+    h2PQ: 'Your history is not a barrier. It\'s the starting point.',
+    introPQ: 'Every session is built around your story: past or current injuries, chronic conditions, returning after years off, or simply the desire to be guided in strengthening your body (thighs, glutes, back, core, arms…).',
+    eyebrowRes: 'Results',
+    h2Res: 'What students notice, session after session.',
+    res1: 'Pain that fades away',
+    res2: 'A toned body, renewed confidence',
+    res3: 'Better posture',
+    res4: 'More ease in everyday movement',
+    res5: 'Autonomy preserved for years to come',
+    eyebrowTem: 'Testimonials',
+    h2Tem: 'Jean, Evelyne, Stéphanie.',
+    eyebrowQJS: 'About me',
+    h2QJS: 'My name is Violette Saint Bris. I get people moving.',
+    eyebrowTar: 'Pricing',
+    eyebrowCon: 'Contact',
+    h2Con: 'Starting <span class="accent">this week</span>?',
+    formNom: 'Name',
+    formContact: 'Email or phone',
+    formMsg: 'Your situation (history, goals…)',
+    formBtn: 'Request my free session',
+    footer1: 'Pilates by Violette — home sessions, Paris 7th',
+    footer2: 'Rue du Bac · Grenelle · Varenne · Saint-Germain · Université · Lille · Saints-Pères'
+  }
+};
+
+function applyLang(lang) {
+  var t = T[lang];
+  var qs = function(sel) { return document.querySelector(sel); };
+  var qsa = function(sel) { return document.querySelectorAll(sel); };
+
+  qs('.promo').innerHTML = t.promo;
+  document.getElementById('nav-cta').textContent = t.navCta;
+
+  var eyebrows = qsa('.eyebrow');
+  eyebrows[0].textContent = t.eyebrowHero;
+  qs('h1.display').innerHTML = t.h1;
+  qs('.sub').innerHTML = t.sub;
+  qs('.btn-terra').textContent = t.heroBtn;
+
+  var etapes = qsa('.etape');
+  if(etapes[0]){etapes[0].querySelector('h3').textContent = t.step1h; etapes[0].querySelector('p').textContent = t.step1p;}
+  if(etapes[1]){etapes[1].querySelector('h3').textContent = t.step2h; etapes[1].querySelector('p').textContent = t.step2p;}
+  if(etapes[2]){etapes[2].querySelector('h3').textContent = t.step3h; etapes[2].querySelector('p').textContent = t.step3p;}
+
+  eyebrows[1].textContent = t.eyebrowPQ;
+  qs('#pourqui h2').textContent = t.h2PQ;
+  qs('#pourqui .intro').textContent = t.introPQ;
+
+  eyebrows[2].textContent = t.eyebrowRes;
+  qs('#resultats h2').textContent = t.h2Res;
+  var resItems = qsa('.res-item');
+  var resKeys = ['res1','res2','res3','res4','res5'];
+  resItems.forEach(function(el,i){ if(resKeys[i]) el.innerHTML = '<i>→</i>' + t[resKeys[i]]; });
+
+  eyebrows[3].textContent = t.eyebrowTem;
+
+  eyebrows[4].textContent = t.eyebrowQJS;
+  qs('#quijesuis h2').textContent = t.h2QJS;
+
+  eyebrows[5].textContent = t.eyebrowTar;
+
+  eyebrows[6].textContent = t.eyebrowCon;
+  qs('#contact h2').innerHTML = t.h2Con;
+  qs('label[for="f-nom"]').textContent = t.formNom;
+  qs('label[for="f-mail"]').textContent = t.formContact;
+  qs('label[for="f-msg"]').textContent = t.formMsg;
+  qs('.envoyer').textContent = t.formBtn;
+
+  var footerSpans = qsa('footer .wrap span');
+  if(footerSpans[0]) footerSpans[0].textContent = t.footer1;
+  if(footerSpans[1]) footerSpans[1].textContent = t.footer2;
+
+  var btn = document.getElementById('lang-btn');
+  btn.textContent = lang === 'fr' ? '🇬🇧' : '🇫🇷';
+  btn.title = lang === 'fr' ? 'Switch to English' : 'Passer en français';
+  document.documentElement.lang = lang;
+}
+
+function toggleLang() {
+  var current = localStorage.getItem('lang') || 'fr';
+  var next = current === 'fr' ? 'en' : 'fr';
+  localStorage.setItem('lang', next);
+  applyLang(next);
+}
+
+(function() {
+  var saved = localStorage.getItem('lang');
+  if(saved && saved !== 'fr') applyLang(saved);
 })();
 </script>
 </body>
