@@ -18,18 +18,43 @@
   "@context": "https://schema.org",
   "@type": "HealthAndBeautyBusiness",
   "name": "Pilates by Violette",
-  "description": "Cours de Pilates particuliers et collectifs à Paris 7ᵉ. À domicile, en cabinet ou en entreprise.",
+  "description": "Cours de Pilates particuliers à domicile à Paris 7ᵉ. Kinésithérapeute diplômée d'État, spécialisée en Pilates thérapeutique et postural.",
   "url": "https://pilatesbyviolette.com",
+  "telephone": "+33610706202",
   "address": {
     "@type": "PostalAddress",
     "addressLocality": "Paris",
     "postalCode": "75007",
     "addressCountry": "FR"
   },
-  "areaServed": ["Paris 7ème", "Paris 6ème", "Paris 15ème", "Paris 8ème"],
-  "serviceType": "Cours de Pilates",
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": 48.8553,
+    "longitude": 2.3204
+  },
+  "areaServed": [
+    {"@type": "City", "name": "Paris 7ème arrondissement"},
+    {"@type": "City", "name": "Paris 6ème arrondissement"},
+    {"@type": "City", "name": "Paris 15ème arrondissement"},
+    {"@type": "City", "name": "Paris 8ème arrondissement"}
+  ],
+  "hasOfferCatalog": {
+    "@type": "OfferCatalog",
+    "name": "Cours de Pilates",
+    "itemListElement": [
+      {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Cours particulier de Pilates à domicile Paris 7", "description": "1h de Pilates individualisé à votre domicile, 7ème arrondissement"}},
+      {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Cours duo de Pilates à domicile Paris", "description": "1h de Pilates en duo à votre domicile"}},
+      {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Pilates en entreprise Paris", "description": "Cours de Pilates en entreprise à Paris"}}
+    ]
+  },
   "priceRange": "€€",
-  "openingHours": "Mo-Sa 07:00-20:00"
+  "openingHours": "Mo-Sa 09:00-19:00",
+  "founder": {
+    "@type": "Person",
+    "name": "Violette Saint Bris",
+    "jobTitle": "Kinésithérapeute & Coach Pilates",
+    "knowsAbout": ["Pilates", "Kinésithérapie", "Posturologie", "Ostéopathie"]
+  }
 }
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Italiana&family=Prata&family=Lora:ital@0;1&family=Jost:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
@@ -218,9 +243,9 @@
 <header class="hero" id="haut">
   <div class="hero-txt">
     <div class="breath" aria-hidden="true"></div>
-    <p class="eyebrow">Paris 7ᵉ</p>
-    <h1 class="display">Le Pilates,<br><span class="accent">à domicile.</span></h1>
-    <p class="sub">Cours particuliers et duos chez vous, rive gauche. Par une <strong>kinésithérapeute diplômée d'État</strong>, pour un corps tonique, solide et sans douleur.</p>
+    <p class="eyebrow">Coach Pilates à Paris 7ᵉ</p>
+    <h1 class="display">Le Pilates à Paris 7,<br><span class="accent">à domicile.</span></h1>
+    <p class="sub">Cours particuliers et duos de Pilates à domicile dans le 7ᵉ arrondissement et alentours. Par une <strong>kinésithérapeute diplômée d'État</strong>, pour un corps tonique, solide et sans douleur.</p>
     <div class="cta-zone">
       <a class="btn-terra" href="https://www.doctolib.fr/masseur-kinesitherapeute/paris/violette-saint-bris-paris" target="_blank" rel="noopener">Ma séance d'essai offerte</a>
     </div>
