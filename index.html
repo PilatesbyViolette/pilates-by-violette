@@ -208,8 +208,21 @@
   footer{background:var(--encre);color:rgba(247,244,238,.55);border-top:1px solid rgba(247,244,238,.12);padding:32px 0;font-size:12.5px;letter-spacing:.06em}
   footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 
+  /* hamburger */
+  #menu-btn{display:none;background:none;border:none;cursor:pointer;padding:6px;flex-direction:column;gap:5px;width:34px}
+  #menu-btn span{display:block;height:1.5px;background:var(--ink);border-radius:2px;transition:transform .25s,opacity .25s}
+  #menu-btn.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
+  #menu-btn.open span:nth-child(2){opacity:0}
+  #menu-btn.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
+  .mobile-menu{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--ivoire);z-index:49;flex-direction:column;align-items:center;justify-content:center;gap:36px}
+  .mobile-menu.open{display:flex}
+  .mobile-menu a{font-size:22px;letter-spacing:.14em;text-transform:uppercase;opacity:.8;color:var(--ink)}
+  .mobile-menu a:hover{opacity:1}
+  .mobile-menu .m-cta{background:var(--terra-bouton);color:var(--ivoire);padding:14px 36px;border-radius:999px;font-size:14px;letter-spacing:.16em;margin-top:12px;opacity:1}
+
   @media (max-width:940px){
     .nav-links{display:none}
+    #menu-btn{display:flex}
     .promo{font-size:12px}
     .hero,.contact-grid,.cafe-grid{grid-template-columns:1fr}
     .hero-txt{padding-top:140px}
@@ -241,11 +254,22 @@
       <a href="#tarifs">Tarifs</a>
     </div>
     <div class="nav-right">
-      <button id="lang-btn" onclick="toggleLang()" aria-label="Switch language" title="Switch to English">🇬🇧</button>
+      <button id="lang-btn" onclick="toggleLang()" aria-label="Switch language" title="Switch to English">EN</button>
       <a class="nav-cta" href="https://www.doctolib.fr/masseur-kinesitherapeute/paris/violette-saint-bris-paris" target="_blank" rel="noopener" id="nav-cta">Séance offerte</a>
+      <button id="menu-btn" aria-label="Menu" onclick="toggleMenu()">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </div>
 </nav>
+
+<div class="mobile-menu" id="mobile-menu">
+  <a href="#pourqui" onclick="closeMenu()" id="mm-pq">Pour qui</a>
+  <a href="#resultats" onclick="closeMenu()" id="mm-res">Résultats</a>
+  <a href="#quijesuis" onclick="closeMenu()" id="mm-qjs">Qui je suis</a>
+  <a href="#tarifs" onclick="closeMenu()" id="mm-tar">Tarifs</a>
+  <a class="m-cta" href="https://www.doctolib.fr/masseur-kinesitherapeute/paris/violette-saint-bris-paris" target="_blank" rel="noopener" onclick="closeMenu()" id="mm-cta">Séance offerte</a>
+</div>
 
 <header class="hero" id="haut">
   <div class="hero-txt">
@@ -652,9 +676,13 @@ function applyLang(lang) {
   // promo
   qs('.promo').innerHTML = t.promo;
 
-  // nav links
+  // nav links (desktop + mobile menu)
   var navLinks = qsa('.nav-links a');
   navLinks.forEach(function(el,i){ if(t.navLinks[i]) el.textContent = t.navLinks[i]; });
+  var mmIds = ['mm-pq','mm-res','mm-qjs','mm-tar'];
+  mmIds.forEach(function(id,i){ var el=document.getElementById(id); if(el&&t.navLinks[i]) el.textContent=t.navLinks[i]; });
+  var mmCta = document.getElementById('mm-cta');
+  if(mmCta) mmCta.textContent = t.navCta;
   document.getElementById('nav-cta').textContent = t.navCta;
 
   // hero
@@ -766,6 +794,19 @@ function applyLang(lang) {
   btn.textContent = lang === 'fr' ? 'EN' : 'FR';
   btn.title = lang === 'fr' ? 'Switch to English' : 'Passer en français';
   document.documentElement.lang = lang;
+}
+
+function toggleMenu() {
+  var btn = document.getElementById('menu-btn');
+  var menu = document.getElementById('mobile-menu');
+  var isOpen = menu.classList.contains('open');
+  if(isOpen) { menu.classList.remove('open'); btn.classList.remove('open'); document.body.style.overflow=''; }
+  else { menu.classList.add('open'); btn.classList.add('open'); document.body.style.overflow='hidden'; }
+}
+function closeMenu() {
+  document.getElementById('mobile-menu').classList.remove('open');
+  document.getElementById('menu-btn').classList.remove('open');
+  document.body.style.overflow='';
 }
 
 function toggleLang() {
