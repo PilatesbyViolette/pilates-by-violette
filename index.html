@@ -451,9 +451,9 @@
         <h2>On commence <span class="accent">cette semaine</span> ?</h2>
         <div class="canaux">
           <a href="https://www.doctolib.fr/masseur-kinesitherapeute/paris/violette-saint-bris-paris" target="_blank" rel="noopener">Réserver sur Doctolib ↗</a>
-          <a href="#">WhatsApp — 06 10 70 62 02</a>
+          <a href="https://wa.me/33610706202?text=Bonjour%20Violette%2C%20je%20souhaite%20des%20informations%20sur%20vos%20cours%20de%20Pilates." target="_blank" rel="noopener">WhatsApp — 06 10 70 62 02</a>
           <a href="mailto:violette.saintbris@gmail.com">violette.saintbris@gmail.com</a>
-          <a href="#">Instagram — @violettesaintbris</a>
+          <a href="https://instagram.com/violettesaintbris" target="_blank" rel="noopener">Instagram — @violettesaintbris</a>
         </div>
       </div>
       <div>
@@ -830,6 +830,23 @@ function toggleLang() {
   var saved = localStorage.getItem('lang');
   if(saved && saved !== 'fr') applyLang(saved);
   else document.getElementById('lang-btn').textContent = 'EN';
+})();
+</script>
+
+<script>
+// Google Ads conversion tracking on high-intent clicks (Doctolib bookings + WhatsApp)
+(function() {
+  var CONV = 'AW-819470016/HihvCJKrkfMcEMC94IYD';
+  function fireConversion() {
+    if(typeof gtag === 'function') gtag('event', 'conversion', {'send_to': CONV});
+  }
+  document.addEventListener('click', function(e) {
+    var a = e.target.closest('a');
+    if(!a || !a.href) return;
+    if(a.href.indexOf('doctolib.fr') !== -1 || a.href.indexOf('wa.me') !== -1) {
+      fireConversion();
+    }
+  }, true);
 })();
 </script>
 </body>
