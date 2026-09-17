@@ -493,6 +493,7 @@
     }).then(function(r){
       status.style.display = 'block';
       if(r.ok){
+        if(typeof gtag === 'function'){ gtag('event', 'conversion', {'send_to': 'AW-819470016/HihvCJKrkfMcEMC94IYD'}); }
         form.reset();
         status.textContent = 'Merci ! Votre message est bien envoyé — Violette vous répond très vite.';
         btn.textContent = 'Message envoyé ✓';
