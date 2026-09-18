@@ -131,12 +131,9 @@
   .btn-terra{display:inline-block;background:var(--terra-bouton);color:var(--ivoire);padding:16px 34px;border-radius:999px;font-size:13px;letter-spacing:.16em;text-transform:uppercase;transition:background .3s,transform .2s}
   .btn-terra:hover{background:var(--terra-bouton-hover);transform:translateY(-1px)}
 
-  /* ---------- bandeau promo ---------- */
-  .promo{position:fixed;top:0;left:0;right:0;z-index:60;background:var(--encre);color:var(--ivoire);text-align:center;padding:16px 16px;font-size:16px;letter-spacing:.04em}
-  .promo b{font-weight:500;letter-spacing:.1em;color:var(--terra)}
 
   /* ---------- nav ---------- */
-  nav{position:fixed;top:54px;left:0;right:0;z-index:50;background:rgba(247,244,238,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--ligne)}
+  nav{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(247,244,238,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--ligne)}
   .nav-in{max-width:1200px;margin:0 auto;padding:18px 6vw;display:flex;justify-content:space-between;align-items:center;gap:18px}
   .logo{font-family:'Prata',serif;font-size:20px;white-space:nowrap}
   .logo em{font-family:'Lora',serif;font-style:italic;color:var(--terra)}
@@ -287,7 +284,6 @@
     .nav-links{display:none}
     .nav-in .nav-cta{display:none}
     #menu-btn{display:flex}
-    .promo{font-size:12px}
     .hero,.contact-grid,.cafe-grid{grid-template-columns:1fr}
     .hero-txt{padding-top:140px}
     .hero-img{min-height:64vw}
@@ -313,8 +309,6 @@
 </script>
 </head>
 <body>
-
-<div class="promo"><b>RENTRÉE 2026</b> — Cours gratuits du 1ᵉʳ au 20 septembre. <u>Réservez votre place.</u></div>
 
 <nav>
   <div class="nav-in">
@@ -583,7 +577,6 @@
 <script>
 var T = {
   fr: {
-    promo: '<b>RENTRÉE 2026</b> — Cours gratuits du 1ᵉʳ au 20 septembre. <u>Réservez votre place.</u>',
     navLinks: ['Pour qui','Résultats','Qui je suis','Tarifs'],
     navCta: 'Séance offerte',
     eyebrowHero: 'Coach Pilates à Paris 7ᵉ',
@@ -667,7 +660,6 @@ var T = {
     legalPrivacy: 'Politique de confidentialité'
   },
   en: {
-    promo: '<b>AUTUMN 2026</b> — Free classes from September 1st to 20th. <u>Book your spot.</u>',
     navLinks: ['Who it\'s for','Results','About me','Pricing'],
     navCta: 'Free session',
     eyebrowHero: 'Pilates Coach in Paris 7th',
@@ -756,9 +748,6 @@ function applyLang(lang) {
   var t = T[lang];
   var qs = function(sel) { return document.querySelector(sel); };
   var qsa = function(sel) { return document.querySelectorAll(sel); };
-
-  // promo
-  qs('.promo').innerHTML = t.promo;
 
   // nav links (desktop + mobile menu)
   var navLinks = qsa('.nav-links a');
