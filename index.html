@@ -3,60 +3,109 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pilates by Violette — Coach Pilates à Paris 7ᵉ</title>
-<meta name="description" content="Cours de Pilates particuliers et collectifs à Paris 7ᵉ · À domicile, en cabinet ou en entreprise · Corrigez votre posture et soignez vos douleurs avec Violette, coach certifiée.">
-<meta name="keywords" content="pilates paris 7, cours pilates paris 7eme, pilates à domicile paris, coach pilates paris, pilates particulier paris, pilates posture paris">
+<title>Pilates à Paris 7 à domicile — par une kinésithérapeute D.E. | Pilates by Violette</title>
+<meta name="description" content="Cours de Pilates particuliers et en duo à domicile, Paris 7ᵉ. Par Violette, kinésithérapeute diplômée d'État. Bilan postural offert à la 1ʳᵉ séance.">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://pilatesbyviolette.com">
-<meta property="og:title" content="Pilates by Violette — Coach Pilates à Paris 7ᵉ">
-<meta property="og:description" content="Cours de Pilates particuliers et collectifs à Paris 7ᵉ · À domicile, en cabinet ou en entreprise.">
-<meta property="og:url" content="https://pilatesbyviolette.com">
+<link rel="canonical" href="https://pilatesbyviolette.com/">
+<meta property="og:title" content="Pilates à Paris 7 à domicile — par une kinésithérapeute D.E.">
+<meta property="og:description" content="Cours de Pilates particuliers et en duo à domicile, Paris 7ᵉ. Par Violette, kinésithérapeute diplômée d'État. Bilan postural offert.">
+<meta property="og:url" content="https://pilatesbyviolette.com/">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="fr_FR">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "HealthAndBeautyBusiness",
+  "@id": "https://pilatesbyviolette.com/#business",
   "name": "Pilates by Violette",
-  "description": "Cours de Pilates particuliers à domicile à Paris 7ᵉ. Kinésithérapeute diplômée d'État, spécialisée en Pilates thérapeutique et postural.",
-  "url": "https://pilatesbyviolette.com",
+  "description": "Cours de Pilates particuliers et en duo à domicile dans le 7ᵉ arrondissement de Paris. Par Violette Saint Bris, kinésithérapeute diplômée d'État, spécialisée en Pilates thérapeutique et postural.",
+  "url": "https://pilatesbyviolette.com/",
   "telephone": "+33610706202",
+  "email": "violette.saintbris@gmail.com",
+  "priceRange": "€€",
+  "currenciesAccepted": "EUR",
   "address": {
     "@type": "PostalAddress",
     "addressLocality": "Paris",
     "postalCode": "75007",
     "addressCountry": "FR"
   },
-  "geo": {
-    "@type": "GeoCoordinates",
-    "latitude": 48.8553,
-    "longitude": 2.3204
+  "geo": {"@type": "GeoCoordinates", "latitude": 48.8553, "longitude": 2.3204},
+  "serviceArea": {
+    "@type": "GeoCircle",
+    "geoMidpoint": {"@type": "GeoCoordinates", "latitude": 48.8553, "longitude": 2.3204},
+    "geoRadius": 1200
   },
   "areaServed": [
-    {"@type": "City", "name": "Paris 7ème arrondissement"},
-    {"@type": "City", "name": "Paris 6ème arrondissement"},
-    {"@type": "City", "name": "Paris 15ème arrondissement"},
-    {"@type": "City", "name": "Paris 8ème arrondissement"}
+    {"@type": "City", "name": "Paris 7ᵉ arrondissement"},
+    {"@type": "City", "name": "Paris 6ᵉ arrondissement"}
   ],
+  "openingHoursSpecification": [{
+    "@type": "OpeningHoursSpecification",
+    "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+    "opens": "09:00", "closes": "19:00"
+  }],
+  "sameAs": [
+    "https://www.instagram.com/violettesaintbris",
+    "https://www.doctolib.fr/masseur-kinesitherapeute/paris/violette-saint-bris-paris"
+  ],
+  "founder": {"@id": "https://pilatesbyviolette.com/#violette"},
   "hasOfferCatalog": {
     "@type": "OfferCatalog",
-    "name": "Cours de Pilates",
+    "name": "Cours de Pilates à domicile — Paris 7ᵉ",
     "itemListElement": [
-      {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Cours particulier de Pilates à domicile Paris 7", "description": "1h de Pilates individualisé à votre domicile, 7ème arrondissement"}},
-      {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Cours duo de Pilates à domicile Paris", "description": "1h de Pilates en duo à votre domicile"}},
-      {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Pilates en entreprise Paris", "description": "Cours de Pilates en entreprise à Paris"}}
+      {
+        "@type": "Offer",
+        "priceCurrency": "EUR", "price": "90",
+        "priceSpecification": {"@type": "UnitPriceSpecification", "price": "90", "priceCurrency": "EUR", "unitText": "séance (1 h)"},
+        "itemOffered": {"@type": "Service", "name": "Cours particulier de Pilates à domicile — Paris 7ᵉ", "description": "1 h de Pilates individualisé à domicile, 7ᵉ arrondissement."}
+      },
+      {
+        "@type": "Offer",
+        "priceCurrency": "EUR", "price": "50",
+        "priceSpecification": {"@type": "UnitPriceSpecification", "price": "50", "priceCurrency": "EUR", "unitText": "par personne / séance (1 h)"},
+        "itemOffered": {"@type": "Service", "name": "Cours de Pilates en duo à domicile — Paris", "description": "1 h de Pilates en duo à domicile, par personne."}
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {"@type": "Service", "name": "Pilates en petit groupe & entreprise", "description": "Sur devis."}
+      },
+      {
+        "@type": "Offer",
+        "price": "0", "priceCurrency": "EUR",
+        "itemOffered": {"@type": "Service", "name": "Bilan postural — 1ʳᵉ séance offerte", "description": "Analyse de la posture, des antécédents et des objectifs, offerte à la première séance."}
+      }
     ]
-  },
-  "priceRange": "€€",
-  "openingHours": "Mo-Sa 09:00-19:00",
-  "founder": {
-    "@type": "Person",
-    "name": "Violette Saint Bris",
-    "jobTitle": "Kinésithérapeute & Coach Pilates",
-    "knowsAbout": ["Pilates", "Kinésithérapie", "Posturologie", "Ostéopathie"]
   }
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "@id": "https://pilatesbyviolette.com/#violette",
+  "name": "Violette Saint Bris",
+  "jobTitle": "Kinésithérapeute diplômée d'État & professeure de Pilates certifiée",
+  "worksFor": {"@id": "https://pilatesbyviolette.com/#business"},
+  "knowsAbout": ["Pilates thérapeutique", "Kinésithérapie", "Posturologie", "Rééducation périnéale", "Méthode de Gasquet"],
+  "hasCredential": [
+    {
+      "@type": "EducationalOccupationalCredential",
+      "credentialCategory": "diplôme d'État",
+      "name": "Diplôme d'État de masseur-kinésithérapeute",
+      "recognizedBy": {"@type": "GovernmentOrganization", "name": "Ministère de la Santé (France)"}
+    },
+    {
+      "@type": "EducationalOccupationalCredential",
+      "credentialCategory": "certification",
+      "name": "Certification professeure de Pilates"
+    }
+  ],
+  "sameAs": ["https://www.instagram.com/violettesaintbris"]
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Italiana&family=Prata&family=Lora:ital@0;1&family=Jost:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -129,7 +178,7 @@
   .etapes{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
   .etape{position:relative;background:#FCFAF5;border:1px solid var(--ligne);border-radius:2px;padding:42px 34px}
   .etape .n{font-family:'Italiana',serif;font-size:17px;color:var(--terra);letter-spacing:.18em}
-  .etape h3{font-family:'Italiana',serif;font-size:24px;margin:15px 0 12px}
+  .etape h2{font-family:'Italiana',serif;font-size:24px;margin:15px 0 12px}
   .etape p{font-size:15px;color:var(--graphite)}
   .etape.ordo{border-color:var(--terra)}
   .etape.ordo::before{content:"OFFERTE";position:absolute;top:-12px;right:20px;background:var(--terra-bouton);color:var(--ivoire);font-size:10.5px;letter-spacing:.22em;padding:6px 14px}
@@ -300,17 +349,17 @@
     <div class="etapes">
       <div class="etape ordo">
         <span class="n">01</span>
-        <h3>Le bilan postural</h3>
+        <h2>Le bilan postural</h2>
         <p>Première séance offerte : analyse de votre posture, de vos antécédents et de vos objectifs. C'est la fondation de tout le programme.</p>
       </div>
       <div class="etape">
         <span class="n">02</span>
-        <h3>Des séances individualisées</h3>
+        <h2>Des séances individualisées</h2>
         <p>Un programme construit pour corriger votre posture et soigner vos blessures. Pilates ring, élastiques, travail au sol : chaque exercice a une raison d'être.</p>
       </div>
       <div class="etape">
         <span class="n">03</span>
-        <h3>Le rendez-vous hebdomadaire</h3>
+        <h2>Le rendez-vous hebdomadaire</h2>
         <p>Une heure par semaine, chez vous, non négociable dans l'agenda. La régularité fait le résultat — et l'accompagnement fait la régularité.</p>
       </div>
     </div>
@@ -704,9 +753,9 @@ function applyLang(lang) {
 
   // steps
   var etapes = qsa('.etape');
-  if(etapes[0]){etapes[0].querySelector('h3').textContent = t.step1h; etapes[0].querySelector('p').textContent = t.step1p;}
-  if(etapes[1]){etapes[1].querySelector('h3').textContent = t.step2h; etapes[1].querySelector('p').textContent = t.step2p;}
-  if(etapes[2]){etapes[2].querySelector('h3').textContent = t.step3h; etapes[2].querySelector('p').textContent = t.step3p;}
+  if(etapes[0]){etapes[0].querySelector('h2').textContent = t.step1h; etapes[0].querySelector('p').textContent = t.step1p;}
+  if(etapes[1]){etapes[1].querySelector('h2').textContent = t.step2h; etapes[1].querySelector('p').textContent = t.step2p;}
+  if(etapes[2]){etapes[2].querySelector('h2').textContent = t.step3h; etapes[2].querySelector('p').textContent = t.step3p;}
 
   // OFFERTE badge via CSS class
   document.body.className = lang === 'en' ? 'lang-en' : '';
