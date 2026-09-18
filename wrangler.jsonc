@@ -1,6 +1,7 @@
 {
   "name": "pilates-by-violette",
   "compatibility_date": "2026-05-02",
+  "workers_dev": false,
   "assets": {
     "directory": "."
   }
