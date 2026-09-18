@@ -22,8 +22,11 @@
   body{background:var(--ivoire);color:var(--encre);font-family:'Jost',system-ui,sans-serif;font-weight:300;line-height:1.7;font-size:16px}
   .wrap{max-width:760px;margin:0 auto;padding:70px 6vw 90px}
   a{color:var(--terra-bouton)}
-  .back{display:inline-block;margin-bottom:40px;font-size:13px;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;color:var(--graphite)}
+  .topline{display:flex;justify-content:space-between;align-items:center;margin-bottom:40px}
+  .back{font-size:13px;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;color:var(--graphite)}
   .back:hover{color:var(--terra-bouton)}
+  #lang-btn{background:none;border:1px solid var(--ligne);cursor:pointer;font-size:13px;letter-spacing:.08em;padding:7px 12px;border-radius:6px;color:var(--graphite);transition:opacity .2s}
+  #lang-btn:hover{opacity:.6}
   h1{font-family:'Prata',serif;font-weight:400;font-size:clamp(30px,5vw,42px);line-height:1.15;margin-bottom:10px}
   .maj{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--sable);margin-bottom:44px}
   h2{font-family:'Prata',serif;font-weight:400;font-size:22px;margin:40px 0 14px;padding-top:24px;border-top:1px solid var(--ligne)}
@@ -38,54 +41,110 @@
 </head>
 <body>
 <div class="wrap">
-  <a class="back" href="/">← Retour à l'accueil</a>
-  <h1>Mentions légales</h1>
-  <p class="maj">Site pilatesbyviolette.com</p>
+  <div class="topline">
+    <a class="back" href="/">← <span id="t-back">Retour à l'accueil</span></a>
+    <button id="lang-btn" onclick="toggleLang()">EN</button>
+  </div>
 
-  <h2>Éditeur du site</h2>
-  <dl>
-    <dt>Éditrice &amp; directrice de la publication</dt>
-    <dd>Violette Saint Bris</dd>
-    <dt>Statut</dt>
-    <dd>Entrepreneure individuelle — masseur-kinésithérapeute exerçant en libéral</dd>
-    <dt>Adresse professionnelle</dt>
-    <dd>199 boulevard Saint-Germain, 75007 Paris</dd>
-    <dt>SIRET</dt>
-    <dd>833 707 912 000 22</dd>
-    <dt>Numéro RPPS</dt>
-    <dd>810101341195</dd>
-    <dt>Contact</dt>
-    <dd>violette.saintbris@gmail.com — +33 6 10 70 62 02</dd>
-  </dl>
+  <!-- ===== FR ===== -->
+  <div id="doc-fr">
+    <h1>Mentions légales</h1>
+    <p class="maj">Site pilatesbyviolette.com</p>
 
-  <h2>Profession réglementée</h2>
-  <p>Violette Saint Bris est masseur-kinésithérapeute diplômée d'État, inscrite au tableau de l'Ordre des masseurs-kinésithérapeutes. La profession est réglementée par le Code de la santé publique (articles L.4321-1 et suivants) et soumise au Code de déontologie des masseurs-kinésithérapeutes. Autorité de tutelle&nbsp;: Ministère chargé de la Santé (France).</p>
-  <p>Les cours de Pilates proposés sur ce site constituent une activité de coaching et de renforcement corporel&nbsp;; ils ne se substituent pas à une prise en charge médicale ou de rééducation.</p>
+    <h2>Éditeur du site</h2>
+    <dl>
+      <dt>Éditrice &amp; directrice de la publication</dt><dd>Violette Saint Bris</dd>
+      <dt>Statut</dt><dd>Entrepreneure individuelle — masseur-kinésithérapeute exerçant en libéral</dd>
+      <dt>Adresse professionnelle</dt><dd>199 boulevard Saint-Germain, 75007 Paris</dd>
+      <dt>SIRET</dt><dd>833 707 912 000 22</dd>
+      <dt>Numéro RPPS</dt><dd>810101341195</dd>
+      <dt>Contact</dt><dd>violette.saintbris@gmail.com — +33 6 10 70 62 02</dd>
+    </dl>
 
-  <h2>Hébergement</h2>
-  <p>Le site est hébergé par&nbsp;:</p>
-  <dl>
-    <dt>Hébergeur</dt>
-    <dd>Cloudflare, Inc.</dd>
-    <dt>Adresse</dt>
-    <dd>101 Townsend Street, San Francisco, CA 94107, États-Unis</dd>
-    <dt>Site</dt>
-    <dd><a href="https://www.cloudflare.com" target="_blank" rel="noopener">www.cloudflare.com</a></dd>
-  </dl>
+    <h2>Profession réglementée</h2>
+    <p>Violette Saint Bris est masseur-kinésithérapeute diplômée d'État, inscrite au tableau de l'Ordre des masseurs-kinésithérapeutes. La profession est réglementée par le Code de la santé publique (articles L.4321-1 et suivants) et soumise au Code de déontologie des masseurs-kinésithérapeutes. Autorité de tutelle&nbsp;: Ministère chargé de la Santé (France).</p>
+    <p>Les cours de Pilates proposés sur ce site constituent une activité de coaching et de renforcement corporel&nbsp;; ils ne se substituent pas à une prise en charge médicale ou de rééducation.</p>
 
-  <h2>Propriété intellectuelle</h2>
-  <p>L'ensemble des contenus présents sur ce site (textes, photographies, éléments graphiques, mise en page) est la propriété exclusive de Violette Saint Bris, sauf mention contraire. Toute reproduction, représentation, modification ou diffusion, totale ou partielle, sans autorisation écrite préalable, est interdite et constituerait une contrefaçon au sens des articles L.335-2 et suivants du Code de la propriété intellectuelle.</p>
+    <h2>Hébergement</h2>
+    <p>Le site est hébergé par&nbsp;:</p>
+    <dl>
+      <dt>Hébergeur</dt><dd>Cloudflare, Inc.</dd>
+      <dt>Adresse</dt><dd>101 Townsend Street, San Francisco, CA 94107, États-Unis</dd>
+      <dt>Site</dt><dd><a href="https://www.cloudflare.com" target="_blank" rel="noopener">www.cloudflare.com</a></dd>
+    </dl>
 
-  <h2>Données personnelles</h2>
-  <p>Le traitement des données collectées via le formulaire de contact est détaillé dans la <a href="/confidentialite/">politique de confidentialité</a>. Conformément au Règlement général sur la protection des données (RGPD) et à la loi Informatique et Libertés, vous disposez d'un droit d'accès, de rectification et d'effacement de vos données, exerçable à l'adresse violette.saintbris@gmail.com.</p>
+    <h2>Propriété intellectuelle</h2>
+    <p>L'ensemble des contenus présents sur ce site (textes, photographies, éléments graphiques, mise en page) est la propriété exclusive de Violette Saint Bris, sauf mention contraire. Toute reproduction, représentation, modification ou diffusion, totale ou partielle, sans autorisation écrite préalable, est interdite et constituerait une contrefaçon au sens des articles L.335-2 et suivants du Code de la propriété intellectuelle.</p>
 
-  <h2>Liens externes</h2>
-  <p>Ce site comporte des liens vers des sites tiers (Doctolib, Instagram, WhatsApp). Violette Saint Bris n'exerce aucun contrôle sur ces sites et décline toute responsabilité quant à leur contenu.</p>
+    <h2>Données personnelles</h2>
+    <p>Le traitement des données collectées via le formulaire de contact est détaillé dans la <a href="/confidentialite/">politique de confidentialité</a>. Conformément au Règlement général sur la protection des données (RGPD) et à la loi Informatique et Libertés, vous disposez d'un droit d'accès, de rectification et d'effacement de vos données, exerçable à l'adresse violette.saintbris@gmail.com.</p>
+
+    <h2>Liens externes</h2>
+    <p>Ce site comporte des liens vers des sites tiers (Doctolib, Instagram, WhatsApp). Violette Saint Bris n'exerce aucun contrôle sur ces sites et décline toute responsabilité quant à leur contenu.</p>
+  </div>
+
+  <!-- ===== EN ===== -->
+  <div id="doc-en" hidden>
+    <h1>Legal notice</h1>
+    <p class="maj">Website pilatesbyviolette.com</p>
+
+    <h2>Website publisher</h2>
+    <dl>
+      <dt>Publisher &amp; publication director</dt><dd>Violette Saint Bris</dd>
+      <dt>Status</dt><dd>Sole proprietor — state-certified physiotherapist in private practice</dd>
+      <dt>Professional address</dt><dd>199 boulevard Saint-Germain, 75007 Paris, France</dd>
+      <dt>SIRET (company ID)</dt><dd>833 707 912 000 22</dd>
+      <dt>RPPS number</dt><dd>810101341195</dd>
+      <dt>Contact</dt><dd>violette.saintbris@gmail.com — +33 6 10 70 62 02</dd>
+    </dl>
+
+    <h2>Regulated profession</h2>
+    <p>Violette Saint Bris is a state-certified physiotherapist (masseur-kinésithérapeute), registered with the French Order of Physiotherapists. The profession is regulated by the French Public Health Code (articles L.4321-1 et seq.) and subject to the physiotherapists' code of ethics. Supervisory authority: French Ministry of Health.</p>
+    <p>The Pilates classes offered on this site are a coaching and body-strengthening activity; they are not a substitute for medical care or rehabilitation.</p>
+
+    <h2>Hosting</h2>
+    <p>This website is hosted by:</p>
+    <dl>
+      <dt>Host</dt><dd>Cloudflare, Inc.</dd>
+      <dt>Address</dt><dd>101 Townsend Street, San Francisco, CA 94107, USA</dd>
+      <dt>Website</dt><dd><a href="https://www.cloudflare.com" target="_blank" rel="noopener">www.cloudflare.com</a></dd>
+    </dl>
+
+    <h2>Intellectual property</h2>
+    <p>All content on this site (text, photographs, graphic elements, layout) is the exclusive property of Violette Saint Bris, unless otherwise stated. Any reproduction, representation, modification or distribution, in whole or in part, without prior written authorization, is prohibited and would constitute infringement under articles L.335-2 et seq. of the French Intellectual Property Code.</p>
+
+    <h2>Personal data</h2>
+    <p>The processing of data collected via the contact form is described in the <a href="/confidentialite/">privacy policy</a>. Under the General Data Protection Regulation (GDPR) and French data protection law, you have the right to access, rectify and erase your data, by writing to violette.saintbris@gmail.com.</p>
+
+    <h2>External links</h2>
+    <p>This site contains links to third-party sites (Doctolib, Instagram, WhatsApp). Violette Saint Bris has no control over these sites and accepts no responsibility for their content.</p>
+  </div>
 </div>
 <footer>
-  <a href="/">Accueil</a>
-  <a href="/mentions-legales/">Mentions légales</a>
-  <a href="/confidentialite/">Politique de confidentialité</a>
+  <a href="/" id="f-home">Accueil</a>
+  <a href="/mentions-legales/" id="f-legal">Mentions légales</a>
+  <a href="/confidentialite/" id="f-privacy">Politique de confidentialité</a>
 </footer>
+
+<script>
+function applyLang(lang){
+  var en = lang === 'en';
+  document.getElementById('doc-fr').hidden = en;
+  document.getElementById('doc-en').hidden = !en;
+  document.documentElement.lang = lang;
+  document.getElementById('lang-btn').textContent = en ? 'FR' : 'EN';
+  document.getElementById('t-back').textContent = en ? 'Back to home' : 'Retour à l\'accueil';
+  document.getElementById('f-home').textContent = en ? 'Home' : 'Accueil';
+  document.getElementById('f-legal').textContent = en ? 'Legal notice' : 'Mentions légales';
+  document.getElementById('f-privacy').textContent = en ? 'Privacy policy' : 'Politique de confidentialité';
+  document.title = (en ? 'Legal notice' : 'Mentions légales') + ' | Pilates by Violette';
+}
+function toggleLang(){
+  var next = (localStorage.getItem('lang') || 'fr') === 'fr' ? 'en' : 'fr';
+  localStorage.setItem('lang', next);
+  applyLang(next);
+}
+applyLang(localStorage.getItem('lang') === 'en' ? 'en' : 'fr');
+</script>
 </body>
 </html>

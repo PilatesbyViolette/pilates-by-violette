@@ -22,8 +22,11 @@
   body{background:var(--ivoire);color:var(--encre);font-family:'Jost',system-ui,sans-serif;font-weight:300;line-height:1.7;font-size:16px}
   .wrap{max-width:760px;margin:0 auto;padding:70px 6vw 90px}
   a{color:var(--terra-bouton)}
-  .back{display:inline-block;margin-bottom:40px;font-size:13px;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;color:var(--graphite)}
+  .topline{display:flex;justify-content:space-between;align-items:center;margin-bottom:40px}
+  .back{font-size:13px;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;color:var(--graphite)}
   .back:hover{color:var(--terra-bouton)}
+  #lang-btn{background:none;border:1px solid var(--ligne);cursor:pointer;font-size:13px;letter-spacing:.08em;padding:7px 12px;border-radius:6px;color:var(--graphite);transition:opacity .2s}
+  #lang-btn:hover{opacity:.6}
   h1{font-family:'Prata',serif;font-weight:400;font-size:clamp(30px,5vw,42px);line-height:1.15;margin-bottom:10px}
   .maj{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--sable);margin-bottom:44px}
   h2{font-family:'Prata',serif;font-weight:400;font-size:22px;margin:40px 0 14px;padding-top:24px;border-top:1px solid var(--ligne)}
@@ -40,50 +43,120 @@
 </head>
 <body>
 <div class="wrap">
-  <a class="back" href="/">← Retour à l'accueil</a>
-  <h1>Politique de confidentialité</h1>
-  <p class="maj">Protection de vos données personnelles</p>
+  <div class="topline">
+    <a class="back" href="/">← <span id="t-back">Retour à l'accueil</span></a>
+    <button id="lang-btn" onclick="toggleLang()">EN</button>
+  </div>
 
-  <p>La présente politique décrit comment vos données personnelles sont collectées et traitées lorsque vous utilisez le site pilatesbyviolette.com, dans le respect du Règlement général sur la protection des données (RGPD) et de la loi Informatique et Libertés.</p>
+  <!-- ===== FR ===== -->
+  <div id="doc-fr">
+    <h1>Politique de confidentialité</h1>
+    <p class="maj">Protection de vos données personnelles</p>
 
-  <h2>Responsable du traitement</h2>
-  <p>Violette Saint Bris — 199 boulevard Saint-Germain, 75007 Paris — violette.saintbris@gmail.com.</p>
+    <p>La présente politique décrit comment vos données personnelles sont collectées et traitées lorsque vous utilisez le site pilatesbyviolette.com, dans le respect du Règlement général sur la protection des données (RGPD) et de la loi Informatique et Libertés.</p>
 
-  <h2>Données collectées</h2>
-  <p>Lorsque vous remplissez le formulaire de contact, les données suivantes sont collectées&nbsp;:</p>
-  <ul>
-    <li>votre <strong>nom</strong>&nbsp;;</li>
-    <li>votre <strong>email ou numéro de téléphone</strong>&nbsp;;</li>
-    <li>les <strong>informations que vous choisissez de communiquer</strong> dans le champ « votre situation » (antécédents, objectifs). Ces informations peuvent concerner votre santé&nbsp;; vous les transmettez librement et volontairement.</li>
-  </ul>
-  <p>Aucune donnée n'est collectée à votre insu. Le site utilise par ailleurs des cookies de mesure d'audience et publicitaires (voir plus bas).</p>
+    <h2>Responsable du traitement</h2>
+    <p>Violette Saint Bris — 199 boulevard Saint-Germain, 75007 Paris — violette.saintbris@gmail.com.</p>
 
-  <h2>Finalités et base légale</h2>
-  <p>Vos données sont utilisées uniquement pour&nbsp;: répondre à votre demande, vous recontacter et vous proposer un accompagnement Pilates adapté. La base légale de ce traitement est votre <strong>consentement</strong>, recueilli au moment de l'envoi du formulaire. Vous pouvez le retirer à tout moment.</p>
+    <h2>Données collectées</h2>
+    <p>Lorsque vous remplissez le formulaire de contact, les données suivantes sont collectées&nbsp;:</p>
+    <ul>
+      <li>votre <strong>nom</strong>&nbsp;;</li>
+      <li>votre <strong>email ou numéro de téléphone</strong>&nbsp;;</li>
+      <li>les <strong>informations que vous choisissez de communiquer</strong> dans le champ « votre situation » (antécédents, objectifs). Ces informations peuvent concerner votre santé&nbsp;; vous les transmettez librement et volontairement.</li>
+    </ul>
+    <p>Aucune donnée n'est collectée à votre insu. Le site utilise par ailleurs des cookies de mesure d'audience et publicitaires (voir plus bas).</p>
 
-  <h2>Destinataires et sous-traitants</h2>
-  <p>Vos données ne sont jamais vendues ni cédées à des tiers à des fins commerciales. Elles peuvent être traitées par les prestataires techniques suivants&nbsp;:</p>
-  <table>
-    <tr><th>Prestataire</th><th>Rôle</th></tr>
-    <tr><td>Formspree</td><td>Traitement et acheminement du formulaire de contact</td></tr>
-    <tr><td>Cloudflare</td><td>Hébergement du site</td></tr>
-    <tr><td>Doctolib</td><td>Prise de rendez-vous (si vous cliquez sur le lien de réservation)</td></tr>
-    <tr><td>Google (Ads, Analytics)</td><td>Mesure d'audience et suivi des campagnes publicitaires</td></tr>
-  </table>
+    <h2>Finalités et base légale</h2>
+    <p>Vos données sont utilisées uniquement pour&nbsp;: répondre à votre demande, vous recontacter et vous proposer un accompagnement Pilates adapté. La base légale de ce traitement est votre <strong>consentement</strong>, recueilli au moment de l'envoi du formulaire. Vous pouvez le retirer à tout moment.</p>
 
-  <h2>Durée de conservation</h2>
-  <p>Vos données de contact sont conservées pendant une durée maximale de <strong>3 ans</strong> à compter de notre dernier échange, puis supprimées.</p>
+    <h2>Destinataires et sous-traitants</h2>
+    <p>Vos données ne sont jamais vendues ni cédées à des tiers à des fins commerciales. Elles peuvent être traitées par les prestataires techniques suivants&nbsp;:</p>
+    <table>
+      <tr><th>Prestataire</th><th>Rôle</th></tr>
+      <tr><td>Formspree</td><td>Traitement et acheminement du formulaire de contact</td></tr>
+      <tr><td>Cloudflare</td><td>Hébergement du site</td></tr>
+      <tr><td>Doctolib</td><td>Prise de rendez-vous (si vous cliquez sur le lien de réservation)</td></tr>
+      <tr><td>Google (Ads, Analytics)</td><td>Mesure d'audience et suivi des campagnes publicitaires</td></tr>
+    </table>
 
-  <h2>Cookies</h2>
-  <p>Le site dépose des cookies de mesure d'audience et de suivi publicitaire (Google Analytics et Google Ads) afin de comprendre la fréquentation du site et l'efficacité des campagnes. Vous pouvez configurer votre navigateur pour refuser les cookies ou les supprimer.</p>
+    <h2>Durée de conservation</h2>
+    <p>Vos données de contact sont conservées pendant une durée maximale de <strong>3 ans</strong> à compter de notre dernier échange, puis supprimées.</p>
 
-  <h2>Vos droits</h2>
-  <p>Conformément au RGPD, vous disposez d'un droit d'accès, de rectification, d'effacement, de limitation, d'opposition et de portabilité de vos données. Pour les exercer, écrivez à <a href="mailto:violette.saintbris@gmail.com">violette.saintbris@gmail.com</a>. Vous pouvez également introduire une réclamation auprès de la CNIL (<a href="https://www.cnil.fr" target="_blank" rel="noopener">www.cnil.fr</a>).</p>
+    <h2>Cookies</h2>
+    <p>Le site dépose des cookies de mesure d'audience et de suivi publicitaire (Google Analytics et Google Ads) afin de comprendre la fréquentation du site et l'efficacité des campagnes. Vous pouvez configurer votre navigateur pour refuser les cookies ou les supprimer.</p>
+
+    <h2>Vos droits</h2>
+    <p>Conformément au RGPD, vous disposez d'un droit d'accès, de rectification, d'effacement, de limitation, d'opposition et de portabilité de vos données. Pour les exercer, écrivez à <a href="mailto:violette.saintbris@gmail.com">violette.saintbris@gmail.com</a>. Vous pouvez également introduire une réclamation auprès de la CNIL (<a href="https://www.cnil.fr" target="_blank" rel="noopener">www.cnil.fr</a>).</p>
+  </div>
+
+  <!-- ===== EN ===== -->
+  <div id="doc-en" hidden>
+    <h1>Privacy policy</h1>
+    <p class="maj">Protection of your personal data</p>
+
+    <p>This policy describes how your personal data is collected and processed when you use the pilatesbyviolette.com website, in compliance with the General Data Protection Regulation (GDPR) and French data protection law.</p>
+
+    <h2>Data controller</h2>
+    <p>Violette Saint Bris — 199 boulevard Saint-Germain, 75007 Paris, France — violette.saintbris@gmail.com.</p>
+
+    <h2>Data collected</h2>
+    <p>When you fill in the contact form, the following data is collected:</p>
+    <ul>
+      <li>your <strong>name</strong>;</li>
+      <li>your <strong>email or phone number</strong>;</li>
+      <li>the <strong>information you choose to share</strong> in the "your situation" field (history, goals). This information may relate to your health; you provide it freely and voluntarily.</li>
+    </ul>
+    <p>No data is collected without your knowledge. The site also uses analytics and advertising cookies (see below).</p>
+
+    <h2>Purpose and legal basis</h2>
+    <p>Your data is used only to: respond to your request, contact you back and offer you a suitable Pilates programme. The legal basis for this processing is your <strong>consent</strong>, obtained when you submit the form. You may withdraw it at any time.</p>
+
+    <h2>Recipients and processors</h2>
+    <p>Your data is never sold or transferred to third parties for commercial purposes. It may be processed by the following technical providers:</p>
+    <table>
+      <tr><th>Provider</th><th>Role</th></tr>
+      <tr><td>Formspree</td><td>Processing and delivery of the contact form</td></tr>
+      <tr><td>Cloudflare</td><td>Website hosting</td></tr>
+      <tr><td>Doctolib</td><td>Appointment booking (if you click the booking link)</td></tr>
+      <tr><td>Google (Ads, Analytics)</td><td>Audience measurement and advertising campaign tracking</td></tr>
+    </table>
+
+    <h2>Retention period</h2>
+    <p>Your contact data is kept for a maximum of <strong>3 years</strong> from our last exchange, then deleted.</p>
+
+    <h2>Cookies</h2>
+    <p>The site uses analytics and advertising cookies (Google Analytics and Google Ads) to understand site traffic and campaign effectiveness. You can set your browser to refuse or delete cookies.</p>
+
+    <h2>Your rights</h2>
+    <p>Under the GDPR, you have the right to access, rectify, erase, restrict, object to and port your data. To exercise them, write to <a href="mailto:violette.saintbris@gmail.com">violette.saintbris@gmail.com</a>. You may also lodge a complaint with the French data protection authority, the CNIL (<a href="https://www.cnil.fr" target="_blank" rel="noopener">www.cnil.fr</a>).</p>
+  </div>
 </div>
 <footer>
-  <a href="/">Accueil</a>
-  <a href="/mentions-legales/">Mentions légales</a>
-  <a href="/confidentialite/">Politique de confidentialité</a>
+  <a href="/" id="f-home">Accueil</a>
+  <a href="/mentions-legales/" id="f-legal">Mentions légales</a>
+  <a href="/confidentialite/" id="f-privacy">Politique de confidentialité</a>
 </footer>
+
+<script>
+function applyLang(lang){
+  var en = lang === 'en';
+  document.getElementById('doc-fr').hidden = en;
+  document.getElementById('doc-en').hidden = !en;
+  document.documentElement.lang = lang;
+  document.getElementById('lang-btn').textContent = en ? 'FR' : 'EN';
+  document.getElementById('t-back').textContent = en ? 'Back to home' : 'Retour à l\'accueil';
+  document.getElementById('f-home').textContent = en ? 'Home' : 'Accueil';
+  document.getElementById('f-legal').textContent = en ? 'Legal notice' : 'Mentions légales';
+  document.getElementById('f-privacy').textContent = en ? 'Privacy policy' : 'Politique de confidentialité';
+  document.title = (en ? 'Privacy policy' : 'Politique de confidentialité') + ' | Pilates by Violette';
+}
+function toggleLang(){
+  var next = (localStorage.getItem('lang') || 'fr') === 'fr' ? 'en' : 'fr';
+  localStorage.setItem('lang', next);
+  applyLang(next);
+}
+applyLang(localStorage.getItem('lang') === 'en' ? 'en' : 'fr');
+</script>
 </body>
 </html>
