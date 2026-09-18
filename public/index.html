@@ -261,9 +261,15 @@
   .champ input:focus,.champ textarea:focus{outline:none;border-color:var(--terra)}
   .envoyer{margin-top:16px;background:var(--terra-bouton);color:var(--ivoire);border:none;border-radius:999px;padding:16px 40px;font-family:'Jost',sans-serif;font-size:12.5px;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;transition:background .3s}
   .envoyer:hover{background:var(--terra-bouton-hover)}
+  .consent{display:flex;align-items:flex-start;gap:10px;margin-top:18px;font-size:13px;line-height:1.5;color:var(--graphite);cursor:pointer}
+  .consent input{margin-top:3px;flex-shrink:0;accent-color:var(--terra-bouton)}
+  .consent a{color:var(--terra-bouton)}
 
   footer{background:var(--encre);color:rgba(247,244,238,.55);border-top:1px solid rgba(247,244,238,.12);padding:32px 0;font-size:12.5px;letter-spacing:.06em}
   footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+  .footer-legal{max-width:1200px;margin:18px auto 0;padding:0 6vw;text-align:center}
+  .footer-legal a{color:rgba(247,244,238,.55);text-decoration:none;margin:0 12px}
+  .footer-legal a:hover{color:rgba(247,244,238,.9)}
 
   /* hamburger */
   #menu-btn{display:none;background:none;border:none;cursor:pointer;padding:6px;flex-direction:column;gap:5px;width:34px}
@@ -518,6 +524,7 @@
           <div class="champ"><label for="f-nom">Nom</label><input id="f-nom" name="nom" type="text" required></div>
           <div class="champ"><label for="f-mail">Email ou téléphone</label><input id="f-mail" name="contact" type="text" required></div>
           <div class="champ"><label for="f-msg">Votre situation (antécédents, objectifs…)</label><textarea id="f-msg" name="message" rows="3"></textarea></div>
+          <label class="consent"><input type="checkbox" name="consentement" required><span id="consent-txt">J'accepte que mes informations soient utilisées pour être recontacté(e). Voir la <a href="/confidentialite/" target="_blank" rel="noopener">politique de confidentialité</a>.</span></label>
           <button class="envoyer" type="submit">Demander ma séance offerte</button>
           <p id="form-status" role="status" style="display:none;margin-top:18px;font-size:15px;color:var(--sable)"></p>
         </form>
@@ -531,6 +538,10 @@
     <span>Pilates by Violette — cours à domicile, Paris 7ᵉ</span>
     <span>Rue du Bac · Grenelle · Varenne · Saint-Germain · Université · Lille · Saints-Pères</span>
   </div>
+  <nav class="footer-legal">
+    <a href="/mentions-legales/">Mentions légales</a>
+    <a href="/confidentialite/">Politique de confidentialité</a>
+  </nav>
 </footer>
 
 <script>
@@ -649,8 +660,11 @@ var T = {
     formErr: 'L\'envoi n\'a pas abouti. Vous pouvez réessayer, ou écrire directement à violette.saintbris@gmail.com.',
     formSending: 'Envoi en cours…',
     formSent: 'Message envoyé ✓',
+    consent: 'J\'accepte que mes informations soient utilisées pour être recontacté(e). Voir la <a href="/confidentialite/" target="_blank" rel="noopener">politique de confidentialité</a>.',
     footer1: 'Pilates by Violette — cours à domicile, Paris 7ᵉ',
-    footer2: 'Rue du Bac · Grenelle · Varenne · Saint-Germain · Université · Lille · Saints-Pères'
+    footer2: 'Rue du Bac · Grenelle · Varenne · Saint-Germain · Université · Lille · Saints-Pères',
+    legalMentions: 'Mentions légales',
+    legalPrivacy: 'Politique de confidentialité'
   },
   en: {
     promo: '<b>AUTUMN 2026</b> — Free classes from September 1st to 20th. <u>Book your spot.</u>',
@@ -730,8 +744,11 @@ var T = {
     formErr: 'Something went wrong. Please try again, or email violette.saintbris@gmail.com directly.',
     formSending: 'Sending…',
     formSent: 'Message sent ✓',
+    consent: 'I agree that my information may be used to be contacted back. See the <a href="/confidentialite/" target="_blank" rel="noopener">privacy policy</a>.',
     footer1: 'Pilates by Violette — home sessions, Paris 7th',
-    footer2: 'Rue du Bac · Grenelle · Varenne · Saint-Germain · Université · Lille · Saints-Pères'
+    footer2: 'Rue du Bac · Grenelle · Varenne · Saint-Germain · Université · Lille · Saints-Pères',
+    legalMentions: 'Legal notice',
+    legalPrivacy: 'Privacy policy'
   }
 };
 
@@ -850,11 +867,16 @@ function applyLang(lang) {
   qs('label[for="f-mail"]').textContent = t.formContact;
   qs('label[for="f-msg"]').textContent = t.formMsg;
   qs('.envoyer').textContent = t.formBtn;
+  var consentTxt = document.getElementById('consent-txt');
+  if(consentTxt) consentTxt.innerHTML = t.consent;
 
   // footer
   var footerSpans = qsa('footer .wrap span');
   if(footerSpans[0]) footerSpans[0].textContent = t.footer1;
   if(footerSpans[1]) footerSpans[1].textContent = t.footer2;
+  var legalLinks = qsa('.footer-legal a');
+  if(legalLinks[0]) legalLinks[0].textContent = t.legalMentions;
+  if(legalLinks[1]) legalLinks[1].textContent = t.legalPrivacy;
 
   // lang button
   var btn = document.getElementById('lang-btn');
