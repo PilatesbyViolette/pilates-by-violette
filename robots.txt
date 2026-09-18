@@ -1,0 +1,5 @@
+# robots.txt — pilatesbyviolette.com
+User-agent: *
+Allow: /
+
+Sitemap: https://pilatesbyviolette.com/sitemap.xml
