@@ -318,6 +318,7 @@
       <a href="#resultats">Résultats</a>
       <a href="#quijesuis">Qui je suis</a>
       <a href="#tarifs">Tarifs</a>
+      <a href="/blog/">Blog</a>
     </div>
     <div class="nav-right">
       <button id="lang-btn" onclick="toggleLang()" aria-label="Switch language" title="Switch to English">EN</button>
@@ -334,6 +335,7 @@
   <a href="#resultats" onclick="closeMenu()" id="mm-res">Résultats</a>
   <a href="#quijesuis" onclick="closeMenu()" id="mm-qjs">Qui je suis</a>
   <a href="#tarifs" onclick="closeMenu()" id="mm-tar">Tarifs</a>
+  <a href="/blog/" onclick="closeMenu()" id="mm-blog">Blog</a>
   <a class="m-cta" href="https://www.doctolib.fr/masseur-kinesitherapeute/paris/violette-saint-bris-paris" target="_blank" rel="noopener" onclick="closeMenu()" id="mm-cta">Séance offerte</a>
 </div>
 
@@ -533,8 +535,9 @@
     <span>Rue du Bac · Grenelle · Varenne · Saint-Germain · Université · Lille · Saints-Pères</span>
   </div>
   <nav class="footer-legal">
-    <a href="/mentions-legales/">Mentions légales</a>
-    <a href="/confidentialite/">Politique de confidentialité</a>
+    <a href="/blog/" id="fl-blog">Blog</a>
+    <a href="/mentions-legales/" id="fl-legal">Mentions légales</a>
+    <a href="/confidentialite/" id="fl-privacy">Politique de confidentialité</a>
   </nav>
 </footer>
 
@@ -577,7 +580,7 @@
 <script>
 var T = {
   fr: {
-    navLinks: ['Pour qui','Résultats','Qui je suis','Tarifs'],
+    navLinks: ['Pour qui','Résultats','Qui je suis','Tarifs','Blog'],
     navCta: 'Séance offerte',
     eyebrowHero: 'Coach Pilates à Paris 7ᵉ',
     h1: 'Le Pilates à Paris 7,<br><span class="accent">à domicile.</span>',
@@ -656,11 +659,12 @@ var T = {
     consent: 'J\'accepte que mes informations soient utilisées pour être recontacté(e). Voir la <a href="/confidentialite/" target="_blank" rel="noopener">politique de confidentialité</a>.',
     footer1: 'Pilates by Violette — cours à domicile, Paris 7ᵉ',
     footer2: 'Rue du Bac · Grenelle · Varenne · Saint-Germain · Université · Lille · Saints-Pères',
+    legalBlog: 'Blog',
     legalMentions: 'Mentions légales',
     legalPrivacy: 'Politique de confidentialité'
   },
   en: {
-    navLinks: ['Who it\'s for','Results','About me','Pricing'],
+    navLinks: ['Who it\'s for','Results','About me','Pricing','Blog'],
     navCta: 'Free session',
     eyebrowHero: 'Pilates Coach in Paris 7th',
     h1: 'Pilates in Paris 7,<br><span class="accent">at home.</span>',
@@ -739,6 +743,7 @@ var T = {
     consent: 'I agree that my information may be used to be contacted back. See the <a href="/confidentialite/" target="_blank" rel="noopener">privacy policy</a>.',
     footer1: 'Pilates by Violette — home sessions, Paris 7th',
     footer2: 'Rue du Bac · Grenelle · Varenne · Saint-Germain · Université · Lille · Saints-Pères',
+    legalBlog: 'Blog',
     legalMentions: 'Legal notice',
     legalPrivacy: 'Privacy policy'
   }
@@ -752,7 +757,7 @@ function applyLang(lang) {
   // nav links (desktop + mobile menu)
   var navLinks = qsa('.nav-links a');
   navLinks.forEach(function(el,i){ if(t.navLinks[i]) el.textContent = t.navLinks[i]; });
-  var mmIds = ['mm-pq','mm-res','mm-qjs','mm-tar'];
+  var mmIds = ['mm-pq','mm-res','mm-qjs','mm-tar','mm-blog'];
   mmIds.forEach(function(id,i){ var el=document.getElementById(id); if(el&&t.navLinks[i]) el.textContent=t.navLinks[i]; });
   var mmCta = document.getElementById('mm-cta');
   if(mmCta) mmCta.textContent = t.navCta;
@@ -863,9 +868,12 @@ function applyLang(lang) {
   var footerSpans = qsa('footer .wrap span');
   if(footerSpans[0]) footerSpans[0].textContent = t.footer1;
   if(footerSpans[1]) footerSpans[1].textContent = t.footer2;
-  var legalLinks = qsa('.footer-legal a');
-  if(legalLinks[0]) legalLinks[0].textContent = t.legalMentions;
-  if(legalLinks[1]) legalLinks[1].textContent = t.legalPrivacy;
+  var flBlog = document.getElementById('fl-blog');
+  var flLegal = document.getElementById('fl-legal');
+  var flPrivacy = document.getElementById('fl-privacy');
+  if(flBlog) flBlog.textContent = t.legalBlog;
+  if(flLegal) flLegal.textContent = t.legalMentions;
+  if(flPrivacy) flPrivacy.textContent = t.legalPrivacy;
 
   // lang button
   var btn = document.getElementById('lang-btn');
