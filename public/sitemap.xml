@@ -8,13 +8,19 @@
   </url>
   <url>
     <loc>https://pilatesbyviolette.com/blog/</loc>
-    <lastmod>2026-09-22</lastmod>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://pilatesbyviolette.com/blog/pilates-mal-de-dos/</loc>
-    <lastmod>2026-09-22</lastmod>
+    <lastmod>2026-09-25</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pilatesbyviolette.com/blog/pilates-post-partum/</loc>
+    <lastmod>2026-09-25</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.8</priority>
   </url>
