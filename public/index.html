@@ -50,7 +50,7 @@
   }],
   "sameAs": [
     "https://www.instagram.com/violettesaintbris",
-    "https://www.doctolib.fr/masseur-kinesitherapeute/paris/violette-saint-bris-paris",
+    "https://calendly.com/pilatesbyviolette/",
     "https://maps.app.goo.gl/eBTRrEB7Gbiz1zYZA"
   ],
   "founder": {"@id": "https://pilatesbyviolette.com/#violette"},
@@ -318,7 +318,7 @@
     </div>
     <div class="nav-right">
       <button id="lang-btn" onclick="toggleLang()" aria-label="Switch language" title="Switch to English">EN</button>
-      <a class="nav-cta" href="https://www.doctolib.fr/masseur-kinesitherapeute/paris/violette-saint-bris-paris" target="_blank" rel="noopener" id="nav-cta">Séance offerte</a>
+      <a class="nav-cta" href="https://calendly.com/pilatesbyviolette/" target="_blank" rel="noopener" id="nav-cta">Séance offerte</a>
       <button id="menu-btn" aria-label="Menu" onclick="toggleMenu()">
         <span></span><span></span><span></span>
       </button>
@@ -332,7 +332,7 @@
   <a href="#quijesuis" onclick="closeMenu()" id="mm-qjs">Qui je suis</a>
   <a href="#tarifs" onclick="closeMenu()" id="mm-tar">Tarifs</a>
   <a href="/blog/" onclick="closeMenu()" id="mm-blog">Blog</a>
-  <a class="m-cta" href="https://www.doctolib.fr/masseur-kinesitherapeute/paris/violette-saint-bris-paris" target="_blank" rel="noopener" onclick="closeMenu()" id="mm-cta">Séance offerte</a>
+  <a class="m-cta" href="https://calendly.com/pilatesbyviolette/" target="_blank" rel="noopener" onclick="closeMenu()" id="mm-cta">Séance offerte</a>
 </div>
 
 <header class="hero" id="haut">
@@ -342,7 +342,7 @@
     <h1 class="display">Le Pilates à Paris 7ᵉ &amp; 6ᵉ,<br><span class="accent">en présentiel, à domicile.</span></h1>
     <p class="sub">Cours particuliers et duos de Pilates à domicile dans le 7ᵉ arrondissement et alentours. Par une <strong>kinésithérapeute diplômée d'État</strong>, pour un corps tonique, solide et sans douleur.</p>
     <div class="cta-zone">
-      <a class="btn-terra" href="https://www.doctolib.fr/masseur-kinesitherapeute/paris/violette-saint-bris-paris" target="_blank" rel="noopener">Ma séance d'essai offerte</a>
+      <a class="btn-terra" href="https://calendly.com/pilatesbyviolette/" target="_blank" rel="noopener">Ma séance d'essai offerte</a>
     </div>
   </div>
   <figure class="hero-img">
@@ -505,7 +505,7 @@
       <div>
         <h2>On commence <span class="accent">cette semaine</span> ?</h2>
         <div class="canaux">
-          <a href="https://www.doctolib.fr/masseur-kinesitherapeute/paris/violette-saint-bris-paris" target="_blank" rel="noopener">Réserver sur Doctolib ↗</a>
+          <a href="https://calendly.com/pilatesbyviolette/" target="_blank" rel="noopener">Réserver sur Calendly ↗</a>
           <a href="https://wa.me/33610706202?text=Bonjour%20Violette%2C%20je%20souhaite%20des%20informations%20sur%20vos%20cours%20de%20Pilates." target="_blank" rel="noopener">WhatsApp — 06 10 70 62 02</a>
           <a href="mailto:violette.saintbris@gmail.com">violette.saintbris@gmail.com</a>
           <a href="https://instagram.com/violettesaintbris" target="_blank" rel="noopener">Instagram — @violettesaintbris</a>
@@ -643,7 +643,7 @@ var T = {
     ],
     eyebrowCon: 'Contact',
     h2Con: 'On commence <span class="accent">cette semaine</span> ?',
-    canaux: ['Réserver sur Doctolib ↗','WhatsApp — 06 10 70 62 02','violette.saintbris@gmail.com','Instagram — @violettesaintbris'],
+    canaux: ['Réserver sur Calendly ↗','WhatsApp — 06 10 70 62 02','violette.saintbris@gmail.com','Instagram — @violettesaintbris'],
     formNom: 'Nom',
     formContact: 'Email ou téléphone',
     formMsg: 'Votre situation (antécédents, objectifs…)',
@@ -727,7 +727,7 @@ var T = {
     ],
     eyebrowCon: 'Contact',
     h2Con: 'Starting <span class="accent">this week</span>?',
-    canaux: ['Book on Doctolib ↗','WhatsApp — +33 6 10 70 62 02','violette.saintbris@gmail.com','Instagram — @violettesaintbris'],
+    canaux: ['Book on Calendly ↗','WhatsApp — +33 6 10 70 62 02','violette.saintbris@gmail.com','Instagram — @violettesaintbris'],
     formNom: 'Name',
     formContact: 'Email or phone',
     formMsg: 'Your situation (history, goals…)',
@@ -906,7 +906,7 @@ function toggleLang() {
 </script>
 
 <script>
-// Google Ads conversion tracking on high-intent clicks (Doctolib bookings + WhatsApp)
+// Google Ads conversion tracking on high-intent clicks (Calendly bookings + WhatsApp)
 (function() {
   var CONV = 'AW-819470016/HihvCJKrkfMcEMC94IYD';
   function fireConversion() {
@@ -915,7 +915,7 @@ function toggleLang() {
   document.addEventListener('click', function(e) {
     var a = e.target.closest('a');
     if(!a || !a.href) return;
-    if(a.href.indexOf('doctolib.fr') !== -1 || a.href.indexOf('wa.me') !== -1) {
+    if(a.href.indexOf('calendly.com') !== -1 || a.href.indexOf('wa.me') !== -1) {
       fireConversion();
     }
   }, true);
