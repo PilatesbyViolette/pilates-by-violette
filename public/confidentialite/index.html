@@ -45,7 +45,7 @@
 <div class="wrap">
   <div class="topline">
     <a class="back" href="/">← <span id="t-back">Retour à l'accueil</span></a>
-    <button id="lang-btn" onclick="toggleLang()">EN</button>
+    <button id="lang-btn">EN</button>
   </div>
 
   <!-- ===== FR ===== -->
@@ -140,25 +140,6 @@
   <a href="/confidentialite/" id="f-privacy">Politique de confidentialité</a>
 </footer>
 
-<script>
-function applyLang(lang){
-  var en = lang === 'en';
-  document.getElementById('doc-fr').hidden = en;
-  document.getElementById('doc-en').hidden = !en;
-  document.documentElement.lang = lang;
-  document.getElementById('lang-btn').textContent = en ? 'FR' : 'EN';
-  document.getElementById('t-back').textContent = en ? 'Back to home' : 'Retour à l\'accueil';
-  document.getElementById('f-home').textContent = en ? 'Home' : 'Accueil';
-  document.getElementById('f-legal').textContent = en ? 'Legal notice' : 'Mentions légales';
-  document.getElementById('f-privacy').textContent = en ? 'Privacy policy' : 'Politique de confidentialité';
-  document.title = (en ? 'Privacy policy' : 'Politique de confidentialité') + ' | Pilates by Violette';
-}
-function toggleLang(){
-  var next = (localStorage.getItem('lang') || 'fr') === 'fr' ? 'en' : 'fr';
-  localStorage.setItem('lang', next);
-  applyLang(next);
-}
-applyLang(localStorage.getItem('lang') === 'en' ? 'en' : 'fr');
-</script>
+<script src="/js/legal.js" data-title-fr="Politique de confidentialité" data-title-en="Privacy policy" defer></script>
 </body>
 </html>

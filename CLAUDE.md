@@ -38,7 +38,11 @@ l'utilisateur d'en générer un nouveau.
 
 - `public/` : **seul dossier publié** sur le web (`assets.directory = "./public"`
   dans `wrangler.jsonc`). Tout fichier servi va ici, rien d'autre.
-- `public/index.html` : page d'accueil (CSS, traductions et scripts inline).
+- `public/index.html` : page d'accueil (CSS inline, JSON-LD).
+- `public/js/accueil.js` : scripts de l'accueil (consentement cookies, gtag, formulaire,
+  traductions `T`, `applyLang()`, menu, suivi de conversion).
+- `public/js/legal.js` : bascule FR/EN des deux pages légales.
+- `public/_headers` : en-têtes de sécurité, dont la Content-Security-Policy.
 - `public/blog/` : index du blog + un dossier par article (`/blog/<slug>/index.html`).
 - `public/mentions-legales/`, `public/confidentialite/` : pages légales bilingues.
 - `public/img/` : images WebP, `og-cover.jpg`. Favicons à la racine de `public/`.
@@ -51,12 +55,12 @@ ne pas la fusionner dans `main`.
 
 ## Pièges connus — à vérifier à chaque modification
 
-1. **Traductions FR/EN.** `public/index.html` contient un objet JS `T = { fr, en }`
+1. **Traductions FR/EN.** `public/js/accueil.js` contient un objet JS `T = { fr, en }`
    et une fonction `applyLang()` qui **réécrit** les textes à chaque changement de
    langue. Modifier un texte visible dans le HTML sans modifier `T.fr` **et** `T.en`
    fait réapparaître l'ancien texte dès qu'on bascule de langue.
    Test obligatoire : FR → EN → FR, le texte doit rester le nouveau.
-2. **Suivi de conversion Google Ads.** Le script en bas de `public/index.html`
+2. **Suivi de conversion Google Ads.** Le script en fin de `public/js/accueil.js`
    déclenche la conversion `AW-819470016/HihvCJKrkfMcEMC94IYD` sur les clics dont
    l'URL contient `calendly.com` ou `wa.me`, et sur l'envoi réussi du formulaire.
    Changer un lien de réservation sans adapter cette condition casse le suivi
@@ -74,6 +78,14 @@ ne pas la fusionner dans `main`.
    un lien interne vers elle. Mettre à jour le `lastmod` des pages modifiées.
 8. **Vérifier le site en ligne** : en cas de doute sur ce qui est déployé, regarder
    le code source (`view-source:`) plutôt que l'affichage, qui peut être en cache.
+9. **Content-Security-Policy.** `public/_headers` impose une CSP stricte : aucun
+   script inline ni attribut `onclick`/`onsubmit`… (ajouter les scripts dans
+   `public/js/` et les gestionnaires avec `addEventListener`). Tout nouveau service
+   tiers (script, police, image, API, formulaire, iframe, widget) doit être ajouté à
+   la directive concernée de la CSP de `public/_headers`, **puis testé** avec
+   `npx wrangler dev`, console ouverte : zéro violation, bascule FR → EN → FR,
+   formulaire, conversion Google Ads. Sinon il est bloqué en silence pour les
+   visiteurs (seule la console le signale).
 
 ## Règles éditoriales et de marque
 
